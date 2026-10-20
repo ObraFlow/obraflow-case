@@ -1,0 +1,66 @@
+name: obraflow
+
+x-tools: &tools
+  build:
+    context: .
+    target: tools
+  environment:
+    DATABASE_URL: postgresql://obraflow:obraflow_local@db:5432/obraflow?schema=public
+    LOG_LEVEL: ${LOG_LEVEL:-info}
+  restart: "no"
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: obraflow
+      POSTGRES_PASSWORD: obraflow_local
+      POSTGRES_DB: obraflow
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U obraflow -d obraflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  migrate:
+    <<: *tools
+    command: ["npm", "run", "db:migrate"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  seed:
+    <<: *tools
+    command: ["npm", "run", "db:seed"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  app:
+    build:
+      context: .
+      target: runner
+    environment:
+      DATABASE_URL: postgresql://obraflow:obraflow_local@db:5432/obraflow?schema=public
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "127.0.0.1:${PORT:-3000}:3000"
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  postgres_data:

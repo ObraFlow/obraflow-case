@@ -49,6 +49,8 @@ Especificação preparada em 20/10/2026. Evidências: [contrato de negócio](./d
 
 ### F01 — Fundação executável
 
+Implementação preparada em 20/10/2026, com execução descrita em [Desenvolvimento](./development.md). O schema inicial cobre apenas cadastros e configuração; pedidos, etapas e decisões serão adicionados nas features correspondentes.
+
 - Next.js + TypeScript, PostgreSQL, Prisma, estilos e ferramentas de validação configurados com versões compatíveis fixadas no lockfile.
 - Docker Compose inicia aplicação e banco; .env.example sem segredos; migrations versionadas.
 - Scripts de lint, tipos, testes e build executáveis em CI.
