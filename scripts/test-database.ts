@@ -31,8 +31,14 @@ export function getTestDatabaseUrl(environment: Record<string, string | undefine
   if (!test.database.endsWith("_test")) {
     throw new Error("O nome do banco de integração deve terminar em _test.");
   }
-  if (test.hostname === development.hostname && test.port === development.port && test.database === development.database) {
-    throw new Error("Banco de teste e desenvolvimento não podem ser o mesmo, mesmo com usuários ou schemas diferentes.");
+  if (
+    test.hostname === development.hostname &&
+    test.port === development.port &&
+    test.database === development.database
+  ) {
+    throw new Error(
+      "Banco de teste e desenvolvimento não podem ser o mesmo, mesmo com usuários ou schemas diferentes.",
+    );
   }
   return environment.TEST_DATABASE_URL;
 }

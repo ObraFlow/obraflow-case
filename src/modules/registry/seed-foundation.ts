@@ -42,7 +42,7 @@ export async function seedFoundation(database: PrismaClient) {
       skipDuplicates: true,
     });
 
-    if (!await transaction.project.findUnique({ where: { id: foundationIds.projects.centro } })) {
+    if (!(await transaction.project.findUnique({ where: { id: foundationIds.projects.centro } }))) {
       await transaction.project.create({
         data: {
           id: foundationIds.projects.centro,
@@ -50,20 +50,44 @@ export async function seedFoundation(database: PrismaClient) {
           rulesVersion: 1,
           bands: {
             create: [
-              { id: foundationIds.bands.centroFirst, position: 1, upperLimit: "10000.00", approvers: { create: [{ userId: foundationIds.users.amanda, position: 1 }] } },
-              { id: foundationIds.bands.centroLast, position: 2, upperLimit: null, approvers: { create: [{ userId: foundationIds.users.amanda, position: 1 }, { userId: foundationIds.users.joao, position: 2 }] } },
+              {
+                id: foundationIds.bands.centroFirst,
+                position: 1,
+                upperLimit: "10000.00",
+                approvers: { create: [{ userId: foundationIds.users.amanda, position: 1 }] },
+              },
+              {
+                id: foundationIds.bands.centroLast,
+                position: 2,
+                upperLimit: null,
+                approvers: {
+                  create: [
+                    { userId: foundationIds.users.amanda, position: 1 },
+                    { userId: foundationIds.users.joao, position: 2 },
+                  ],
+                },
+              },
             ],
           },
         },
       });
     }
-    if (!await transaction.project.findUnique({ where: { id: foundationIds.projects.norte } })) {
+    if (!(await transaction.project.findUnique({ where: { id: foundationIds.projects.norte } }))) {
       await transaction.project.create({
         data: {
           id: foundationIds.projects.norte,
           name: "Obra Norte",
           rulesVersion: 1,
-          bands: { create: [{ id: foundationIds.bands.norteFirst, position: 1, upperLimit: "5000.00", approvers: { create: [{ userId: foundationIds.users.joao, position: 1 }] } }] },
+          bands: {
+            create: [
+              {
+                id: foundationIds.bands.norteFirst,
+                position: 1,
+                upperLimit: "5000.00",
+                approvers: { create: [{ userId: foundationIds.users.joao, position: 1 }] },
+              },
+            ],
+          },
         },
       });
     }

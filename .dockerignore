@@ -11,3 +11,6 @@ test-results
 *.log
 npm-debug.log*
 docs
+.local
+src/generated/prisma
+*.tsbuildinfo

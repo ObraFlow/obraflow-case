@@ -8,6 +8,8 @@ export function POST(request: Request, context: { params: Promise<{ id: string }
   return withApi(request, async (actorId) => {
     parseQuery(request, z.object({}).strict());
     const id = parseId((await context.params).id);
-    return apiJson(await decideOrder(getDatabase(), id, actorId, await readJson(request, decisionSchema)));
+    return apiJson(
+      await decideOrder(getDatabase(), id, actorId, await readJson(request, decisionSchema)),
+    );
   });
 }
