@@ -14,23 +14,23 @@ Obras possuem configurações independentes. Não há isolamento multiempresa. F
 
 Todos os limites abaixo são escolhas do projeto para uma demonstração verificável. Não são regras adicionais atribuídas ao enunciado.
 
-| Campo | Contrato |
-|---|---|
-| IDs | UUID; gerados no servidor, exceto a chave de idempotência gerada pelo cliente |
-| Nome de obra, fornecedor e usuário | Texto após trim, 1–120 caracteres; nomes iguais permitidos |
-| Descrição do item | Texto após trim, 1–200 caracteres |
-| Unidade | Texto após trim, 1–16 caracteres; sugestões un, kg, m, m², h, sem enum fechado |
-| Quantidade | Decimal positivo, até 3 casas, de 0.001 a 1000000.000 |
-| Preço unitário | BRL não negativo, até 2 casas, de 0.00 a 1000000.00 |
-| Itens por pedido | 1–100; ordem de entrada preservada |
-| Observações internas | Opcional, até 2000 caracteres após trim; vazio normalizado para null |
-| Motivo de rejeição | Obrigatório após trim, 1–2000 caracteres |
-| Total por item / pedido | Máximo 100000000.00; acima disso, rejeitar antes de persistir |
-| Faixas por obra | 0–20; configuração vazia permitida, bloqueando novos pedidos |
-| Aprovadores por faixa | 1–10 usuários existentes, distintos e ordenados |
-| Teto finito de faixa | 0.00–100000000.00, até 2 casas |
-| Data do pedido | Data civil válida YYYY-MM-DD; sem restrição adicional de passado/futuro |
-| Corpo HTTP JSON | Até 256 KiB; rejeitar excessos antes de processar o corpo completo |
+| Campo                              | Contrato                                                                       |
+| ---------------------------------- | ------------------------------------------------------------------------------ |
+| IDs                                | UUID; gerados no servidor, exceto a chave de idempotência gerada pelo cliente  |
+| Nome de obra, fornecedor e usuário | Texto após trim, 1–120 caracteres; nomes iguais permitidos                     |
+| Descrição do item                  | Texto após trim, 1–200 caracteres                                              |
+| Unidade                            | Texto após trim, 1–16 caracteres; sugestões un, kg, m, m², h, sem enum fechado |
+| Quantidade                         | Decimal positivo, até 3 casas, de 0.001 a 1000000.000                          |
+| Preço unitário                     | BRL não negativo, até 2 casas, de 0.00 a 1000000.00                            |
+| Itens por pedido                   | 1–100; ordem de entrada preservada                                             |
+| Observações internas               | Opcional, até 2000 caracteres após trim; vazio normalizado para null           |
+| Motivo de rejeição                 | Obrigatório após trim, 1–2000 caracteres                                       |
+| Total por item / pedido            | Máximo 100000000.00; acima disso, rejeitar antes de persistir                  |
+| Faixas por obra                    | 0–20; configuração vazia permitida, bloqueando novos pedidos                   |
+| Aprovadores por faixa              | 1–10 usuários existentes, distintos e ordenados                                |
+| Teto finito de faixa               | 0.00–100000000.00, até 2 casas                                                 |
+| Data do pedido                     | Data civil válida YYYY-MM-DD; sem restrição adicional de passado/futuro        |
+| Corpo HTTP JSON                    | Até 256 KiB; rejeitar excessos antes de processar o corpo completo             |
 
 API aceita decimais como strings sem separador de milhar, sinal, notação exponencial ou vírgula. Formatos locais são convertidos pela UI. Precisão excessiva é erro, não arredondamento silencioso da entrada. Saídas normalizam quantidade para 3 casas e dinheiro para 2.
 
@@ -52,11 +52,11 @@ Cada faixa possui teto inclusivo e cadeia completa. Tetos finitos são estritame
 
 Exemplo de configuração:
 
-| Intervalo derivado | Teto persistido | Cadeia |
-|---|---|---|
-| De zero até R$ 10.000,00 | 10000.00 | Amanda |
-| Acima de R$ 10.000,00 até R$ 50.000,00 | 50000.00 | Amanda → João |
-| Acima de R$ 50.000,00 | null | João → Carla |
+| Intervalo derivado                     | Teto persistido | Cadeia        |
+| -------------------------------------- | --------------- | ------------- |
+| De zero até R$ 10.000,00               | 10000.00        | Amanda        |
+| Acima de R$ 10.000,00 até R$ 50.000,00 | 50000.00        | Amanda → João |
+| Acima de R$ 50.000,00                  | null            | João → Carla  |
 
 Escolher a primeira faixa cujo teto seja >= total ou a faixa final sem teto. Não acumular aprovadores de outras faixas. Sem faixa, responder NO_APPLICABLE_RULE e não criar qualquer parte do pedido.
 
@@ -68,12 +68,12 @@ Edição ocorre em rascunho local e um único PUT substitui a configuração com
 
 Na criação, copiar os aprovadores ordenados para etapas próprias, guardar a versão da configuração e o teto da faixa selecionada. Pedido inicia PENDING, version=1 e currentStepPosition=1. Não existe rascunho persistido, edição de pedido enviado, reabertura ou cancelamento separado nesta entrega.
 
-| Estado atual | Comando válido | Resultado |
-|---|---|---|
-| PENDING, etapa intermediária | APPROVE pelo aprovador atual | Registrar decisão, avançar posição; continuar PENDING |
-| PENDING, última etapa | APPROVE pelo aprovador atual | Registrar decisão; APPROVED; posição atual null |
-| PENDING | REJECT pelo aprovador atual, com motivo | Registrar decisão; REJECTED; posição atual null |
-| APPROVED ou REJECTED | Qualquer decisão | ORDER_CLOSED; sem alteração |
+| Estado atual                 | Comando válido                          | Resultado                                             |
+| ---------------------------- | --------------------------------------- | ----------------------------------------------------- |
+| PENDING, etapa intermediária | APPROVE pelo aprovador atual            | Registrar decisão, avançar posição; continuar PENDING |
+| PENDING, última etapa        | APPROVE pelo aprovador atual            | Registrar decisão; APPROVED; posição atual null       |
+| PENDING                      | REJECT pelo aprovador atual, com motivo | Registrar decisão; REJECTED; posição atual null       |
+| APPROVED ou REJECTED         | Qualquer decisão                        | ORDER_CLOSED; sem alteração                           |
 
 Etapas derivadas: APPROVED, REJECTED, CURRENT, UPCOMING e SKIPPED. Após rejeição, etapas posteriores são SKIPPED e não recebem decisões fictícias. O histórico contém somente decisões realmente tomadas. A versão do pedido aumenta em um a cada decisão efetiva.
 
@@ -109,18 +109,18 @@ GET de regras, lista de pedidos (incluindo contagem) e detalhes devem observar u
 
 ## Modelo inicial
 
-| Entidade | Campos relevantes / relações |
-|---|---|
-| Project | id, name, rulesVersion (inicia 0), createdAt |
-| User | id, name, createdAt |
-| Supplier | id, name, createdAt |
-| ApprovalBand | id, projectId, position, upperLimit nullable |
-| BandApprover | bandId, userId, position |
-| PurchaseOrder | id, projectId, supplierId, requesterId, orderDate, notes, total, status, version, currentStepPosition, rulesVersion, selectedUpperLimit, createdAt |
-| OrderItem | id, orderId, position, description, quantity, unit, unitPrice, lineTotal |
-| OrderStep | id, orderId, userId, approverNameSnapshot, position |
-| Decision | id, stepId, actorId, outcome, reason nullable, decidedAt |
-| OrderIdempotency | requesterId, key, requestHash, contractVersion, orderId, originalResponse, createdAt |
+| Entidade         | Campos relevantes / relações                                                                                                                       |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Project          | id, name, rulesVersion (inicia 0), createdAt                                                                                                       |
+| User             | id, name, createdAt                                                                                                                                |
+| Supplier         | id, name, createdAt                                                                                                                                |
+| ApprovalBand     | id, projectId, position, upperLimit nullable                                                                                                       |
+| BandApprover     | bandId, userId, position                                                                                                                           |
+| PurchaseOrder    | id, projectId, supplierId, requesterId, orderDate, notes, total, status, version, currentStepPosition, rulesVersion, selectedUpperLimit, createdAt |
+| OrderItem        | id, orderId, position, description, quantity, unit, unitPrice, lineTotal                                                                           |
+| OrderStep        | id, orderId, userId, approverNameSnapshot, position                                                                                                |
+| Decision         | id, stepId, actorId, outcome, reason nullable, decidedAt                                                                                           |
+| OrderIdempotency | requesterId, key, requestHash, contractVersion, orderId, originalResponse, createdAt                                                               |
 
 Não depender do ID de faixa removível para explicar pedido antigo. Guardar rulesVersion, teto e cadeia própria. Nome do aprovador é copiado para manter leitura histórica; IDs mantêm vínculo. Cadastro não expõe atualização de nomes nesta versão.
 
@@ -130,20 +130,20 @@ Tipos iniciais: quantity NUMERIC(10,3); unitPrice NUMERIC(9,2); totais e tetos N
 
 ## Cenários de aceite F00
 
-| Cenário | Resultado contratual |
-|---|---|
-| Total 10000.00 | Primeira faixa; Amanda |
-| Total 10000.01 | Segunda faixa; Amanda → João |
-| Total 50000.00 | Segunda faixa |
-| Total 50000.01 | Faixa ilimitada, se existir; senão NO_APPLICABLE_RULE |
-| Total zero com item válido | Primeira faixa disponível |
-| Dois itens 0.005 × 1.00 | Total 0.02 |
-| Usuário João tenta decidir antes de Amanda | NOT_CURRENT_APPROVER; sem gravação |
-| Rejeição com espaços no motivo | VALIDATION_ERROR |
-| Regra muda depois da criação | Pedido mantém versão/cadeia antigas |
-| Duas decisões sobre version=1 | Um sucesso; um ORDER_VERSION_CONFLICT |
-| Dois PUTs com mesma rulesVersion | Um sucesso; um RULES_VERSION_CONFLICT |
-| Mesmo pedido/chave repetido | Um pedido; 201 inicial e 200 no replay |
-| Mesma chave e conteúdo diferente | IDEMPOTENCY_KEY_REUSED |
+| Cenário                                    | Resultado contratual                                  |
+| ------------------------------------------ | ----------------------------------------------------- |
+| Total 10000.00                             | Primeira faixa; Amanda                                |
+| Total 10000.01                             | Segunda faixa; Amanda → João                          |
+| Total 50000.00                             | Segunda faixa                                         |
+| Total 50000.01                             | Faixa ilimitada, se existir; senão NO_APPLICABLE_RULE |
+| Total zero com item válido                 | Primeira faixa disponível                             |
+| Dois itens 0.005 × 1.00                    | Total 0.02                                            |
+| Usuário João tenta decidir antes de Amanda | NOT_CURRENT_APPROVER; sem gravação                    |
+| Rejeição com espaços no motivo             | VALIDATION_ERROR                                      |
+| Regra muda depois da criação               | Pedido mantém versão/cadeia antigas                   |
+| Duas decisões sobre version=1              | Um sucesso; um ORDER_VERSION_CONFLICT                 |
+| Dois PUTs com mesma rulesVersion           | Um sucesso; um RULES_VERSION_CONFLICT                 |
+| Mesmo pedido/chave repetido                | Um pedido; 201 inicial e 200 no replay                |
+| Mesma chave e conteúdo diferente           | IDEMPOTENCY_KEY_REUSED                                |
 
 Estes são cenários especificados; testes executáveis serão implementados nas features correspondentes.

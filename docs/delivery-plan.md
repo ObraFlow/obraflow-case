@@ -17,20 +17,22 @@ Prazo do enunciado: 01/11/2026 às 23:59, sem fuso explicitado. Para organizaç�
 
 ## Backlog e branches
 
-Todas as branches partem da main atualizada depois de suas dependências. O responsável é um papel, não a afirmação de que existe um agente ativo. F00–F08 são obrigatórias; F09 é condicional.
+As branches partem da integração local `feat/obraflow-delivery`, após suas dependências. main mantém a base do desafio. O responsável é um papel, não a afirmação de que existe um agente ativo. F00–F08 são obrigatórias; os diferenciais selecionados de F09 foram integrados após o fluxo central, antes da revisão final F07/F08.
 
-| ID | Feature / resultado demonstrável | Branch proposta | Depende de | Responsável principal |
-|---|---|---|---|---|
-| F00 | Contratos de negócio, fluxo das telas, erros e modelo inicial revisados | `docs/product-contracts` | — | Produto + arquitetura |
-| F01 | Aplicação e banco iniciam; migrations, seed mínimo e CI funcionam | `chore/foundation` | F00 | Integração |
-| F02 | Cadastros básicos via API e estrutura visual navegável | `feat/registry-shell` | F01 | Implementação |
-| F03 | Configurar, consultar, editar e remover regras por obra | `feat/approval-rules` | F02 | Implementação |
-| F04 | Cadastrar pedido com N itens e cadeia persistida | `feat/purchase-orders` | F03 | Implementação |
-| F05 | Consultar lista, detalhes, etapas e histórico dos pedidos | `feat/order-tracking` | F04 | Implementação |
-| F06 | Aprovar/rejeitar em sequência com proteção contra concorrência | `feat/approval-decisions` | F05 | Implementação + revisão técnica |
-| F07 | Jornada inteira robusta a falhas e usável em dispositivos diferentes | `fix/quality-accessibility` | F06 | QA + interface |
-| F08 | Instalação limpa, documentação, screenshots e demonstração prontas | `docs/delivery-docs` | F07 | Integração + produto |
-| F09 | Melhorias de operação selecionadas e testadas | `feat/product-enhancements` | F08 | Produto + implementação |
+Entrega implementada em 20/10/2026. Os critérios abaixo permanecem como contrato; os resultados e limites das verificações estão em [Verificação](./verification.md). A tabela registra as branches usadas, não uma lista de novas tarefas pendentes.
+
+| ID  | Feature / resultado demonstrável                                        | Branch utilizada            | Depende de | Responsável principal           |
+| --- | ----------------------------------------------------------------------- | --------------------------- | ---------- | ------------------------------- |
+| F00 | Contratos de negócio, fluxo das telas, erros e modelo inicial revisados | `docs/product-contracts`    | —          | Produto + arquitetura           |
+| F01 | Aplicação e banco iniciam; migrations, seed mínimo e CI funcionam       | `chore/foundation`          | F00        | Integração                      |
+| F02 | Cadastros básicos via API e estrutura visual navegável                  | `feat/registry-shell`       | F01        | Implementação                   |
+| F03 | Configurar, consultar, editar e remover regras por obra                 | `feat/approval-rules`       | F02        | Implementação                   |
+| F04 | Cadastrar pedido com N itens e cadeia persistida                        | `feat/purchase-orders`      | F03        | Implementação                   |
+| F05 | Consultar lista, detalhes, etapas e histórico dos pedidos               | `feat/order-tracking`       | F04        | Implementação                   |
+| F06 | Aprovar/rejeitar em sequência com proteção contra concorrência          | `feat/approval-decisions`   | F05        | Implementação + revisão técnica |
+| F07 | Jornada inteira robusta a falhas e usável em dispositivos diferentes    | `fix/quality-accessibility` | F06        | QA + interface                  |
+| F08 | Instalação limpa, documentação, screenshots e demonstração prontas      | `docs/delivery-docs`        | F07        | Integração + produto            |
+| F09 | Melhorias de operação selecionadas e testadas                           | `feat/product-enhancements` | F06        | Produto + implementação         |
 
 Os critérios de qualidade se aplicam desde a primeira feature. F07 é a verificação integrada, não o início dos testes ou dos estados de erro. Documentação também cresce em cada PR; F08 confirma a experiência de entrega.
 
@@ -124,23 +126,23 @@ Implementação preparada em 20/10/2026, com execução descrita em [Desenvolvim
 
 ## Diferenciais ordenados por valor
 
-| Diferencial | Valor para o usuário | Condição para entrar |
-|---|---|---|
-| Linha do tempo clara e motivo de bloqueio | Reduz dúvida sobre quem precisa agir | Parte da implementação obrigatória bem acabada |
-| Prévia da cadeia antes do cadastro | Evita surpresa ao solicitar compra | Incluída no desenho de F04, usando regras retornadas pelo servidor; criação revalida |
-| Filtro “aguardando minha decisão” e busca por identificador | Ajuda o aprovador a encontrar trabalho acionável | F08 concluída e testes preservados |
-| Resumo de quantidade e valor pendente | Dá contexto operacional | Métricas com definição clara e dados consistentes |
+| Diferencial                                                 | Valor para o usuário                             | Condição para entrar                                                                 |
+| ----------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| Linha do tempo clara e motivo de bloqueio                   | Reduz dúvida sobre quem precisa agir             | Parte da implementação obrigatória bem acabada                                       |
+| Prévia da cadeia antes do cadastro                          | Evita surpresa ao solicitar compra               | Incluída no desenho de F04, usando regras retornadas pelo servidor; criação revalida |
+| Filtro “aguardando minha decisão” e busca por identificador | Ajuda o aprovador a encontrar trabalho acionável | F08 concluída e testes preservados                                                   |
+| Resumo de quantidade e valor pendente                       | Dá contexto operacional                          | Métricas com definição clara e dados consistentes                                    |
 
 Não adicionar nesta entrega: microserviços, mensageria, event sourcing, multiempresa, aplicativo móvel, integração ERP real ou notificações externas. Essas capacidades exigiriam novos requisitos e validação de valor.
 
 ## Estratégia de testes
 
-| Nível | Cobertura prioritária | Ferramenta / ambiente |
-|---|---|---|
-| Unidade | Seleção de faixa, cálculos, arredondamento e transições | Vitest; domínio sem infraestrutura |
-| Integração | Transações, constraints, versões, concorrência e API | Vitest + PostgreSQL dedicado de testes |
-| Jornada | Configurar regra → criar pedido → aprovar; rejeitar; corrigir erro | Playwright com seed controlado |
-| Manual | Responsividade, teclado, clareza, falhas e instalação | Checklist e screenshots |
+| Nível      | Cobertura prioritária                                              | Ferramenta / ambiente                  |
+| ---------- | ------------------------------------------------------------------ | -------------------------------------- |
+| Unidade    | Seleção de faixa, cálculos, arredondamento e transições            | Vitest; domínio sem infraestrutura     |
+| Integração | Transações, constraints, versões, concorrência e API               | Vitest + PostgreSQL dedicado de testes |
+| Jornada    | Configurar regra → criar pedido → aprovar; rejeitar; corrigir erro | Playwright com seed controlado         |
+| Manual     | Responsividade, teclado, clareza, falhas e instalação              | Checklist e screenshots                |
 
 Casos obrigatórios: total zero com itens válidos; limite exato; um centavo acima; quantidade fracionária; preço zero; quantidade zero inválida; nenhuma regra; cadeia vazia; motivo em branco; usuário incorreto; etapa futura; pedido encerrado; edição de regra com pedido pendente; duas decisões simultâneas; falha que deve desfazer toda a transação.
 
@@ -158,15 +160,15 @@ Não perseguir percentual arbitrário de cobertura. Proteger invariantes e jorna
 
 ## Cronograma sugerido
 
-| Período (2026) | Objetivo |
-|---|---|
-| 20–21/10 | F00 e F01: contratos, telas e ambiente |
-| 22–23/10 | F02 e F03: cadastros, navegação e regras |
-| 24–25/10 | F04 e F05: pedido e acompanhamento |
-| 26–27/10 | F06: decisões e integridade |
-| 28–29/10 | F07: revisão integrada e correções |
-| 30/10 | F08: instalação limpa, documentação e demo |
-| 31/10 | Reserva para correções; F09 apenas se houver folga |
-| 01/11 | Conferência final e entrega antes do limite |
+| Período (2026) | Objetivo                                           |
+| -------------- | -------------------------------------------------- |
+| 20–21/10       | F00 e F01: contratos, telas e ambiente             |
+| 22–23/10       | F02 e F03: cadastros, navegação e regras           |
+| 24–25/10       | F04 e F05: pedido e acompanhamento                 |
+| 26–27/10       | F06: decisões e integridade                        |
+| 28–29/10       | F07: revisão integrada e correções                 |
+| 30/10          | F08: instalação limpa, documentação e demo         |
+| 31/10          | Reserva para correções; F09 apenas se houver folga |
+| 01/11          | Conferência final e entrega antes do limite        |
 
 O cronograma depende da disponibilidade real. Ao atrasar, cortar F09 primeiro e simplificar apresentações opcionais, preservando regras, estados e integridade.

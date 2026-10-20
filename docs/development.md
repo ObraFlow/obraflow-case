@@ -80,7 +80,16 @@ Remove-Item Env:TEST_DATABASE_URL
 
 O runner aplica migrations no banco de teste antes de chamar Vitest; os testes preparam os dados de demonstração necessários. Não executar `db:migrate` ou `db:seed` no banco de desenvolvimento para preparar os testes. O guard do runner de integração não protege comandos operacionais executados separadamente.
 
-O CI usa PostgreSQL 17 efêmero com nome `obraflow_test`, configura `TEST_DATABASE_URL` separada de `DATABASE_URL`, instala pelo lockfile e executa geração do client, lint, tipos, testes unitários, integração e build. Migrations e preparação de dados de teste passam pelo runner de integração. A fundação ainda não possui E2E de negócio; eles entram nas features que implementarem os fluxos.
+O CI usa PostgreSQL 17 efêmero com nome `obraflow_test`, configura `TEST_DATABASE_URL` separada de `DATABASE_URL`, instala pelo lockfile e executa geração do client, lint, tipos, testes unitários, integração, build e jornadas no Chromium. Migrations e preparação de dados de teste passam pelos runners protegidos.
+
+Para jornadas completas:
+
+```sh
+npx playwright install chromium
+npm run test:e2e
+```
+
+O runner valida a URL antes de escrever, aplica migrations, executa o seed, gera build e inicia servidor temporário na porta 3100. O Playwright não reutiliza um servidor arbitrário já iniciado nessa porta. Não executar E2E e integração simultaneamente no mesmo banco. Screenshots de documentação são geradas em docs/screenshots; traces e falhas ficam em test-results.
 
 ## Saúde e diagnóstico
 
@@ -98,7 +107,7 @@ O Docker Engine precisa estar ativo. Não confundir validação estática do Com
 - Seed usa uma transação e lock advisory por execução. Obras já existentes não recebem suas regras iniciais novamente, mesmo se sua configuração tiver sido esvaziada. Alterações de nomes e regras permanecem intactas.
 - O guard de integração compara host, porta e banco, normaliza loopbacks e ignora diferença de usuário/schema; aliases de DNS arbitrários não são resolvidos. Nunca configurar um alias remoto para o mesmo banco de desenvolvimento.
 
-As regras completas dos pedidos, identidade de demonstração e E2E de negócio entram nas features seguintes. O healthcheck é operacional e não substitui essas validações.
+As regras completas dos pedidos e o seletor de identidade de demonstração estão implementados. O healthcheck é operacional e não substitui a verificação desses fluxos.
 
 ## Verificação local da F01 — 20/10/2026
 

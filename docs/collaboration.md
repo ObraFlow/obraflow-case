@@ -2,23 +2,23 @@
 
 ## Responsabilidades
 
-| Papel | Responsabilidade | Entregável |
-|---|---|---|
-| Produto / negócio | Resolver ambiguidades, priorizar e validar a experiência | Critérios, fluxos e exemplos de negócio |
-| Arquitetura / integração | Manter contratos e coerência; integrar mudanças | Decisões, schema e plano de integração |
-| Implementação | Entregar uma feature completa dentro do contrato | UI + API + domínio + persistência + testes |
-| Revisão técnica / QA | Procurar violações, falhas e problemas de uso | Achados com evidência e regressões verificadas |
+| Papel                    | Responsabilidade                                         | Entregável                                     |
+| ------------------------ | -------------------------------------------------------- | ---------------------------------------------- |
+| Produto / negócio        | Resolver ambiguidades, priorizar e validar a experiência | Critérios, fluxos e exemplos de negócio        |
+| Arquitetura / integração | Manter contratos e coerência; integrar mudanças          | Decisões, schema e plano de integração         |
+| Implementação            | Entregar uma feature completa dentro do contrato         | UI + API + domínio + persistência + testes     |
+| Revisão técnica / QA     | Procurar violações, falhas e problemas de uso            | Achados com evidência e regressões verificadas |
 
 São papéis que podem ser desempenhados pela mesma pessoa em momentos distintos. Agentes auxiliam; a responsabilidade pelas decisões e pela entrega continua com o autor do projeto.
 
 ## Política de branches e PRs
 
-- main deve permanecer executável. Branch curta com prefixo conforme o tipo de trabalho: `feat/`, `fix/`, `chore/`, `docs/`, `test/` ou `refactor/`, seguido de um nome descritivo em kebab-case.
+- A integração local deve permanecer executável. Branch curta com prefixo conforme o tipo de trabalho: `feat/`, `fix/`, `chore/`, `docs/`, `test/` ou `refactor/`, seguido de um nome descritivo em kebab-case.
 - Branches de feature seguem a tabela do plano; nenhuma branch permanente por agente, frontend, backend ou ambiente.
-- Partir da main após integrar dependências. Evitar uma cadeia longa de PRs empilhados.
+- Partir da branch de integração após incorporar dependências. Evitar uma cadeia longa de PRs empilhados.
 - Uma feature grande pode ter subentregas verticais; descrever explicitamente o comportamento suportado em cada PR.
 - Fazer commits pequenos e coerentes, por exemplo `feat(approvals): enforce current approver` ou `test(orders): cover fractional quantities`.
-- Antes de integrar, atualizar com main, resolver conflitos e executar os checks pertinentes.
+- Antes de integrar, atualizar com a branch de integração, resolver conflitos e executar os checks pertinentes.
 - Definir a estratégia de integração antes de combinar as branches; não reescrever branch compartilhada sem coordenação.
 - Mudanças de negócio, schema, dependências e configuração compartilhada precisam de revisão do integrador.
 - PR deve informar problema, resultado, critérios atendidos, testes executados, screenshots de UI e limitações reais.
@@ -32,13 +32,13 @@ Uma composição útil é: integrador conduz o fluxo; um agente implementa a fea
 
 ### Ondas de trabalho
 
-| Momento | Trabalho que pode ocorrer em paralelo | Ponto de sincronização |
-|---|---|---|
-| F00 | Revisão de produto, riscos técnicos e rascunhos de telas | Contratos e decisões aceitos |
-| F01 | Ambiente/CI e especificação de testes sem editar arquivos comuns | Aplicação mínima executável |
-| F03–F06 | Uma feature em implementação; revisão independente; cenários da próxima feature | PR integrado e contratos atualizados |
-| F07 | Auditoria de teclado/responsividade e revisão de integridade | Correções atribuídas a um dono por arquivo |
-| F08 | Documentação, roteiro de demonstração e instalação limpa | Checklist completo |
+| Momento | Trabalho que pode ocorrer em paralelo                                           | Ponto de sincronização                     |
+| ------- | ------------------------------------------------------------------------------- | ------------------------------------------ |
+| F00     | Revisão de produto, riscos técnicos e rascunhos de telas                        | Contratos e decisões aceitos               |
+| F01     | Ambiente/CI e especificação de testes sem editar arquivos comuns                | Aplicação mínima executável                |
+| F03–F06 | Uma feature em implementação; revisão independente; cenários da próxima feature | PR integrado e contratos atualizados       |
+| F07     | Auditoria de teclado/responsividade e revisão de integridade                    | Correções atribuídas a um dono por arquivo |
+| F08     | Documentação, roteiro de demonstração e instalação limpa                        | Checklist completo                         |
 
 Não dividir regras e pedidos em implementações simultâneas antes de estabilizar o contrato da alçada. Não deixar dois agentes alterarem schema.prisma, lockfile, configuração raiz ou seed ao mesmo tempo.
 
@@ -77,12 +77,12 @@ Skill é um procedimento reutilizável; agente é um executor de uma tarefa. Uma
 
 As skills personalizadas abaixo são propostas para uma etapa posterior. Não foram criadas, instaladas ou registradas por este plano. Se forem implementadas, usar a skill disponível `skill-creator`, seguindo seu SKILL.md e as instruções locais.
 
-| Skill proposta | Quando usar | Saída esperada |
-|---|---|---|
-| `obraflow-feature` | Iniciar uma feature do backlog | Contrato de tarefa, decisões afetadas, implementação e evidência |
+| Skill proposta           | Quando usar                         | Saída esperada                                                      |
+| ------------------------ | ----------------------------------- | ------------------------------------------------------------------- |
+| `obraflow-feature`       | Iniciar uma feature do backlog      | Contrato de tarefa, decisões afetadas, implementação e evidência    |
 | `obraflow-domain-review` | Alterar alçadas, totais ou decisões | Revisão de invariantes, limites, transações e cenários de regressão |
-| `obraflow-ui-review` | Criar ou revisar telas | Checklist de estados, hierarquia, acessibilidade e responsividade |
-| `obraflow-delivery` | Preparar um marco ou entrega final | Instalação limpa, checks, documentação e roteiro demonstrável |
+| `obraflow-ui-review`     | Criar ou revisar telas              | Checklist de estados, hierarquia, acessibilidade e responsividade   |
+| `obraflow-delivery`      | Preparar um marco ou entrega final  | Instalação limpa, checks, documentação e roteiro demonstrável       |
 
 Não criar uma skill por tabela ou componente. Começar com os procedimentos escritos neste plano; empacotar quando houver repetição útil, mantendo referências para os contratos em vez de duplicá-los.
 
@@ -96,15 +96,15 @@ Não adicionar Figma, Sites, geração de imagens ou outros serviços apenas par
 
 ## Boas práticas que precisam virar evidência
 
-| Dimensão | Prática | Evidência na entrega |
-|---|---|---|
-| Negócio | Invariantes e ambiguidades resolvidas | Decisões + testes de fronteira |
-| Produto | Cada ação explica estado e próximo responsável | Fluxos e screenshots com dados reais |
-| Manutenção | Módulos e domínio independentes da interface | Testes de domínio sem runtime web |
-| Integridade | Transações, constraints e controle de versão | Testes de rollback e concorrência |
-| Escala | Paginação, consultas e índices adequados | Consultas revisadas e cenário com volume |
-| Operação | Configuração reproduzível e diagnóstico | Compose, logs sem dados sensíveis e instalação limpa |
-| Qualidade | Verificação automática e revisão humana | CI e checklist registrado |
+| Dimensão    | Prática                                        | Evidência na entrega                                 |
+| ----------- | ---------------------------------------------- | ---------------------------------------------------- |
+| Negócio     | Invariantes e ambiguidades resolvidas          | Decisões + testes de fronteira                       |
+| Produto     | Cada ação explica estado e próximo responsável | Fluxos e screenshots com dados reais                 |
+| Manutenção  | Módulos e domínio independentes da interface   | Testes de domínio sem runtime web                    |
+| Integridade | Transações, constraints e controle de versão   | Testes de rollback e concorrência                    |
+| Escala      | Paginação, consultas e índices adequados       | Consultas revisadas e cenário com volume             |
+| Operação    | Configuração reproduzível e diagnóstico        | Compose, logs sem dados sensíveis e instalação limpa |
+| Qualidade   | Verificação automática e revisão humana        | CI e checklist registrado                            |
 
 ## Roteiro da demonstração
 

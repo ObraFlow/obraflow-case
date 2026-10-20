@@ -1,20 +1,22 @@
-![Banner do desafio ObraFlow](assets/banner.png)
+# ObraFlow · Dokimos
 
-## Execução da implementação — F01
+Pedidos de compra com aprovação sequencial por obra e valor. O solicitante acompanha cada etapa; o aprovador encontra o que precisa decidir; as regras mudam sem reescrever a história dos pedidos existentes.
 
-A fundação contém Next.js, TypeScript, Tailwind, PostgreSQL, Prisma, migration inicial, seed e CI. As telas e APIs de negócio serão implementadas nas próximas features; o enunciado original está preservado abaixo.
+Implementação do [desafio original](docs/challenge.md), preservado integralmente. Stack: Next.js, React, TypeScript, Tailwind, PostgreSQL e Prisma. Execução local sem serviços pagos ou credenciais externas.
 
-Com Docker Engine ativo e Docker Compose instalado:
+## Iniciar
+
+Com Docker Engine ativo e Docker Compose instalado, na raiz do projeto:
 
 ```sh
 docker compose up --build --wait
 ```
 
-Aplicação: [localhost:3000](http://localhost:3000). Prontidão do banco/schema: [GET /api/health](http://localhost:3000/api/health), com 200 quando disponível e 503 em falha, sem credenciais na resposta.
+Abrir [localhost:3000](http://localhost:3000). O Compose aguarda o banco, aplica migrations, executa o seed e inicia a aplicação. Portas 3000 e 5432 publicadas apenas no loopback.
 
-O Compose prepara banco, aplica migrations e executa o seed antes de iniciar a aplicação. O seed cria duas obras, três usuários, dois fornecedores e três faixas de alçada, preservando dados já existentes. Pedidos de demonstração entram nas próximas features. Não há serviços pagos nem credenciais externas.
+O seed repetível cria duas obras, três usuários, dois fornecedores, três faixas e quatro pedidos em estados diferentes. Não reseta configurações nem decisões existentes. Credenciais locais: usuário `obraflow`, senha `obraflow_local`, banco `obraflow`. `docker compose down` para os serviços sem apagar o volume.
 
-Para desenvolvimento com Node.js 24.11+ (linha 24) e npm 11, copie `.env.example` para `.env` e execute:
+Para desenvolvimento no host: Node.js 24.11+ da linha 24 e npm 11. Copiar `.env.example` para `.env` e executar:
 
 ```sh
 npm ci
@@ -25,201 +27,92 @@ npm run db:seed
 npm run dev
 ```
 
-Checks locais:
+## Experimentar
+
+1. Em **Aprovações**, explore pedidos e históricos.
+2. Como **Lucas**, crie um pedido na Obra Centro com um ou mais itens.
+3. Até R$ 10.000,00, Amanda é a única aprovadora. Acima disso, Amanda decide antes de João.
+4. Troque para Amanda e aprove; depois para João para concluir uma cadeia de duas pessoas.
+5. Rejeite outro pedido com motivo e confira o encerramento.
+6. Edite uma regra e compare um pedido antigo com um novo: a cadeia antiga permanece.
+
+Na Obra Norte, até R$ 5.000,00 basta João; valores acima não têm cobertura e o cadastro é bloqueado. Preço zero é permitido. O total usa todos os itens, arredondados individualmente.
+
+O seletor de usuário demonstra a autorização por etapa. **Não é autenticação segura.** Cadastros básicos podem ser criados pela API, sem telas administrativas adicionais.
+
+## Telas
+
+![Pedidos e alçadas](docs/screenshots/orders.png)
+
+| Novo pedido                                           | Regras por obra                                  |
+| ----------------------------------------------------- | ------------------------------------------------ |
+| ![Cadastro com itens](docs/screenshots/new-order.png) | ![Editor de alçadas](docs/screenshots/rules.png) |
+
+[Detalhes e histórico](docs/screenshots/order-detail.png) · [Versão móvel](docs/screenshots/mobile.png)
+
+## Testar
 
 ```sh
 npm run check
+```
+
+Executa geração do client, lint, tipos, testes unitários e build. Integração e navegador usam banco separado terminado em `_test`; o runner recusa o banco de desenvolvimento antes de migrations.
+
+Criar o banco de testes uma vez, caso ainda não exista:
+
+```sh
+docker compose exec -T db createdb -U obraflow obraflow_test
+```
+
+Confirmar `TEST_DATABASE_URL` em `.env`, conforme `.env.example`:
+
+```sh
 npm run test:integration
+npx playwright install chromium
+npm run test:e2e
 ```
 
-Integração exige banco dedicado `obraflow_test` e `TEST_DATABASE_URL`, com proteção contra o banco de desenvolvimento. Veja criação do banco, operação, versões e detalhes em [Desenvolvimento](docs/development.md). Contratos e organização estão no [índice de documentação](docs/README.md).
+E2E prepara dados, gera o build e inicia servidor temporário na porta 3100. Não executar integração e E2E simultaneamente no mesmo banco. Diagnósticos de falha em `test-results/`. CI repete os checks em PostgreSQL efêmero; execução remota depende do envio ao repositório.
 
----
+## API
 
-# Desafio Full-stack — ObraFlow
+Header obrigatório: `X-Demo-User-Id`. Lucas no seed: `66666666-6666-4666-8666-666666666666`.
 
-Bem-vindo(a) ao nosso processo seletivo! Estamos buscando alguém com curiosidade técnica, autonomia e, acima de tudo, **visão de produto e criatividade** para transformar problemas reais em soluções.
-## Contexto
+| Método     | Rota                                                           | Uso                                    |
+| ---------- | -------------------------------------------------------------- | -------------------------------------- |
+| GET / POST | `/api/projects`, `/api/users`, `/api/suppliers`                | Listar/cadastrar referências           |
+| GET        | `/api/projects/{id}`, `/api/users/{id}`, `/api/suppliers/{id}` | Consulta individual                    |
+| GET / PUT  | `/api/projects/{id}/approval-rules`                            | Ler/substituir configuração com versão |
+| GET / POST | `/api/orders`                                                  | Listar/cadastrar pedidos               |
+| GET        | `/api/orders/{id}`                                             | Itens, etapas, permissões e histórico  |
+| POST       | `/api/orders/{id}/decisions`                                   | Aprovar/rejeitar etapa atual           |
+| GET        | `/api/health`                                                  | Prontidão operacional, sem header demo |
 
-O **ObraFlow** é uma plataforma para empresas do setor de construção civil, concebida como parte de um [ERP (*Enterprise Resource Planning*)](https://pt.wikipedia.org/wiki/Sistema_integrado_de_gest%C3%A3o_empresarial).
+Exemplo PowerShell:
 
-O **Dokimos** é o serviço de aprovações do ObraFlow. Ele gerencia **alçadas de aprovação**: regras que definem quem pode autorizar uma decisão e em qual ordem, de acordo com o contexto do pedido — neste caso, a obra e o valor da compra.
-
-A gestão de alçadas é necessária para que a empresa mantenha controle financeiro e operacional. Compras de menor impacto podem ser decididas rapidamente por responsáveis próximos à obra; compras de maior valor exigem revisão adicional de pessoas com maior responsabilidade. Isso reduz o risco de gastos indevidos, evita que uma única pessoa aprove decisões além de sua responsabilidade e cria uma trilha auditável de quem aprovou ou rejeitou cada pedido.
-
-Também é importante que essas regras sejam configuráveis por obra: projetos diferentes podem ter orçamentos, portes e responsáveis distintos. Assim, o sistema deve identificar a regra aplicável no momento da criação do pedido, formar a cadeia de aprovadores e só avançar para a próxima pessoa depois da aprovação anterior. Em caso de rejeição, o fluxo é interrompido e o motivo fica registrado no histórico.
-
-Em produção, uma regra simples seria:
-
-```text
-Obra 1 — valor até R$ 10.000,00
--> Aprovadores: João
-Obra 1 — valor acima de R$ 10.000 
--> Aprovadores: Amanda
+```powershell
+$headers = @{ 'X-Demo-User-Id' = '66666666-6666-4666-8666-666666666666' }
+Invoke-RestMethod 'http://localhost:3000/api/orders?page=1&pageSize=20' -Headers $headers
 ```
 
-*   Se um pedido na Obra 1 custar **R$ 8.000,00**, basta o clique da João para ser aprovado.
-*   Se custar **R$ 12.500,00**, João precisa aprovar primeiro. Só depois da aprovação dela é que o pedido fica liberado para o Amanda decidir. Se a João (ou o Amanda) rejeitar, o pedido é cancelado na hora e precisa ter um motivo registrado.
+POST de pedido também exige `Idempotency-Key` UUID. Mesma chave, solicitante e conteúdo não criam outro pedido. Dinheiro e quantidades são strings decimais. [Payloads, paginação e erros](docs/api-contract.md).
 
-Neste desafio você vai construir a **versão simplificada** desse fluxo: as telas de um sistema de pedidos de compra com aprovação por alçada.
+## Decisões técnicas
 
----
+- **Monólito modular:** rotas tratam HTTP; serviços coordenam transações; domínio calcula e valida. Módulos de cadastros, regras e pedidos mantêm responsabilidades claras sem infraestrutura distribuída.
+- **PostgreSQL + Prisma:** migrations, FKs, posições únicas, decisão única por etapa, CHECKs e índice parcial para uma faixa sem teto. O SQL complementar precisa ser preservado nas migrations futuras.
+- **Faixas completas:** escolher o menor teto inclusivo compatível, ou faixa final ilimitada. Sem cobertura, não há pedido. Cada faixa define toda a cadeia, resolvendo a ambiguidade do enunciado.
+- **Histórico:** pedido guarda versão, teto e etapas próprias com nomes copiados. Editar/remover regras não altera pedidos existentes; decisões não são editáveis pela API.
+- **Integridade:** configuração e criação bloqueiam a mesma obra. Decisão usa versão/estado condicionais e histórico na mesma transação. Leituras compostas usam snapshot consistente. Testes exercitam concorrência real.
+- **Dinheiro:** Decimal no servidor e inteiros de precisão fixa na prévia. HALF_UP por item, seguido da soma. Totais são recalculados no backend.
+- **Comunicação:** HTTP JSON com erros por campo, retry de leitura e atualização após mutações. Cadastro incerto mantém corpo, ator e chave. Decisões conflitantes exigem nova leitura.
+- **UI:** componentes locais e formulários controlados por React, com Tailwind/CSS e Zod no servidor. O escopo não exigiu design system externo, gerenciador global de estado ou biblioteca adicional de formulários.
+- **Manutenção/escala:** paginação, filtros no servidor, índices, pool limitado, transações curtas e dependências fixadas. Busca por prefixo de UUID é uma conveniência; maior volume exigiria avaliar índice/plano específico.
 
-# Backend e persistência
+Em produção: autenticação e papéis reais, isolamento por empresa se exigido, backups com restauração testada, métricas, gestão de conexões/segredos, migrations compatíveis com deploy e retenção de idempotência/histórico. Notificações exigiriam jobs/outbox; não há necessidade demonstrada de microserviços. Auditoria da aplicação não protege contra administradores do banco.
 
-Você deve projetar e implementar a [API](https://pt.wikipedia.org/wiki/Interface_de_programa%C3%A7%C3%A3o_de_aplica%C3%A7%C3%B5es) (ou outro mecanismo de comunicação entre front-end e servidor) e a persistência necessários para suportar o desafio. O contrato, as rotas e o formato dos dados são livres, desde que atendam aos comportamentos abaixo:
+## Organização
 
-* cadastrar e listar obras, usuários, fornecedores, pedidos e regras de alçada;
-* criar pedidos com cabeçalho e **N itens**; calcular e persistir seus totais;
-* determinar a cadeia de aprovadores conforme a obra e o valor total do pedido;
-* registrar aprovações e rejeições, incluindo o motivo obrigatório de rejeição;
-* impedir decisões fora da ordem da alçada e preservar o histórico;
-* criar, editar, remover e consultar níveis e aprovadores das regras por obra;
-* garantir a consistência das leituras e escritas dos dados.
+[Plano](docs/delivery-plan.md) · [Decisões](docs/decisions.md) · [Negócio/modelo](docs/domain-contract.md) · [Fluxos](docs/product-flows.md) · [Agentes](docs/collaboration.md) · [Operação](docs/development.md)
 
-Inclua dados de demonstração suficientes para avaliar o fluxo: ao menos 2 obras, usuários, regras e pedidos em diferentes estados.
-
-Documente no `README.md` como iniciar a aplicação, popular os dados (quando aplicável) e consumir a API. Se optar por expor uma API HTTP, documente também os principais endpoints e payloads.
-
----
-
-# Tecnologias
-
-A stack é **livre**. Escolha as tecnologias de front-end, back-end, banco de dados, ORM, biblioteca de estilos, testes e infraestrutura que considerar mais adequadas.
-
-A única exigência é que a aplicação possa ser executada localmente conforme as instruções do seu `README.md`, sem depender de serviços pagos ou de credenciais externas.
-
-Testes são desejáveis, mas não obrigatórios.
-
----
-
-# O que você vai construir
-
-Três telas. O layout é livre — **não entregamos Figma, API ou implementação de referência**. O desenho das telas e as decisões de produto são parte da avaliação.
-
-## 1. Cadastro de pedido de compra
-
-Um pedido de compra representa uma solicitação ao fornecedor e deve conter **um ou mais itens**. A alçada é determinada pelo **valor total do pedido**, e não pelo valor isolado de um item.
-
-
-### Dados gerais
-
-| Campo | Obrigatório | Comportamento esperado |
-|---|---:|---|
-| Obra | Sim | Lista as obras disponíveis para o pedido. |
-| Fornecedor | Sim | Identifica o fornecedor do pedido. |
-| Data do pedido | Sim | Data de emissão do pedido. |
-| Observações internas | Não | Campo livre para justificar ou complementar a solicitação. |
-
-Não é **obrigatório** criar uma tela de cadastro de fornecedor, obra ou usuário — se quiser, considere que esses dados já existem no sistema. A tela deve apenas permitir selecionar a obra e o fornecedor do pedido.
-
-### Itens do pedido
-
-A tela começa com um item em branco e deve permitir **adicionar, editar e remover N itens** antes do envio. Cada item deve ter, no mínimo:
-
-| Campo | Obrigatório | Comportamento esperado |
-|---|---:|---|
-| Descrição | Sim | Descreve claramente o material ou serviço. |
-| Quantidade | Sim | Número positivo; pode aceitar decimais. |
-| Unidade | Sim | Por exemplo: `un`, `kg`, `m`, `m²` ou `h`. |
-| Preço unitário | Sim | Valor monetário não negativo. |
-| Total do item | Calculado | `quantidade × preço unitário`; não deve ser editável diretamente. |
-
-O candidato pode definir a experiência de uso mais adequada — por exemplo, uma tabela expansível, um formulário por item ou um drawer — desde que a inclusão de vários itens permaneça clara.
-
-### Totalização e envio
-
-A interface deve exibir o **total do pedido**, calculado pela soma dos totais dos itens. Esse é o valor usado para selecionar a regra de alçada.
-
-O botão **Cadastrar pedido** só deve ficar disponível quando os dados gerais e todos os itens forem válidos. Ao criar o pedido, o back-end deve persistir cabeçalho, itens, total calculado e cadeia inicial de aprovação.
-## 2. Aprovação
-
-A tela deve listar pedidos e permitir abrir os detalhes de cada um. A lista pode ser em tabela, cartões ou outra composição clara, mas deve apresentar pelo menos:
-
-| Informação por pedido | Descrição |
-|---|---|
-| Identificador, obra e fornecedor | Contexto rápido do pedido. |
-| Data, quantidade de itens e valor total | Resumo financeiro e operacional. |
-| Situação | Pendente, aprovado ou rejeitado. |
-| Alçada atual | Aprovadores concluídos, aprovador atual e próximas etapas. |
-| Ações | Aprovar ou rejeitar quando houver uma decisão disponível. |
-
-Nos detalhes, apresente os itens — descrição, quantidade, unidade, preço unitário e total — além do histórico de decisões. A lista de pedidos **pendentes** deve refletir o nível atual da alçada, calculado e persistido pelo back-end. A rejeição exige motivo, interrompe o fluxo e fica registrada no histórico. Quando toda a cadeia for concluída, as ações de decisão devem estar desabilitadas com uma explicação.
-
-## 3. Regras da alçada
-
-A tela deve permitir selecionar uma obra e configurar as faixas de valor que definem a cadeia de aprovação. Uma representação mínima pode ser uma tabela como esta:
-
-| Faixa de valor | Aprovadores, na ordem do fluxo | Ações |
-|---|---|---|
-| Até R$ 10.000,00 | Amanda | Editar / remover |
-| Acima de R$ 10.000,00 | Amanda → João | Editar / remover |
-
-A interface deve listar usuários disponíveis e permitir:
-
-* criar, editar e remover níveis/faixas de alçada;
-* definir o limite de valor de cada faixa;
-* adicionar, remover e reordenar aprovadores em cada faixa;
-* listar as regras já salvas para a obra selecionada.
-
-O comportamento para valores sem regra aplicável deve ser definido e documentado pelo candidato — por exemplo, impedir o envio do pedido com uma mensagem clara.
-
----
-
-# Validações e erros (exigidos)
-
-| Situação | Comportamento esperado |
-|---|---|
-| Quantidade ou preço unitário inválido, negativo ou não numérico | erro no item correspondente, mensagem compreensível, não envia |
-| Pedido sem itens | erro claro; não envia |
-| Campos obrigatórios vazios (obra, fornecedor, data ou descrição de item) | erro no campo correspondente; não envia |
-| Nenhuma obra cadastrada | empty state amigável, não tela branca |
-| API fora do ar / 500 | estado de erro com opção de tentar novamente |
-| Rejeitar sem motivo | validação antes do submit |
-| Cadeia de alçada já concluída | botão de decisão desabilitado + explicação |
-
-Loading state é obrigatório em toda lista.
-
----
-
-# 📦 Como entregar (Prazo: 01/11/2026 às 23:59)
-O repositório deve conter instruções claras para instalar dependências, configurar o ambiente e iniciar a solução completa (front-end, back-end e banco de dados, quando aplicável). O método de execução é livre; `docker compose` é aceito, mas não obrigatório.
-
-Repositório deve conter:
-
-* código-fonte do front-e˝nd e do back-end;
-* dados de demonstração e instruções para criá-los ou carregá-los;
-* `README.md` com explicando:
-  * screenshots das telas;
-  * as tecnologias escolhidas e os motivos da escolha;
-  * como a regra de alçada é modelada, calculada e persistida;
-  * como o front-end se comunica com o back-end;
-  * como a consistência e a integridade dos dados são garantidas;
-  * o que mudaria em produção;
-1. Faça um **Fork** deste repositório (`https://github.com/ObraFlow/obraflow-case`).
-2. Abra um **Pull Request (PR)** para este repositório até **01/11/2026 às 23:59**.
-3. **Importante:** Na descrição do seu Pull Request, deixe seu **e-mail e telefone (WhatsApp)** para contato!
-
----
-
-# Avaliação
-
-| Critério | Peso |
-|---|---:|
-| Funcionamento completo: front-end, back-end e persistência | 25% |
-| Modelagem e implementação das regras de alçada | 20% |
-| Qualidade de código, organização e decisões técnicas | 15% |
-| **Desenho de UI: hierarquia, clareza, consistência** | 20% |
-| Estados (loading / empty / erro), responsividade e validações | 10% |
-| Documentação (`## Decisões técnicas`) | 10% |
-
-IA é permitida — mas você precisará explicar cada decisão na entrevista de 30 min.
-
----
-
-## Contato
-
-
-**Jonathan Bispo**  
-WhatsApp: [+55 71 99204-4335](https://wa.me/5571992044335)  
-E-mail: [contrato@obraflow.io](mailto:contrato@obraflow.io)
+Features são registradas em commits e merges locais na branch de entrega. Consulte `git log --graph --oneline --decorate`.

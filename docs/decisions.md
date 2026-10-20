@@ -79,14 +79,22 @@ Evolução condicionada a evidência: métricas e planos de consulta antes de ca
 
 ## Fechamento das decisões de F00
 
-| Questão | Decisão | Impacto |
-|---|---|---|
-| Precisão e limites máximos | Quantidade 3 casas, máximo 1 milhão; preço 2 casas, máximo 1 milhão; total máximo 100 milhões | Schema, formulários e cálculo |
-| Pedido repetido após falha de rede | Idempotency-Key obrigatória por solicitante; replay da resposta original | Contrato HTTP e persistência |
-| Limites de payload e itens | 256 KiB e 1–100 itens; textos limitados no contrato | Segurança, UX e desempenho |
-| Configuração editada simultaneamente | Versão por obra, lock compartilhado com criação e conflito explícito | Integridade das regras |
-| Exclusão de faixa intermediária | Intervalo derivado se expande na seguinte; prévia e confirmação antes de salvar | Comportamento do editor |
-| Edição do pedido | Sem edição após envio na primeira entrega | Imutabilidade de valores e cadeia |
-| Campos mínimos de cadastros | Nome de 1–120 caracteres; ID e createdAt gerados no servidor | Evitar requisitos inventados |
+| Questão                              | Decisão                                                                                       | Impacto                           |
+| ------------------------------------ | --------------------------------------------------------------------------------------------- | --------------------------------- |
+| Precisão e limites máximos           | Quantidade 3 casas, máximo 1 milhão; preço 2 casas, máximo 1 milhão; total máximo 100 milhões | Schema, formulários e cálculo     |
+| Pedido repetido após falha de rede   | Idempotency-Key obrigatória por solicitante; replay da resposta original                      | Contrato HTTP e persistência      |
+| Limites de payload e itens           | 256 KiB e 1–100 itens; textos limitados no contrato                                           | Segurança, UX e desempenho        |
+| Configuração editada simultaneamente | Versão por obra, lock compartilhado com criação e conflito explícito                          | Integridade das regras            |
+| Exclusão de faixa intermediária      | Intervalo derivado se expande na seguinte; prévia e confirmação antes de salvar               | Comportamento do editor           |
+| Edição do pedido                     | Sem edição após envio na primeira entrega                                                     | Imutabilidade de valores e cadeia |
+| Campos mínimos de cadastros          | Nome de 1–120 caracteres; ID e createdAt gerados no servidor                                  | Evitar requisitos inventados      |
 
 Antes de F01, verificar compatibilidade das versões concretas das dependências e o ambiente disponível. São escolhas de execução, sem alterar estes contratos. Os testes da implementação deverão comprovar as decisões aqui registradas.
+
+## D10 — Interface e verificação da entrega
+
+Na implementação, usar componentes locais e formulários controlados com React, em vez de adicionar React Hook Form/shadcn antecipadamente. O escopo tem três fluxos e a necessidade principal é controlar erros, rascunho e submissão incerta. Zod continua responsável pelos contratos no servidor; cálculo visual usa BigInt com teste de equivalência ao domínio Decimal. Custo: a validação visual e o foco precisam ser mantidos explicitamente, protegidos pelas jornadas no navegador.
+
+Tailwind/CSS compõem o visual sem depender de fontes ou recursos remotos. Webpack foi escolhido para build/dev após falha do processo CSS do Turbopack no Windows, mantendo o mesmo caminho no Docker. Playwright usa Chromium e servidor isolado na porta 3100, com PostgreSQL de testes e proteção contra o banco de demonstração.
+
+Seed de pedidos é um gerador de fixtures, sem simular requisições HTTP. Usa a validação e o cálculo do domínio; cria cenários completos, com itens, etapas e decisões, em uma transação. Uma falha no terceiro cenário reverte os cenários ausentes anteriores. IDs reservados permitem repetição sem desfazer intervenções do avaliador. A configuração já existente da obra não é substituída pelo seed.
