@@ -15,7 +15,11 @@ function run(script: string, arguments_: string[], environment: NodeJS.ProcessEn
 try {
   // O guard é executado antes de migrations, conexão ou testes.
   const connectionString = getTestDatabaseUrl(process.env);
-  const environment = { ...process.env, DATABASE_URL: connectionString, TEST_DATABASE_GUARDED: "true" };
+  const environment = {
+    ...process.env,
+    DATABASE_URL: connectionString,
+    TEST_DATABASE_GUARDED: "true",
+  };
   run("node_modules/prisma/build/index.js", ["migrate", "deploy"], environment);
   run("node_modules/vitest/vitest.mjs", ["run", "--project", "integration"], environment);
 } catch (error) {

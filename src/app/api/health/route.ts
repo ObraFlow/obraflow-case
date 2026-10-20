@@ -13,10 +13,20 @@ export async function GET() {
     await getDatabase().project.findFirst({ select: { id: true } });
   });
   if (!result.ready && process.env.LOG_LEVEL !== "silent") {
-    console.error(JSON.stringify({ level: "error", event: "readiness_failed", requestId, durationMs: Date.now() - startedAt }));
+    console.error(
+      JSON.stringify({
+        level: "error",
+        event: "readiness_failed",
+        requestId,
+        durationMs: Date.now() - startedAt,
+      }),
+    );
   }
   return Response.json(
     { status: result.ready ? "ready" : "unavailable" },
-    { status: result.ready ? 200 : 503, headers: { "Cache-Control": "no-store", "X-Request-Id": requestId } },
+    {
+      status: result.ready ? 200 : 503,
+      headers: { "Cache-Control": "no-store", "X-Request-Id": requestId },
+    },
   );
 }

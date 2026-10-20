@@ -16,7 +16,9 @@ export function parseEnvironment(input: Record<string, string | undefined>) {
   const result = environmentSchema.safeParse(input);
   if (!result.success) {
     const fields = [...new Set(result.error.issues.map((issue) => issue.path.join(".")))];
-    throw new Error(`Configuração de ambiente inválida: ${fields.join(", ")}. Consulte .env.example.`);
+    throw new Error(
+      `Configuração de ambiente inválida: ${fields.join(", ")}. Consulte .env.example.`,
+    );
   }
   return result.data;
 }
