@@ -64,17 +64,17 @@ A cadeia será confirmada ao cadastrar o pedido.
 
 ### Estados
 
-| Situação | Apresentação e recuperação |
-|---|---|
-| Carregando dados de seleção | Placeholder ou indicador com rótulo; não apresentar seletor vazio como resultado final |
-| Nenhuma obra ou fornecedor | Estado vazio explicativo; cadastro indisponível; informar que os dados precisam ser cadastrados, sem link para uma tela inexistente |
-| Carregando regras da obra | “Consultando alçada”; preservar itens e bloquear cadastro até concluir |
-| Falha ao carregar dados/regras | Mensagem próxima da seção e **Tentar novamente**, preservando preenchimento |
-| Entrada inválida | Erro no campo/item; mensagem clara; não enviar |
-| Enviando | “Cadastrando…”; impedir novo envio e mudanças nos campos durante a requisição |
-| Servidor rejeita a criação | Preservar formulário, mostrar erro e atualizar a prévia quando pertinente; nunca mostrar sucesso antes da resposta |
-| Resposta de envio perdida | Explicar que a confirmação não chegou; permitir tentar novamente com a mesma chave de idempotência e conteúdo. Replay não cria outro pedido; após resposta, consultar o detalhe atual |
-| Sucesso | Abrir detalhe confirmado pelo servidor; feedback anunciado por tecnologia assistiva |
+| Situação                       | Apresentação e recuperação                                                                                                                                                            |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Carregando dados de seleção    | Placeholder ou indicador com rótulo; não apresentar seletor vazio como resultado final                                                                                                |
+| Nenhuma obra ou fornecedor     | Estado vazio explicativo; cadastro indisponível; informar que os dados precisam ser cadastrados, sem link para uma tela inexistente                                                   |
+| Carregando regras da obra      | “Consultando alçada”; preservar itens e bloquear cadastro até concluir                                                                                                                |
+| Falha ao carregar dados/regras | Mensagem próxima da seção e **Tentar novamente**, preservando preenchimento                                                                                                           |
+| Entrada inválida               | Erro no campo/item; mensagem clara; não enviar                                                                                                                                        |
+| Enviando                       | “Cadastrando…”; impedir novo envio e mudanças nos campos durante a requisição                                                                                                         |
+| Servidor rejeita a criação     | Preservar formulário, mostrar erro e atualizar a prévia quando pertinente; nunca mostrar sucesso antes da resposta                                                                    |
+| Resposta de envio perdida      | Explicar que a confirmação não chegou; permitir tentar novamente com a mesma chave de idempotência e conteúdo. Replay não cria outro pedido; após resposta, consultar o detalhe atual |
+| Sucesso                        | Abrir detalhe confirmado pelo servidor; feedback anunciado por tecnologia assistiva                                                                                                   |
 
 Cancelar um formulário modificado exige confirmação de descarte. Falha de rede não deve limpar itens e observações.
 
@@ -137,19 +137,19 @@ Sua decisão: Amanda
 
 ### Estados
 
-| Situação | Apresentação e recuperação |
-|---|---|
+| Situação                    | Apresentação e recuperação                                                                        |
+| --------------------------- | ------------------------------------------------------------------------------------------------- |
 | Carregando lista ou detalhe | Skeleton com estrutura correspondente e texto acessível; não exibir “Nenhum pedido” durante carga |
-| Sem pedidos | Explicar a lista e oferecer **Novo pedido** |
-| Sem tarefas do usuário | “Nenhum pedido aguarda sua decisão”; permitir acessar todos |
-| Sem resultado dos filtros | Explicar e oferecer **Limpar filtros** |
-| Falha de leitura | Mensagem e **Tentar novamente**; preservar filtros |
-| Pedido inexistente | “Pedido não encontrado” e link para lista |
-| Sem histórico | “Nenhuma decisão registrada”; cadeia inicial continua visível |
-| Enviando decisão | Indicador na confirmação; bloquear novas ações concorrentes nessa interface |
-| Rejeição sem motivo | Erro junto ao campo; manter confirmação aberta |
-| Falha de decisão | Preservar motivo, mostrar mensagem e permitir consultar novamente antes de repetir |
-| Sucesso | Anunciar decisão e mostrar estado confirmado; se saiu da fila pessoal, explicar a mudança |
+| Sem pedidos                 | Explicar a lista e oferecer **Novo pedido**                                                       |
+| Sem tarefas do usuário      | “Nenhum pedido aguarda sua decisão”; permitir acessar todos                                       |
+| Sem resultado dos filtros   | Explicar e oferecer **Limpar filtros**                                                            |
+| Falha de leitura            | Mensagem e **Tentar novamente**; preservar filtros                                                |
+| Pedido inexistente          | “Pedido não encontrado” e link para lista                                                         |
+| Sem histórico               | “Nenhuma decisão registrada”; cadeia inicial continua visível                                     |
+| Enviando decisão            | Indicador na confirmação; bloquear novas ações concorrentes nessa interface                       |
+| Rejeição sem motivo         | Erro junto ao campo; manter confirmação aberta                                                    |
+| Falha de decisão            | Preservar motivo, mostrar mensagem e permitir consultar novamente antes de repetir                |
+| Sucesso                     | Anunciar decisão e mostrar estado confirmado; se saiu da fila pessoal, explicar a mudança         |
 
 ## 3. Regras de alçada
 
@@ -194,19 +194,19 @@ Alterações não salvas                         [Descartar] [Salvar regras]
 
 ### Estados
 
-| Situação | Apresentação e recuperação |
-|---|---|
-| Sem obra selecionada | Orientar selecionar uma obra |
-| Carregando regras | Indicador da seção, sem mostrar rascunho de outra obra |
-| Nenhuma obra | Estado vazio amigável; editor indisponível |
-| Obra sem regras | “Nenhuma alçada configurada”; **Adicionar faixa** e explicação do bloqueio de novos pedidos |
-| Nenhum usuário | Explicar que aprovadores precisam existir; salvar faixas incompletas indisponível |
-| Falha de leitura | Mensagem e **Tentar novamente**; não trocar configuração por lista vazia |
-| Rascunho inválido | Erro no teto ou cadeia correspondente; preservar conteúdo |
-| Salvando | “Salvando…”; impedir mudanças e novos envios até a resposta |
-| Falha ao salvar | Preservar rascunho; não exibir sucesso nem mudar a versão |
-| Conflito de versão | Explicar edição concorrente e oferecer recarregar mediante descarte explícito |
-| Sucesso | “Regras salvas”; exibir versão confirmada e intervalos vigentes |
+| Situação             | Apresentação e recuperação                                                                  |
+| -------------------- | ------------------------------------------------------------------------------------------- |
+| Sem obra selecionada | Orientar selecionar uma obra                                                                |
+| Carregando regras    | Indicador da seção, sem mostrar rascunho de outra obra                                      |
+| Nenhuma obra         | Estado vazio amigável; editor indisponível                                                  |
+| Obra sem regras      | “Nenhuma alçada configurada”; **Adicionar faixa** e explicação do bloqueio de novos pedidos |
+| Nenhum usuário       | Explicar que aprovadores precisam existir; salvar faixas incompletas indisponível           |
+| Falha de leitura     | Mensagem e **Tentar novamente**; não trocar configuração por lista vazia                    |
+| Rascunho inválido    | Erro no teto ou cadeia correspondente; preservar conteúdo                                   |
+| Salvando             | “Salvando…”; impedir mudanças e novos envios até a resposta                                 |
+| Falha ao salvar      | Preservar rascunho; não exibir sucesso nem mudar a versão                                   |
+| Conflito de versão   | Explicar edição concorrente e oferecer recarregar mediante descarte explícito               |
+| Sucesso              | “Regras salvas”; exibir versão confirmada e intervalos vigentes                             |
 
 ## Acessibilidade e responsividade
 
@@ -231,14 +231,14 @@ Alterações não salvas                         [Descartar] [Salvar regras]
 
 Esta tabela orienta o fluxo visual; os detalhes dos payloads pertencem ao contrato da API.
 
-| Interação | Comunicação |
-|---|---|
-| Lista | `GET /api/orders`, com filtros e paginação definidos no contrato; fila pessoal é extensão condicional F09 |
-| Criar pedido | `POST /api/orders` |
-| Abrir/atualizar detalhe | `GET /api/orders/:id` |
-| Aprovar/rejeitar | `POST /api/orders/:id/decisions`, com versão esperada |
-| Carregar regras e prévia do cadastro | `GET /api/projects/:id/approval-rules` |
-| Salvar configuração completa | `PUT /api/projects/:id/approval-rules`, com versão esperada |
+| Interação                            | Comunicação                                                                                               |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| Lista                                | `GET /api/orders`, com filtros e paginação definidos no contrato; fila pessoal é extensão condicional F09 |
+| Criar pedido                         | `POST /api/orders`                                                                                        |
+| Abrir/atualizar detalhe              | `GET /api/orders/:id`                                                                                     |
+| Aprovar/rejeitar                     | `POST /api/orders/:id/decisions`, com versão esperada                                                     |
+| Carregar regras e prévia do cadastro | `GET /api/projects/:id/approval-rules`                                                                    |
+| Salvar configuração completa         | `PUT /api/projects/:id/approval-rules`, com versão esperada                                               |
 
 As listas de obras, fornecedores e usuários usam os endpoints de cadastros definidos no contrato. A interface não exige endpoint separado de prévia nem presume que a cadeia vista no navegador substitua a decisão do servidor.
 
@@ -246,20 +246,20 @@ As listas de obras, fornecedores e usuários usam os endpoints de cadastros defi
 
 Configuração de referência: **Obra Centro**, até R$ 10.000,00 → Amanda; acima de R$ 10.000,00 → Amanda → João. **Obra Norte**, até R$ 5.000,00 → João, sem faixa ilimitada. Esses nomes são dados propostos para a demonstração.
 
-| Cenário | Passos | Resultado observável |
-|---|---|---|
-| Limite inclusivo | Criar na Obra Centro item de R$ 10.000,00 | Prévia e cadeia persistida contêm somente Amanda |
-| Um centavo acima | Criar na Obra Centro R$ 10.000,01 | Cadeia Amanda → João; João ainda não pode decidir |
-| Compra com vários itens | Dois itens de R$ 6.250,00 | Total R$ 12.500,00; alçada usa soma e exige duas etapas |
-| Aprovação completa | Amanda aprova R$ 12.500,00; trocar para João e aprovar | Após Amanda permanece pendente; após João fica aprovado com duas decisões |
-| Rejeição | Amanda abre rejeição, tenta motivo vazio e depois informa motivo | Vazio impede envio; rejeição válida encerra, registra motivo e impede João |
-| Sem cobertura | Tentar R$ 5.000,01 na Obra Norte | Explicação junto ao resumo; cadastro indisponível |
-| Arredondamento | Dois itens com quantidade 0,125 e preço R$ 0,04 | Cada total R$ 0,01; total R$ 0,02, igual ao servidor |
-| Snapshot | Criar pedido; depois alterar a cadeia da faixa e salvar | Pedido existente mantém cadeia; novo pedido recebe configuração nova |
-| Rascunho de regras | Remover faixa inferior sem salvar; inspecionar prévia; descartar | Explica intervalo ampliado; regra vigente permanece inalterada |
-| Concorrência de regras | Duas sessões carregam mesma versão; cada uma tenta salvar | Primeira salva; segunda vê conflito com rascunho preservado e sem sobrescrita |
-| Concorrência de decisão | Duas sessões abrem mesma etapa; uma aprova e outra tenta rejeitar | Só uma decisão efetiva; a outra recebe atualização de estado |
-| Recuperação | Simular falha ao carregar lista e falha ao salvar formulário | Tentar novamente disponível; dados preenchidos preservados |
-| Telas vazias | Revisar obra sem regras, lista filtrada vazia e fila pessoal vazia | Mensagens distintas com próximo passo apropriado |
+| Cenário                 | Passos                                                             | Resultado observável                                                          |
+| ----------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| Limite inclusivo        | Criar na Obra Centro item de R$ 10.000,00                          | Prévia e cadeia persistida contêm somente Amanda                              |
+| Um centavo acima        | Criar na Obra Centro R$ 10.000,01                                  | Cadeia Amanda → João; João ainda não pode decidir                             |
+| Compra com vários itens | Dois itens de R$ 6.250,00                                          | Total R$ 12.500,00; alçada usa soma e exige duas etapas                       |
+| Aprovação completa      | Amanda aprova R$ 12.500,00; trocar para João e aprovar             | Após Amanda permanece pendente; após João fica aprovado com duas decisões     |
+| Rejeição                | Amanda abre rejeição, tenta motivo vazio e depois informa motivo   | Vazio impede envio; rejeição válida encerra, registra motivo e impede João    |
+| Sem cobertura           | Tentar R$ 5.000,01 na Obra Norte                                   | Explicação junto ao resumo; cadastro indisponível                             |
+| Arredondamento          | Dois itens com quantidade 0,125 e preço R$ 0,04                    | Cada total R$ 0,01; total R$ 0,02, igual ao servidor                          |
+| Snapshot                | Criar pedido; depois alterar a cadeia da faixa e salvar            | Pedido existente mantém cadeia; novo pedido recebe configuração nova          |
+| Rascunho de regras      | Remover faixa inferior sem salvar; inspecionar prévia; descartar   | Explica intervalo ampliado; regra vigente permanece inalterada                |
+| Concorrência de regras  | Duas sessões carregam mesma versão; cada uma tenta salvar          | Primeira salva; segunda vê conflito com rascunho preservado e sem sobrescrita |
+| Concorrência de decisão | Duas sessões abrem mesma etapa; uma aprova e outra tenta rejeitar  | Só uma decisão efetiva; a outra recebe atualização de estado                  |
+| Recuperação             | Simular falha ao carregar lista e falha ao salvar formulário       | Tentar novamente disponível; dados preenchidos preservados                    |
+| Telas vazias            | Revisar obra sem regras, lista filtrada vazia e fila pessoal vazia | Mensagens distintas com próximo passo apropriado                              |
 
 Este roteiro é uma especificação para revisão e futura validação; sua presença não significa execução de testes nem implementação concluída.
