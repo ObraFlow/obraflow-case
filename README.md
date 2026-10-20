@@ -1,5 +1,41 @@
 ![Banner do desafio ObraFlow](assets/banner.png)
 
+## Execução da implementação — F01
+
+A fundação contém Next.js, TypeScript, Tailwind, PostgreSQL, Prisma, migration inicial, seed e CI. As telas e APIs de negócio serão implementadas nas próximas features; o enunciado original está preservado abaixo.
+
+Com Docker Engine ativo e Docker Compose instalado:
+
+```sh
+docker compose up --build --wait
+```
+
+Aplicação: [localhost:3000](http://localhost:3000). Prontidão do banco/schema: [GET /api/health](http://localhost:3000/api/health), com 200 quando disponível e 503 em falha, sem credenciais na resposta.
+
+O Compose prepara banco, aplica migrations e executa o seed antes de iniciar a aplicação. O seed cria duas obras, três usuários, dois fornecedores e três faixas de alçada, preservando dados já existentes. Pedidos de demonstração entram nas próximas features. Não há serviços pagos nem credenciais externas.
+
+Para desenvolvimento com Node.js 24.11+ (linha 24) e npm 11, copie `.env.example` para `.env` e execute:
+
+```sh
+npm ci
+docker compose up -d db
+npm run db:generate
+npm run db:migrate
+npm run db:seed
+npm run dev
+```
+
+Checks locais:
+
+```sh
+npm run check
+npm run test:integration
+```
+
+Integração exige banco dedicado `obraflow_test` e `TEST_DATABASE_URL`, com proteção contra o banco de desenvolvimento. Veja criação do banco, operação, versões e detalhes em [Desenvolvimento](docs/development.md). Contratos e organização estão no [índice de documentação](docs/README.md).
+
+---
+
 # Desafio Full-stack — ObraFlow
 
 Bem-vindo(a) ao nosso processo seletivo! Estamos buscando alguém com curiosidade técnica, autonomia e, acima de tudo, **visão de produto e criatividade** para transformar problemas reais em soluções.

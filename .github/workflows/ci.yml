@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: postgresql://obraflow:obraflow_local@localhost:5432/obraflow?schema=public
+      TEST_DATABASE_URL: postgresql://obraflow:obraflow_local@localhost:5432/obraflow_test?schema=public
+      NEXT_TELEMETRY_DISABLED: "1"
+      LOG_LEVEL: error
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: obraflow
+          POSTGRES_PASSWORD: obraflow_local
+          POSTGRES_DB: obraflow_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U obraflow -d obraflow_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm run test
+      - name: Integration tests
+        run: npm run test:integration
+      - name: Production build
+        run: npm run build
