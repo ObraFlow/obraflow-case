@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# material de apoio local (nao vai para o repositorio)
+/docs/
+/DESAFIO.md
