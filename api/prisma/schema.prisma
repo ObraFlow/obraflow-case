@@ -1,7 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// Prisma schema for the ObraFlow approvals case.
+// Docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client"
@@ -10,4 +8,186 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Base entities
+// ---------------------------------------------------------------------------
+
+model ConstructionSite {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  approvalTiers  ApprovalTier[]
+  purchaseOrders PurchaseOrder[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  role      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tierApprovals       ApprovalTierApprover[]
+  approvalSteps       ApprovalStep[]
+  requestedOrders     PurchaseOrder[]
+  purchaseOrderEvents PurchaseOrderEvent[]
+}
+
+model Supplier {
+  id        String   @id @default(uuid())
+  name      String
+  taxId     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  purchaseOrders PurchaseOrder[]
+}
+
+// ---------------------------------------------------------------------------
+// Approval rules (configured per construction site)
+// ---------------------------------------------------------------------------
+
+/// A tier covers order totals above the previous tier's maxAmount and up to
+/// (and including) its own maxAmount. maxAmount = null means "no upper limit".
+/// Storing only the upper limit makes gaps and overlaps impossible.
+model ApprovalTier {
+  id        String   @id @default(uuid())
+  siteId    String
+  maxAmount Decimal? @db.Decimal(14, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  site      ConstructionSite       @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  approvers ApprovalTierApprover[]
+
+  // NULLS NOT DISTINCT
+  @@unique([siteId, maxAmount])
+}
+
+/// Ordered list of approvers for a tier. Position starts at 1.
+model ApprovalTierApprover {
+  tierId   String
+  userId   String
+  position Int
+
+  tier ApprovalTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@id([tierId, position])
+  @@unique([tierId, userId])
+}
+
+// ---------------------------------------------------------------------------
+// Purchase orders
+// ---------------------------------------------------------------------------
+
+enum PurchaseOrderStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model PurchaseOrder {
+  id          String              @id @default(uuid())
+  /// Human-readable identifier shown in the UI (e.g. PC-0042).
+  number      Int                 @unique @default(autoincrement())
+  siteId      String
+  supplierId  String
+  requesterId String
+  orderDate   DateTime            @db.Date
+  notes       String?
+  /// Sum of item totals, always calculated by the API.
+  total       Decimal             @db.Decimal(14, 2)
+  status      PurchaseOrderStatus @default(PENDING)
+  /// Position of the step waiting for a decision; null once the order is final.
+  currentStep Int?
+  /// Optimistic lock: every decision increments it, so concurrent decisions
+  /// on the same order cannot both succeed.
+  version     Int                 @default(0)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  site      ConstructionSite     @relation(fields: [siteId], references: [id], onDelete: Restrict)
+  supplier  Supplier             @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  requester User                 @relation(fields: [requesterId], references: [id], onDelete: Restrict)
+  items     PurchaseOrderItem[]
+  steps     ApprovalStep[]
+  events    PurchaseOrderEvent[]
+
+  @@index([status])
+  @@index([siteId])
+}
+
+model PurchaseOrderItem {
+  id          String  @id @default(uuid())
+  orderId     String
+  position    Int
+  description String
+  quantity    Decimal @db.Decimal(14, 3)
+  /// Free text validated by the API (un, kg, m, m², h...).
+  unit        String
+  unitPrice   Decimal @db.Decimal(14, 2)
+  /// quantity x unitPrice, rounded to cents by the API.
+  total       Decimal @db.Decimal(14, 2)
+
+  order PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, position])
+}
+
+enum ApprovalStepStatus {
+  WAITING // not this approver's turn yet
+  CURRENT // waiting for this approver's decision
+  APPROVED
+  REJECTED
+  CANCELLED // never reached because an earlier step rejected the order
+}
+
+/// Snapshot of the approval chain, copied from the matching tier when the
+/// order is created. Editing tiers later does not affect existing orders.
+model ApprovalStep {
+  id         String             @id @default(uuid())
+  orderId    String
+  position   Int
+  approverId String
+  status     ApprovalStepStatus @default(WAITING)
+  decidedAt  DateTime?
+  /// Required when status is REJECTED (enforced by a CHECK constraint).
+  reason     String?
+
+  order    PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  approver User          @relation(fields: [approverId], references: [id], onDelete: Restrict)
+
+  @@unique([orderId, position])
+  @@index([approverId, status])
+}
+
+enum PurchaseOrderEventType {
+  CREATED
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+/// Append-only audit trail. Rows are never updated or deleted by the API.
+model PurchaseOrderEvent {
+  id        String                 @id @default(uuid())
+  orderId   String
+  type      PurchaseOrderEventType
+  actorId   String?
+  reason    String?
+  /// Extra context, e.g. the tier limit and total used at creation.
+  metadata  Json?
+  createdAt DateTime               @default(now())
+
+  order PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  actor User?         @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([orderId, createdAt])
 }
