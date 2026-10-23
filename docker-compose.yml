@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: obraflow
+      POSTGRES_PASSWORD: obraflow
+      POSTGRES_DB: obraflow
+    ports:
+      - "5433:5432"
+    volumes:
+      - db_data:/var/lib/postgresql
+
+volumes:
+  db_data:
