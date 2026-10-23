@@ -66,6 +66,8 @@ Regra: UI nunca importa Prisma. Domain nunca importa Prisma. Services são o ún
 - Ao terminar uma feature, explique em 5–8 linhas como eu apresentaria isso na entrevista e aponte o que eu poderia não saber defender. Eu reescrevo e colo no README.
 - Não adicionar dependências sem justificar.
 - Não gerar código "mágico": prefira explícito e legível a abstrações.
+- **Nunca rodar `git commit`** (nem amend/merge/rebase). Eu commito tudo manualmente. Ao terminar, deixe os arquivos na árvore e sugira a mensagem de commit em um bloco `bash`.
+- **Nunca adicionar `Co-Authored-By`** nem qualquer atribuição a IA em commits ou PRs.
 - Atualize `README.md > ## Decisões técnicas` quando uma decisão nova for tomada.
 
 ## Checklist de validações exigidas (DESAFIO.md)
