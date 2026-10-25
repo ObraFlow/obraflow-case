@@ -4,6 +4,6 @@ import { ConstructionSitesService } from './construction-sites.service.js';
 
 @Module({
   controllers: [ConstructionSitesController],
-  providers: [ConstructionSitesService]
+  providers: [ConstructionSitesService],
 })
 export class ConstructionSitesModule {}

@@ -4,15 +4,15 @@ import { CreateConstructionSiteDto } from './dto/create-construction-site.dto.js
 
 @Controller('construction-sites')
 export class ConstructionSitesController {
-    constructor(private readonly service: ConstructionSitesService) { }
+  constructor(private readonly service: ConstructionSitesService) {}
 
-    @Get()
-    findAll() {
-        return this.service.findAll();
-    }
+  @Get()
+  findAll() {
+    return this.service.findAll();
+  }
 
-    @Post()
-    create(@Body() dto: CreateConstructionSiteDto) {
-        return this.service.create(dto);
-    }
+  @Post()
+  create(@Body() dto: CreateConstructionSiteDto) {
+    return this.service.create(dto);
+  }
 }
