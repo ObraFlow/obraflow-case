@@ -1,6 +1,6 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module.js';
 import { ValidationPipe } from '@nestjs/common';
+import { HttpAdapterHost, NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module.js';
 import { PrismaExceptionFilter } from './common/prisma-exception.filter.js';
 
 async function bootstrap() {
@@ -8,7 +8,10 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   app.enableShutdownHooks();
 
-  app.useGlobalFilters(new PrismaExceptionFilter()); // convert prisma exceptions to http 
+  // Convert Prisma exceptions to HTTP responses. The adapter lets unknown errors
+  // fall back to Nest's default handler.
+  const { httpAdapter } = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new PrismaExceptionFilter(httpAdapter));
 
   app.useGlobalPipes(
     new ValidationPipe({
