@@ -16,7 +16,10 @@ export class PrismaService
   }
 
   async onModuleInit() {
-    await this.$connect();
+    // With a driver adapter, $connect() does not open a connection (the pg pool
+    // connects lazily). A real query makes the app fail at startup when the
+    // database is unreachable, instead of on the first request.
+    await this.$queryRaw`SELECT 1`;
   }
 
   async onModuleDestroy() {
