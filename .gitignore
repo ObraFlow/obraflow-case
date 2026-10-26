@@ -48,5 +48,7 @@ next-env.d.ts
 !.env.example
 
 # skills instalados pelo `prisma init` (só apoio local)
-/.claude/skills/
+/.claude/skills/prisma-*/
+/.claude/settings.local.json
+/.claude/agent-memory-local/
 /skills-lock.json

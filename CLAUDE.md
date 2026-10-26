@@ -18,6 +18,7 @@ Prazo: 01/11/2026. Entrega via PR. Há entrevista de 30 min onde cada decisão s
 ```
 src/
   domain/alcada/      funções puras, sem Prisma: resolverRegra, montarCadeia, aplicarDecisao (+ testes)
+  server/prisma.ts    singleton do PrismaClient (adapter pg). Só services e o seed importam daqui.
   server/services/    Prisma + transações; chamam o domain. Única camada que toca o banco.
   server/actions/     server actions usadas pela UI; chamam services. Sempre validam com Zod.
   app/api/**/route.ts Route Handlers REST finos sobre os mesmos services (documentados no README).
@@ -68,6 +69,10 @@ Regra: UI nunca importa Prisma. Domain nunca importa Prisma. Services são o ún
 - Não gerar código "mágico": prefira explícito e legível a abstrações.
 - **Nunca rodar `git commit`** (nem amend/merge/rebase). Eu commito tudo manualmente. Ao terminar, deixe os arquivos na árvore e sugira a mensagem de commit em um bloco `bash`.
 - **Nunca adicionar `Co-Authored-By`** nem qualquer atribuição a IA em commits ou PRs.
+- Terminal do João é PowerShell 5.1: comandos sugeridos vão **um por bloco**, sem `&&`.
+- Antes de usar API do Next, leia o doc local indicado pela skill `next16`. Antes de criar tela, leia a skill `ui-obraflow` (ou use `/nova-tela`).
+- Ao terminar uma tela, rode o agente `critico-visual` na rota. Ao fechar uma fase, use `/fim-de-fase`.
+- Identidade visual (cores, tipos) ainda **não** está definida: até existir `design.md`, defaults neutros do shadcn, sem inventar.
 - Atualize `README.md > ## Decisões técnicas` quando uma decisão nova for tomada.
 
 ## Checklist de validações exigidas (DESAFIO.md)
