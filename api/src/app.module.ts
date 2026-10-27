@@ -4,6 +4,7 @@ import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { ApprovalTiersModule } from './approval-tiers/approval-tiers.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
+import { SessionModule } from './session/session.module.js';
 import { ConstructionSitesModule } from './construction-sites/construction-sites.module.js';
 import { SuppliersModule } from './suppliers/suppliers.module.js';
 import { UsersModule } from './users/users.module.js';
@@ -16,6 +17,7 @@ import { UsersModule } from './users/users.module.js';
     UsersModule,
     SuppliersModule,
     ApprovalTiersModule,
+    SessionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

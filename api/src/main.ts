@@ -1,5 +1,7 @@
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module.js';
 import { PrismaExceptionFilter } from './common/prisma-exception.filter.js';
 
@@ -21,7 +23,10 @@ async function bootstrap() {
     }),
   ); // validate all payloads
 
-  // TODO: test validations and filters
+  // Parses cookies and verifies the signature of the session cookie.
+  app.use(
+    cookieParser(app.get(ConfigService).getOrThrow<string>('COOKIE_SECRET')),
+  );
 
   await app.listen(process.env.PORT ?? 3000);
 }
