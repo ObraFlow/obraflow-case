@@ -10,6 +10,7 @@ import {
   Req,
   Res,
 } from '@nestjs/common';
+import { ApiNotFoundResponse, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateSessionDto } from './dto/create-session.dto.js';
@@ -27,12 +28,15 @@ const userSelect = { id: true, name: true, email: true, role: true };
  * production this would be a real login issuing the same kind of session.
  * All three routes are idempotent: repeating them leaves the same state.
  */
+@ApiTags('session')
 @Controller('session')
 export class SessionController {
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Logs in as the given user: sets the signed session cookie. */
   @Post()
   @HttpCode(HttpStatus.OK)
+  @ApiNotFoundResponse({ description: 'User not found.' })
   async create(
     @Body() dto: CreateSessionDto,
     @Res({ passthrough: true }) response: Response,
@@ -72,6 +76,7 @@ export class SessionController {
     return { user };
   }
 
+  /** Logs out: clears the session cookie. */
   @Delete()
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Res({ passthrough: true }) response: Response) {

@@ -9,8 +9,11 @@ export class CreateSupplierDto {
   @MaxLength(120)
   name: string;
 
-  // CNPJ stored as 14 digits only, so formatted and unformatted input match the
-  // same unique constraint. Formatting (00.000.000/0000-00) is the UI's job.
+  /**
+   * CNPJ, with or without punctuation. Stored as 14 digits only, so formatted
+   * and unformatted input match the same unique constraint.
+   * @example "11.222.333/0001-81"
+   */
   @Transform(digitsOnly)
   @IsString()
   @Length(14, 14, { message: 'taxId must have 14 digits (CNPJ)' })

@@ -13,13 +13,17 @@ import { MONEY_MESSAGE, MONEY_REGEX } from '../../common/money.js';
  * so adding, removing and reordering approvers is just sending the final list.
  */
 export class ApprovalTierDto {
-  // null means "no upper limit". A missing field is undefined, not null, so it
-  // still fails validation: the client must send null explicitly.
+  /**
+   * Upper limit of the tier (inclusive); null means "no upper limit".
+   * A missing field is undefined, not null, so it still fails validation:
+   * the client must send null explicitly.
+   * @example "10000.00"
+   */
   @ValidateIf((dto: ApprovalTierDto) => dto.maxAmount !== null)
   @Matches(MONEY_REGEX, { message: `maxAmount ${MONEY_MESSAGE} or null` })
   maxAmount: string | null;
 
-  // Order of the array is the order of the approval chain.
+  /** User ids in approval order: the first one decides first. */
   @IsArray()
   @ArrayMinSize(1, { message: 'A tier needs at least one approver' })
   @ArrayUnique({ message: 'An approver cannot appear twice in the same tier' })

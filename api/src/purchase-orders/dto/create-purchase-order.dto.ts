@@ -23,7 +23,10 @@ export class CreatePurchaseOrderDto {
   @IsUUID()
   supplierId: string;
 
-  /** Calendar date without time, e.g. "2026-10-26". */
+  /**
+   * Calendar date without time.
+   * @example "2026-10-26"
+   */
   @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'orderDate must be YYYY-MM-DD' })
   @IsISO8601({ strict: true }, { message: 'orderDate must be a valid date' })
   orderDate: string;

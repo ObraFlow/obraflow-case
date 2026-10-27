@@ -4,6 +4,7 @@ import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module.js';
 import { PrismaExceptionFilter } from './common/prisma-exception.filter.js';
+import { setupSwagger } from './swagger.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -27,6 +28,8 @@ async function bootstrap() {
   app.use(
     cookieParser(app.get(ConfigService).getOrThrow<string>('COOKIE_SECRET')),
   );
+
+  setupSwagger(app);
 
   await app.listen(process.env.PORT ?? 3000);
 }
