@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
-import type { OrderDetail, OrderListItem, OrderStatus, Page } from '@/types/api'
+import type { CreateOrderInput, OrderDetail, OrderListItem, OrderStatus, Page } from '@/types/api'
 
 export interface OrderFilters {
   status?: OrderStatus
@@ -23,6 +23,23 @@ export function useOrder(id: string) {
   return useQuery({
     queryKey: ['order', id],
     queryFn: () => api.get<OrderDetail>(`/purchase-orders/${id}`),
+  })
+}
+
+/**
+ * The Idempotency-Key is created once per form: if the request is repeated
+ * (double click, retry after a network error), the API returns the order
+ * created the first time instead of creating another one.
+ */
+export function useCreateOrder() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ input, idempotencyKey }: { input: CreateOrderInput; idempotencyKey: string }) =>
+      api.post<OrderDetail>('/purchase-orders', input, { 'Idempotency-Key': idempotencyKey }),
+    onSuccess: (order) => {
+      queryClient.setQueryData(['order', order.id], order)
+      void queryClient.invalidateQueries({ queryKey: ['orders'] })
+    },
   })
 }
 
