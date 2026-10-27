@@ -9,26 +9,54 @@ Prazo: 01/11/2026. Entrega via PR. Há entrevista de 30 min onde cada decisão s
 - Tailwind v4 + shadcn/ui
 - Prisma + PostgreSQL (docker compose local; Neon só no deploy — `DATABASE_URL` é a única diferença)
 - Zod (schemas compartilhados entre client e server)
-- react-hook-form + `useFieldArray` para os itens do pedido
+- react-hook-form + `useFieldArray` para os itens do pedido; ligado às actions por `@next-safe-action/adapter-react-hook-form` (`useHookFormAction`)
+- `next-safe-action` para toda server action (schema Zod, middleware do usuário atual, `handleServerError`)
+- `ky` **só** em `src/lib/api/` e só em client components, para leituras interativas via `/api`. O server nunca chama a própria API por HTTP. Sem axios.
 - Vitest apenas em `src/domain/`
 - Sem autenticação. Usuário atual é simulado por um seletor "Agindo como" no header, persistido em cookie.
 
 ## Arquitetura
 
+Arquitetura limpa mínima: **as dependências só apontam para dentro** (transportes → services → domain). Explicação completa, com fluxos e SOLID, em `docs/ARQUITETURA.md` (local).
+
 ```
 src/
-  domain/alcada/      funções puras, sem Prisma: resolverRegra, montarCadeia, aplicarDecisao (+ testes)
-  server/prisma.ts    singleton do PrismaClient (adapter pg). Só services e o seed importam daqui.
-  server/services/    Prisma + transações; chamam o domain. Única camada que toca o banco.
-  server/actions/     server actions usadas pela UI; chamam services. Sempre validam com Zod.
-  app/api/**/route.ts Route Handlers REST finos sobre os mesmos services (documentados no README).
-  app/(telas)/        páginas: pedidos/novo, aprovacoes, regras. loading.tsx + error.tsx em cada uma.
-  lib/schemas/        schemas Zod compartilhados
-  lib/money.ts        helpers de centavos ↔ BRL
+  domain/                 NÚCLEO. Zero imports de next/prisma/fs. Testado no Vitest.
+    alcada/               tipos, resolverRegra, montarCadeia, aplicarDecisao, validarFaixas (+ *.test.ts)
+    pedido/               calcularTotais (centavos)
+    erros.ts              ErroDominio + subclasses com `codigo` (SemFaixaAplicavel, FaixaSobreposta,
+                          DecisaoForaDeOrdem, ConflitoDeDecisao, NaoEncontrado)
+  lib/                    COMPARTILHADO client/server. Sem Prisma.
+    schemas/              Zod por caso de uso (CriarPedidoInput, DecisaoInput, SalvarFaixaInput...)
+    money.ts              centavos ↔ BRL
+    api/                  cliente ky (client.ts) + funções tipadas para client components lerem /api
+  server/                 SÓ SERVER.
+    prisma.ts             singleton PrismaClient (adapter pg). Só services e o seed importam daqui.
+    usuario-atual.ts      lê o cookie "agindo-como" (cookies() é async)
+    dto.ts                tipos de saída (PedidoResumo, PedidoDetalhe, RegraDto) + mappers Prisma → DTO
+    services/             CASOS DE USO. Única camada que escreve. $transaction aqui. Sempre devolvem DTO.
+    actions/              next-safe-action. client.ts = actionClient (handleServerError) + actionComUsuario
+  app/
+    api/**/route.ts       REST fino: parse Zod → service → Response.json. _http.ts mapeia ErroDominio → status.
+    (telas)/              layout (header com <Suspense> no "Agindo como"), aprovacoes, pedidos/novo, regras.
+                          loading.tsx + error.tsx em cada rota.
+  components/             ui/ (shadcn) + layout/ aprovacoes/ pedidos/ regras/
 prisma/schema.prisma, prisma/seed.ts
 ```
 
-Regra: UI nunca importa Prisma. Domain nunca importa Prisma. Services são o único ponto de escrita.
+**Três canais, uma regra para escolher:**
+
+- Página carrega dados → **RSC chama o service direto** (sem HTTP).
+- Usuário muda algo → **server action via `next-safe-action`** + `revalidatePath`.
+- Client component lê algo em reação a interação (preview da faixa, filtro) → **`ky` → `GET /api/...`**. O mesmo endpoint é a API documentada.
+
+**Erros:** `domain` lança `ErroDominio`; services deixam propagar; `handleServerError` traduz para mensagem pt-BR na action; `_http.ts` traduz para status na API (422 sem faixa, 409 conflito/ordem/sobreposição, 404). Nada de `try/catch` que engole erro de domínio.
+
+**Fronteira RSC → client:** nunca passar `Decimal` nem `Date`. Services devolvem DTO (`quantidade: string`, datas ISO, `*Cents: number`).
+
+**Next 16 com `cacheComponents`:** toda leitura de cookie/banco fica dentro de um `<Suspense>` (`loading.tsx` cobre a página; o header precisa do seu próprio). Cadastros (obras, usuários, fornecedores) com `"use cache"` + `cacheLife` + `cacheTag("cadastros")`; pedidos e regras sem cache. Nunca `cookies()` dentro de `"use cache"`.
+
+Regra: UI nunca importa Prisma. Domain nunca importa nada. Services são o único ponto de escrita e nunca vazam tipos do Prisma. Sem camada de repositório sobre o Prisma (decisão consciente, ver ARQUITETURA.md §4).
 
 ## Glossário
 

@@ -15,6 +15,7 @@ Cores, acento, tipografia, espaçamento, raio e sombra **não são definidos aqu
 
 - Se o arquivo existir: siga-o à risca e cite-o quando desviar.
 - Se **não** existir: não invente identidade. Use os defaults neutros do shadcn (`base-nova`, cor `neutral`) sem customizar `globals.css`, sem cor de acento própria, sem fonte nova. Diga na resposta, em uma linha, que a identidade visual ainda não foi definida.
+- **Quando o João pedir a exploração de identidade** (variantes de tela, escolha de paleta e tipografia, escrita do `design.md`): carregue também a skill oficial `frontend-design` (plugin da Anthropic). Ela traz o processo de planejar tokens, revisar contra clichês e "gastar a ousadia em um lugar só". Em conflito, esta skill vence: o produto é um ERP denso, não uma landing page.
 
 ## Padrões por tipo de tela
 

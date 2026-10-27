@@ -21,7 +21,7 @@ Leia `CLAUDE.md` inteiro. As regras que você fiscaliza vêm das seções "Arqui
 ### Camadas
 1. **UI e domain nunca importam Prisma.** Grep por `generated/prisma`, `@prisma/client`, `@prisma/adapter-pg`, `server/prisma` em `src/app`, `src/components`, `src/domain`, `src/lib`. Qualquer ocorrência = **Bloqueia**.
 2. **Services são o único ponto de escrita.** Grep por `prisma\.\w+\.(create|createMany|update|updateMany|upsert|delete|deleteMany)\(` e `prisma\.\$transaction` em `src/**` fora de `src/server/services` (respeitando as isenções acima). Só conta chamada em modelo Prisma (`prisma.pedido.create`), não `Map.delete` ou `.update(` de libs. Ocorrência = **Bloqueia**.
-3. **Actions validam com Zod.** Para cada `export async function` em `src/server/actions`, confirme que a entrada passa por `safeParse` ou `parse` de um schema de `src/lib/schemas`. Falta = **Bloqueia**.
+3. **Actions passam pelo next-safe-action.** Em `src/server/actions/*.ts` (exceto `client.ts`), toda action exportada é `actionComUsuario.inputSchema(...).action(...)` (ou `actionClient.` quando não precisa de usuário) com schema importado de `src/lib/schemas`. `export async function` solta, `safeParse` manual ou `try/catch` que engole `ErroDominio` = **Bloqueia**.
 4. **Route handlers são finos.** Em `src/app/api/**/route.ts`, nenhum import de Prisma e nenhum `if` de regra de negócio: só parse Zod → service → resposta. Violação = **Importante**.
 5. **Domain é puro.** `src/domain/**` sem `import` de `next/*`, `prisma`, `server/`, `fs`, `fetch`. Violação = **Bloqueia**.
 
@@ -43,6 +43,11 @@ Leia `CLAUDE.md` inteiro. As regras que você fiscaliza vêm das seções "Arqui
 14. **Mensagens ao usuário em pt-BR.** Em `src/app`, `src/lib/schemas`, `src/server` e `src/components` (exceto `ui/`), grep **só em strings literais** (entre aspas ou crases) por `required`, `invalid`, `must be`, `Loading`, `Submit`, `Something went wrong`, `Error:`. Identificadores (`FieldError`, `aria-invalid`, `isLoading`) não contam. Ocorrência = **Importante**.
 15. **Nomes de domínio em português** (Pedido, Obra, RegraAlcada, AprovacaoPedido). Modelo/entidade em inglês = **Detalhe**.
 16. **Dependência justificada.** Cada entrada de `dependencies`/`devDependencies` no `package.json` aparece na tabela "Tecnologias e motivos" do `README.md`, direta ou por uma linha agrupadora ("trazidas pelo shadcn", "base do scaffold", "lint e formatação"). Falta = **Detalhe**.
+
+### Canais e fronteiras
+17. **`ky` só no client.** Grep por `from "ky"` e por imports de `@/lib/api`: permitidos apenas em `src/lib/api/**` e em arquivos com `"use client"`. Em `src/server/**`, `src/app/**/page.tsx`, `src/app/api/**` ou `src/domain/**` = **Bloqueia** (o server nunca chama a própria API por HTTP).
+18. **Services devolvem DTO.** Nenhuma função exportada de `src/server/services` tem tipo de retorno ou parâmetro vindo de `src/generated/prisma` (grep por `Prisma.` e `from "@/generated/prisma"` nas assinaturas exportadas; o import interno para consultas é permitido). `Decimal` ou `Date` em DTO de `src/server/dto.ts` = **Importante** (devem ser `string`).
+19. **Erros de domínio têm uma hierarquia.** Toda classe em `src/domain/erros.ts` estende `ErroDominio` e tem `codigo`; `src/app/api/_http.ts` mapeia cada `codigo` para um status; `src/server/actions/client.ts` trata `ErroDominio` no `handleServerError`. Erro de domínio lançado como `new Error("...")` solto = **Importante**.
 
 ## Saída (exatamente este formato)
 

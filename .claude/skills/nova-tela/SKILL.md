@@ -36,20 +36,26 @@ Siga a ordem. Cada passo cita a regra do `CLAUDE.md` que ele cumpre.
 - Componentes shadcn vêm de `@/components/ui`; não criar primitivos novos.
 - Dinheiro só entra e sai pelos helpers de `src/lib/money.ts` (centavos ↔ BRL).
 
-## 4. Mutação
+## 4. Mutação (next-safe-action)
 
 `src/server/actions/<rota>.ts`
-- `"use server"`; cada action valida a entrada com o schema de `src/lib/schemas/` via `safeParse`; retorna `{ ok: true, data } | { ok: false, erro }` em vez de lançar, para a UI mostrar a mensagem.
-- Chama o service; nunca toca o Prisma.
-- `revalidatePath` da rota afetada ao final.
-- Erros de regra de negócio (409 etc.) viram `erro` com a mensagem específica do service, exibida em toast (`sonner`).
+- `"use server"`; cada action é `actionComUsuario.inputSchema(schemaDeLibSchemas).action(async ({ parsedInput, ctx }) => ...)`. O `actionComUsuario` (em `src/server/actions/client.ts`) já leu o cookie "Agindo como" e colocou `ctx.usuarioId`.
+- A action chama o service e devolve o DTO; nunca toca o Prisma; nunca faz `try/catch` para "traduzir" erro. Erros de domínio (`ErroDominio`) sobem e o `handleServerError` do client os transforma na mensagem em pt-BR; qualquer outro erro vira "Erro inesperado".
+- `revalidatePath` da rota afetada ao final (e `updateTag("cadastros")` se mexeu em obra/usuário/fornecedor).
 
 ## 5. Formulário (quando houver)
 
-- `react-hook-form` + `zodResolver` com o **mesmo** schema da action.
-- Itens com `useFieldArray`; começa com um item em branco.
+- `useHookFormAction(acao, zodResolver(schema), { formProps: { defaultValues } })` do `@next-safe-action/adapter-react-hook-form/hooks`. Devolve `form` (o `useForm` normal), `action` (`isPending`, `result`) e `handleSubmitWithAction`.
+- Itens com `useFieldArray({ control: form.control, name: "itens" })`; começa com um item em branco.
+- Erros de validação do servidor voltam para os campos sozinhos; `action.result.serverError` vira toast (`sonner`).
 - Total do item e do pedido calculados na UI só para exibição; o server recalcula e persiste.
-- Botão de envio desabilitado enquanto `!formState.isValid`, com texto ao lado dizendo o que falta.
+- Botão de envio desabilitado enquanto `!form.formState.isValid || action.isPending`, com texto ao lado dizendo o que falta.
+
+## 5b. Leitura interativa no client (ky)
+
+- Se um client component precisa **ler** algo em reação a uma interação (preview da faixa aplicável quando o total muda, filtro da lista), não use action: use uma função de `src/lib/api/` (ex.: `previewAlcada(obraId, totalCents)`), que chama `GET /api/...` com o `ky` configurado em `src/lib/api/client.ts`.
+- O endpoint correspondente em `src/app/api/**/route.ts` é fino: parse Zod → service → `Response.json(dto)`. É o mesmo endpoint documentado no README.
+- `ky` nunca é importado por server component, action ou service.
 
 ## 6. Verificação antes de encerrar
 
