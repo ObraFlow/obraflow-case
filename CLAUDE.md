@@ -113,3 +113,19 @@ Regra: UI nunca importa Prisma. Domain nunca importa nada. Services são o únic
 - [ ] rejeitar sem motivo → validação antes do submit
 - [ ] cadeia concluída → botão desabilitado + explicação
 - [ ] loading em toda lista
+
+## Status
+
+Atualizado ao fim de cada fase (`/fim-de-fase`). Fases detalhadas em `docs/GUIA.md`.
+
+- [x] Fase 0 — Setup: scaffold Next 16, Prisma 7 + Postgres (docker), Zod, shadcn, Vitest, Prettier/ESLint/husky, skills e agentes, `docs/ARQUITETURA.md`.
+- [ ] Fase 1 — Modelagem do banco: `schema.prisma`, migration inicial, `lib/money.ts`, `prisma/seed.ts`. **Em andamento.**
+- [ ] Fase 2 — Domínio puro + testes (`src/domain`).
+- [ ] Fase 3 — Services, actions (next-safe-action), API REST e cliente ky.
+- [ ] Fase 4 — Layout e seletor "Agindo como".
+- [ ] Fase 5 — Tela de regras de alçada.
+- [ ] Fase 6 — Tela de novo pedido.
+- [ ] Fase 7 — Tela de aprovações.
+- [ ] Fase 8 — Estados, responsividade e revisão.
+- [ ] Fase 9 — README, screenshots e deploy.
+- [ ] Fase 10 — PR e ensaio de entrevista.
