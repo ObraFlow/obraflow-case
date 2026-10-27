@@ -30,18 +30,30 @@ const detailInclude = {
 
 export type PurchaseOrderDetail = Prisma.PurchaseOrderGetPayload<{
   include: typeof detailInclude;
+  omit: typeof hiddenFields;
 }>;
 
 const listInclude = {
   site: { select: { id: true, code: true, name: true } },
   supplier: { select: { id: true, name: true } },
   requester: { select: { id: true, name: true } },
+  // The whole chain, so the list can show done, current and next approvers.
   steps: {
-    where: { status: 'CURRENT' },
-    select: { approver: { select: { id: true, name: true } } },
+    orderBy: { position: 'asc' },
+    select: {
+      position: true,
+      status: true,
+      approver: { select: { id: true, name: true } },
+    },
   },
   _count: { select: { items: true } },
 } satisfies Prisma.PurchaseOrderInclude;
+
+/** Internal idempotency fields are not part of the API responses. */
+const hiddenFields = {
+  idempotencyKey: true,
+  requestHash: true,
+} satisfies Prisma.PurchaseOrderOmit;
 
 const IDEMPOTENCY_KEY_REGEX = /^[\w-]{1,100}$/;
 
@@ -84,13 +96,15 @@ export class PurchaseOrdersService {
         skip: (query.page - 1) * query.pageSize,
         take: query.pageSize,
         include: listInclude,
+        omit: hiddenFields,
       }),
     ]);
 
-    const data = orders.map(({ steps, _count, ...order }) => ({
+    const data = orders.map(({ _count, ...order }) => ({
       ...order,
       itemCount: _count.items,
-      currentApprover: steps[0]?.approver ?? null,
+      currentApprover:
+        order.steps.find((step) => step.status === 'CURRENT')?.approver ?? null,
     }));
     return { data, total, page: query.page, pageSize: query.pageSize };
   }
@@ -99,6 +113,7 @@ export class PurchaseOrdersService {
     const order = await this.prisma.purchaseOrder.findUnique({
       where: { id },
       include: detailInclude,
+      omit: hiddenFields,
     });
     if (!order) {
       throw new NotFoundException('Pedido não encontrado.');
