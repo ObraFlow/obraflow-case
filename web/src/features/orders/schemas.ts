@@ -85,7 +85,8 @@ export const orderFormSchema = z
     supplierId: z.string().min(1, 'Selecione o fornecedor.'),
     orderDate: z
       .string()
-      .min(1, 'Informe a data do pedido.')
+      // abort: an empty date gets only the "required" message.
+      .min(1, { message: 'Informe a data do pedido.', abort: true })
       .refine(isValidDate, 'Informe uma data válida.'),
     notes: z.string().trim().max(1000, 'Use no máximo 1000 caracteres.'),
     items: z
