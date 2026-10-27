@@ -85,14 +85,17 @@ export function OrdersPage() {
           value={view}
           onValueChange={(value) => update({ view: value === 'all' ? 'all' : undefined })}
         >
-          <TabsList>
-            <TabsTrigger value="mine">
-              Aguardando minha aprovação
+          <TabsList className="w-full sm:w-auto">
+            <TabsTrigger value="mine" className="flex-1 sm:flex-none">
+              <span className="sm:hidden">Minha aprovação</span>
+              <span className="hidden sm:inline">Aguardando minha aprovação</span>
               {!!awaiting.data?.total && (
                 <Badge className="ml-1 h-5 min-w-5 px-1.5">{awaiting.data.total}</Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="all">Todos os pedidos</TabsTrigger>
+            <TabsTrigger value="all" className="flex-1 sm:flex-none">
+              Todos os pedidos
+            </TabsTrigger>
           </TabsList>
         </Tabs>
 
