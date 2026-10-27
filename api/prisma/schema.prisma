@@ -94,24 +94,29 @@ enum PurchaseOrderStatus {
 }
 
 model PurchaseOrder {
-  id          String              @id @default(uuid())
+  id             String              @id @default(uuid())
   /// Human-readable identifier shown in the UI (e.g. PC-0042).
-  number      Int                 @unique @default(autoincrement())
-  siteId      String
-  supplierId  String
-  requesterId String
-  orderDate   DateTime            @db.Date
-  notes       String?
+  number         Int                 @unique @default(autoincrement())
+  siteId         String
+  supplierId     String
+  requesterId    String
+  orderDate      DateTime            @db.Date
+  notes          String?
   /// Sum of item totals, always calculated by the API.
-  total       Decimal             @db.Decimal(14, 2)
-  status      PurchaseOrderStatus @default(PENDING)
+  total          Decimal             @db.Decimal(14, 2)
+  status         PurchaseOrderStatus @default(PENDING)
   /// Position of the step waiting for a decision; null once the order is final.
-  currentStep Int?
+  currentStep    Int?
   /// Optimistic lock: every decision increments it, so concurrent decisions
   /// on the same order cannot both succeed.
-  version     Int                 @default(0)
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  version        Int                 @default(0)
+  /// Client-generated key that makes creation safe to retry: repeating a
+  /// request with the same key returns the order created the first time.
+  idempotencyKey String?
+  /// Hash of the request body, so a reused key with a different body is refused.
+  requestHash    String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
 
   site      ConstructionSite     @relation(fields: [siteId], references: [id], onDelete: Restrict)
   supplier  Supplier             @relation(fields: [supplierId], references: [id], onDelete: Restrict)
@@ -120,6 +125,8 @@ model PurchaseOrder {
   steps     ApprovalStep[]
   events    PurchaseOrderEvent[]
 
+  // The key is scoped to the requester, so users cannot collide with each other.
+  @@unique([requesterId, idempotencyKey])
   @@index([status])
   @@index([siteId])
 }
@@ -178,6 +185,9 @@ enum PurchaseOrderEventType {
 /// Append-only audit trail. Rows are never updated or deleted by the API.
 model PurchaseOrderEvent {
   id        String                 @id @default(uuid())
+  /// Insertion order. createdAt is not enough: events written in the same
+  /// transaction (APPROVED + COMPLETED) can share the same timestamp.
+  sequence  Int                    @unique @default(autoincrement())
   orderId   String
   type      PurchaseOrderEventType
   actorId   String?
@@ -189,5 +199,5 @@ model PurchaseOrderEvent {
   order PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
   actor User?         @relation(fields: [actorId], references: [id], onDelete: Restrict)
 
-  @@index([orderId, createdAt])
+  @@index([orderId, sequence])
 }
