@@ -30,8 +30,13 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# Ignorar arquivos de ambiente com credenciais
+.env
+.env*.local
+.env.local
+
+# Exceção para manter o modelo de exemplo versionado
+!.env.example
 
 # vercel
 .vercel
@@ -47,3 +52,7 @@ next-env.d.ts
 .cursor/
 .devin/
 AGENTS.md
+.windsurf/
+
+/app/generated/prisma
+/generated/

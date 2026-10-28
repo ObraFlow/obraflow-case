@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrderStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum StepStatus {
+  WAITING
+  PENDING
+  APPROVED
+  REJECTED
+  SKIPPED
+}
+
+enum EventType {
+  CREATED
+  APPROVED
+  REJECTED
+}
+
+model Site {
+  id        Int             @id @default(autoincrement())
+  name      String          @unique
+  createdAt DateTime        @default(now())
+  rules     ApprovalRule[]
+  orders    PurchaseOrder[]
+}
+
+model User {
+  id        Int                    @id @default(autoincrement())
+  name      String
+  email     String                 @unique
+  approvers ApprovalRuleApprover[]
+  steps     OrderApproval[]
+  events    OrderEvent[]
+}
+
+model Supplier {
+  id     Int             @id @default(autoincrement())
+  name   String
+  taxId  String          @unique
+  orders PurchaseOrder[]
+}
+
+// Faixa de valor de uma obra. upTo em centavos, inclusivo; NULL = sem teto.
+model ApprovalRule {
+  id        Int                    @id @default(autoincrement())
+  siteId    Int
+  upTo      Int?
+  site      Site                   @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  approvers ApprovalRuleApprover[]
+  orders    PurchaseOrder[]
+
+  @@unique([siteId, upTo])
+}
+
+// Aprovadores da faixa, em ordem (position 1..N).
+model ApprovalRuleApprover {
+  id       Int          @id @default(autoincrement())
+  ruleId   Int
+  userId   Int
+  position Int
+  rule     ApprovalRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  user     User         @relation(fields: [userId], references: [id])
+
+  @@unique([ruleId, position])
+  @@unique([ruleId, userId])
+}
+
+model PurchaseOrder {
+  id          Int             @id @default(autoincrement())
+  siteId      Int
+  supplierId  Int
+  ruleId      Int?
+  orderDate   DateTime        @db.Date
+  notes       String?
+  totalCents  Int
+  status      OrderStatus     @default(PENDING)
+  currentStep Int?
+  createdAt   DateTime        @default(now())
+  site        Site            @relation(fields: [siteId], references: [id])
+  supplier    Supplier        @relation(fields: [supplierId], references: [id])
+  rule        ApprovalRule?   @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  items       OrderItem[]
+  steps       OrderApproval[]
+  events      OrderEvent[]
+
+  @@index([status, siteId])
+}
+
+model OrderItem {
+  id             Int           @id @default(autoincrement())
+  orderId        Int
+  position       Int
+  description    String
+  quantity       Decimal       @db.Decimal(12, 3)
+  unit           String
+  unitPriceCents Int
+  totalCents     Int
+  order          PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, position])
+}
+
+// Snapshot da cadeia de aprovação no momento da criação do pedido.
+model OrderApproval {
+  id         Int           @id @default(autoincrement())
+  orderId    Int
+  stepOrder  Int
+  approverId Int
+  status     StepStatus    @default(WAITING)
+  decidedAt  DateTime?
+  reason     String?
+  order      PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  approver   User          @relation(fields: [approverId], references: [id])
+
+  @@unique([orderId, stepOrder])
+}
+
+// Trilha de auditoria (somente inserção).
+model OrderEvent {
+  id        Int           @id @default(autoincrement())
+  orderId   Int
+  type      EventType
+  actorId   Int?
+  reason    String?
+  createdAt DateTime      @default(now())
+  order     PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  actor     User?         @relation(fields: [actorId], references: [id])
+}
