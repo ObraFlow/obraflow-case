@@ -10,7 +10,7 @@ Pré-requisitos: Node 24+, Docker.
 cp .env.example .env
 npm install
 npm run db:up        # sobe o Postgres (docker compose)
-npm run db:migrate   # aplica as migrations e gera o client
+npm run db:migrate   # aplica as migrations e gera o client (Prisma 7 não gera sozinho no migrate)
 npm run db:seed      # dados de demonstração
 npm run dev          # http://localhost:3000
 ```
@@ -37,6 +37,7 @@ A cada commit, um hook `pre-commit` (husky) roda `lint-staged`: ESLint com `--fi
 | Base do scaffold: `react`, `react-dom`, `typescript`, `tailwindcss`, `@tailwindcss/turbopack`, `eslint`, `eslint-config-next`, `@types/*` | Vêm do `create-next-app`. TypeScript estrito e as regras do Next para React Hooks e Core Web Vitals.                                                                                                                                                           |
 | Prettier + `prettier-plugin-tailwindcss`                                                                                                  | Formatação única para todo o time; o plugin ordena as classes Tailwind, o que mantém o JSX legível.                                                                                                                                                            |
 | `eslint-config-prettier`                                                                                                                  | Desliga as regras de estilo do ESLint que conflitariam com o Prettier; o ESLint fica só com regras de correção.                                                                                                                                                |
+| `tsx`                                                                                                                                     | Executa `prisma/seed.ts` em TypeScript sem passo de build (`prisma db seed`). Só devDependency; o Node puro não resolve os imports sem extensão do client gerado pelo Prisma.                                                                                  |
 | husky + lint-staged                                                                                                                       | Hook `pre-commit` que lint-a e formata apenas os arquivos em stage. Garante que nada entra no histórico fora do padrão.                                                                                                                                        |
 
 Sem autenticação por escopo do desafio: o usuário atual é simulado por um seletor "Agindo como" no header, persistido em cookie.
@@ -53,3 +54,7 @@ Sem autenticação por escopo do desafio: o usuário atual é simulado por um se
 8. **Erros de domínio com uma hierarquia e três traduções.** `ErroDominio` e subclasses (`SemFaixaAplicavel`, `FaixaSobreposta`, `DecisaoForaDeOrdem`, `ConflitoDeDecisao`, `NaoEncontrado`) nascem em `src/domain/erros.ts`. A action traduz para mensagem em pt-BR; a API traduz para status HTTP (422, 409, 404); a UI nunca vê stack trace.
 9. **Services devolvem DTOs, não objetos do Prisma.** `Decimal` e `Date` não atravessam a fronteira para client components; `src/server/dto.ts` converte para `string`/`number`. UI e API REST recebem o mesmo formato.
 10. **Cache Components do Next 16 a favor.** Cadastros quase estáticos (obras, usuários, fornecedores) usam `"use cache"` com `cacheTag`; pedidos e regras são sempre dinâmicos e chegam por streaming dentro de `<Suspense>`.
+11. **Cadeia de aprovação como snapshot.** Na criação do pedido, os `NivelRegra` da faixa aplicável são copiados para `AprovacaoPedido` (uma linha por aprovador, status `PENDENTE`). Editar ou apagar a regra depois não altera pedidos existentes: é a trilha de auditoria. `Pedido.regraId` é só informativo e vira `null` se a faixa for apagada.
+12. **Status `CANCELADA` nos níveis após uma rejeição.** Quando o aprovador do step atual rejeita, os níveis seguintes recebem `CANCELADA`. A timeline mostra "nunca foi chamado a decidir" sem depender do status do pedido.
+13. **IDs `Int autoincrement` e seed com `TRUNCATE ... RESTART IDENTITY`.** O identificador do pedido na tela é o próprio `id` (`#42`). O seed apaga tudo e reinicia as sequences, então a demo começa sempre em `#1` e nunca há conflito de sequence por id fixado à mão.
+14. **`prisma migrate dev` não gera o client no Prisma 7.** O script `db:migrate` encadeia `prisma generate`. O seed roda com `tsx` porque o client gerado usa imports sem extensão, que o Node puro não resolve.
