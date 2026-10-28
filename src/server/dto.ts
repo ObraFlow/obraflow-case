@@ -81,6 +81,7 @@ export const includePedidoResumo = {
   fornecedor: { select: { nome: true } },
   criadoPor: { select: { nome: true } },
   aprovacoes: { orderBy: { ordem: "asc" }, include: { aprovador: { select: { nome: true } } } },
+  _count: { select: { itens: true } },
 } satisfies Prisma.PedidoInclude;
 
 export const includePedidoDetalhe = {
@@ -132,12 +133,14 @@ export function paraPedidoResumo(pedido: PedidoResumoCarregado): PedidoResumo {
     fornecedorNome: pedido.fornecedor.nome,
     criadoPorNome: pedido.criadoPor.nome,
     dataPedido: dataParaIso(pedido.dataPedido),
+    totalItens: pedido._count.itens,
     totalCents: pedido.totalCents,
     status: pedido.status,
     stepAtual: pedido.stepAtual,
     totalNiveis: pedido.aprovacoes.length,
     aprovadorAtualId: aprovacaoAtual?.aprovadorId ?? null,
     aprovadorAtualNome: aprovacaoAtual?.aprovador.nome ?? null,
+    aprovacoes: pedido.aprovacoes.map(paraAprovacaoDto),
     criadoEm: pedido.criadoEm.toISOString(),
   };
 }
@@ -150,6 +153,5 @@ export function paraPedidoDetalhe(pedido: PedidoDetalheCarregado): PedidoDetalhe
     observacoes: pedido.observacoes,
     regraId: pedido.regraId,
     itens: pedido.itens.map(paraItemDto),
-    aprovacoes: pedido.aprovacoes.map(paraAprovacaoDto),
   };
 }

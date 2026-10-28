@@ -6,9 +6,10 @@ import { resolverRegra } from "@/domain/alcada/resolverRegra";
 import type { FaixaAlcada } from "@/domain/alcada/tipos";
 import { NaoEncontrado, SemFaixaAplicavel } from "@/domain/erros";
 import { calcularTotais } from "@/domain/pedido/calcularTotais";
-import type { PedidoDetalhe, PedidoResumo } from "@/lib/dto";
+import type { Prisma } from "@/generated/prisma/client";
+import type { PaginaDePedidos, PedidoDetalhe, PedidoResumo } from "@/lib/dto";
 import { formatarCentavos } from "@/lib/money";
-import type { CriarPedidoInput, FiltroPedidos } from "@/lib/schemas/pedido";
+import type { CriarPedidoInput, FiltroPedidos, Paginacao } from "@/lib/schemas/pedido";
 import {
   includePedidoDetalhe,
   includePedidoResumo,
@@ -98,18 +99,84 @@ export async function criarPedido(
  */
 export async function listarPedidos(filtro: FiltroPedidos = {}): Promise<PedidoResumo[]> {
   const pedidos = await prisma.pedido.findMany({
-    where: {
-      status: filtro.pendentesPara ? "PENDENTE" : filtro.status,
-      obraId: filtro.obraId,
-      aprovacoes: filtro.pendentesPara
-        ? { some: { aprovadorId: filtro.pendentesPara, status: "PENDENTE" } }
-        : undefined,
-    },
-    orderBy: [{ criadoEm: "desc" }, { id: "desc" }],
+    where: wherePedidos(filtro),
+    orderBy: ORDEM_PEDIDOS,
     include: includePedidoResumo,
   });
+  return filtrarAprovadorDaVez(pedidos.map(paraPedidoResumo), filtro);
+}
 
-  const resumos = pedidos.map(paraPedidoResumo);
+/**
+ * Página da lista para a tela de aprovações. Filtra e pagina no banco (`skip`/`take` + `count`
+ * na mesma transação). A exceção é `pendentesPara`: como o ajuste fino é em memória, os
+ * candidatos são carregados inteiros e a página é recortada depois. São poucos por pessoa.
+ */
+export async function paginarPedidos(
+  filtro: FiltroPedidos,
+  paginacao: Paginacao,
+): Promise<PaginaDePedidos> {
+  const { porPagina } = paginacao;
+
+  if (filtro.pendentesPara) {
+    const todos = await listarPedidos(filtro);
+    const totalPaginas = Math.max(1, Math.ceil(todos.length / porPagina));
+    const pagina = Math.min(paginacao.pagina, totalPaginas);
+    return {
+      itens: todos.slice((pagina - 1) * porPagina, pagina * porPagina),
+      total: todos.length,
+      pagina,
+      porPagina,
+      totalPaginas,
+    };
+  }
+
+  const where = wherePedidos(filtro);
+  const total = await prisma.pedido.count({ where });
+  const totalPaginas = Math.max(1, Math.ceil(total / porPagina));
+  const pagina = Math.min(paginacao.pagina, totalPaginas);
+  const pedidos = await prisma.pedido.findMany({
+    where,
+    orderBy: ORDEM_PEDIDOS,
+    include: includePedidoResumo,
+    skip: (pagina - 1) * porPagina,
+    take: porPagina,
+  });
+
+  return { itens: pedidos.map(paraPedidoResumo), total, pagina, porPagina, totalPaginas };
+}
+
+const ORDEM_PEDIDOS = [
+  { criadoEm: "desc" },
+  { id: "desc" },
+] satisfies Prisma.PedidoOrderByWithRelationInput[];
+
+/**
+ * `busca` aceita o número do pedido ("12" ou "#12") ou um trecho do nome da obra ou do
+ * fornecedor, sem diferenciar maiúsculas. `pendentesPara` reduz no banco aos pedidos
+ * pendentes em que a pessoa aparece pendente; `filtrarAprovadorDaVez` termina o serviço.
+ */
+function wherePedidos(filtro: FiltroPedidos): Prisma.PedidoWhereInput {
+  const busca = filtro.busca?.replace(/^#/, "").trim();
+  const numero = busca && /^\d+$/.test(busca) ? Number(busca) : null;
+
+  return {
+    status: filtro.pendentesPara ? "PENDENTE" : filtro.status,
+    obraId: filtro.obraId,
+    aprovacoes: filtro.pendentesPara
+      ? { some: { aprovadorId: filtro.pendentesPara, status: "PENDENTE" } }
+      : undefined,
+    OR: busca
+      ? [
+          ...(numero !== null ? [{ id: numero }] : []),
+          { obra: { nome: { contains: busca, mode: "insensitive" } } },
+          { fornecedor: { nome: { contains: busca, mode: "insensitive" } } },
+        ]
+      : undefined,
+  };
+}
+
+/** O Prisma não compara `aprovacoes.ordem` com `pedido.stepAtual`; o ajuste fino é aqui. */
+function filtrarAprovadorDaVez(resumos: PedidoResumo[], filtro: FiltroPedidos): PedidoResumo[] {
   if (!filtro.pendentesPara) return resumos;
   return resumos.filter((pedido) => pedido.aprovadorAtualId === filtro.pendentesPara);
 }

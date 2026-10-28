@@ -43,9 +43,21 @@ export const filtroPedidosSchema = z.object({
   obraId: idSchema.optional(),
   /** Só pedidos em que este usuário é o aprovador do step atual. */
   pendentesPara: idSchema.optional(),
+  /** Número do pedido ("12" ou "#12") ou trecho do nome da obra ou do fornecedor. */
+  busca: z.string().trim().max(100, "Busca deve ter no máximo 100 caracteres.").optional(),
 });
 
 export type FiltroPedidos = z.infer<typeof filtroPedidosSchema>;
+
+export const POR_PAGINA_PADRAO = 10;
+
+/** Página da lista (tela de aprovações). `pagina` começa em 1. */
+export const paginacaoSchema = z.object({
+  pagina: z.coerce.number().int().positive().catch(1),
+  porPagina: z.coerce.number().int().min(5).max(50).catch(POR_PAGINA_PADRAO),
+});
+
+export type Paginacao = z.infer<typeof paginacaoSchema>;
 
 /**
  * O que o FORMULÁRIO de pedido segura: ids como texto (valor do <select>), preço em reais

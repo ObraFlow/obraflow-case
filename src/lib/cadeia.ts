@@ -1,9 +1,10 @@
-// Cadeia acumulada em cima dos DTOs (com nomes). Compartilhado: o service usa no preview
-// e a tela de regras usa para mostrar quem é herdado de faixas abaixo.
+// Cadeia de alçada em cima dos DTOs (com nomes), compartilhada entre client e server.
+// A primeira parte é a cadeia acumulada de uma faixa (preview e tela de regras); a segunda
+// traduz o snapshot de um pedido para os estados que a tela desenha (lista e timeline).
 
 import { niveisAcumulados } from "@/domain/alcada/montarCadeia";
-import type { FaixaAlcada } from "@/domain/alcada/tipos";
-import type { NivelDto, RegraDto } from "@/lib/dto";
+import type { FaixaAlcada, StatusPedido } from "@/domain/alcada/tipos";
+import type { AprovacaoDto, NivelDto, RegraDto } from "@/lib/dto";
 
 /** DTO → tipo do domínio (sem nomes, só ids e ordem). */
 export function paraFaixaAlcada(regra: RegraDto): FaixaAlcada {
@@ -40,4 +41,47 @@ export function cadeiaAcumulada(regras: RegraDto[], faixa: RegraDto): NivelAcumu
       faixaId: nivel.faixaId,
     }),
   );
+}
+
+// --- Cadeia de um pedido já criado (snapshot) -----------------------------------
+
+/** Estado de um aprovador dentro da cadeia, como a tela desenha (docs/design.md). */
+export type EstadoNivel = "proximo" | "herdado" | "atual" | "aprovou" | "rejeitou" | "cancelado";
+
+export type NivelCadeia = {
+  nome: string;
+  estado: EstadoNivel;
+};
+
+/**
+ * Converte o snapshot do pedido para os estados da tela: concluídos, o atual (só enquanto
+ * o pedido está pendente), os próximos, quem rejeitou e quem foi cancelado pela rejeição.
+ */
+export function niveisDoPedido(pedido: {
+  status: StatusPedido;
+  stepAtual: number;
+  aprovacoes: AprovacaoDto[];
+}): NivelCadeia[] {
+  return pedido.aprovacoes.map((aprovacao) => ({
+    nome: aprovacao.aprovadorNome,
+    estado: estadoDoNivel(aprovacao, pedido),
+  }));
+}
+
+export function estadoDoNivel(
+  aprovacao: AprovacaoDto,
+  pedido: { status: StatusPedido; stepAtual: number },
+): EstadoNivel {
+  switch (aprovacao.status) {
+    case "APROVADA":
+      return "aprovou";
+    case "REJEITADA":
+      return "rejeitou";
+    case "CANCELADA":
+      return "cancelado";
+    case "PENDENTE":
+      return pedido.status === "PENDENTE" && aprovacao.ordem === pedido.stepAtual
+        ? "atual"
+        : "proximo";
+  }
 }

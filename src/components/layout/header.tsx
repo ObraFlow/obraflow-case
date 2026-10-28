@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { AgindoComo, AgindoComoSkeleton, AvisoSemUsuario } from "@/components/layout/agindo-como";
 import { ContadorPendencias } from "@/components/layout/contador-pendencias";
 import { LimiteDeErro } from "@/components/layout/limite-de-erro";
-import { Navegacao } from "@/components/layout/navegacao";
+import { ListaNavegacao, Navegacao } from "@/components/layout/navegacao";
 
 /**
  * Header escuro de 56px (docs/design.md > Forma). Marca, navegação e "Agindo como".
@@ -24,15 +24,18 @@ export function Header() {
         </Link>
 
         <div className="order-last -mx-4 basis-[calc(100%+2rem)] overflow-x-auto border-t border-white/15 sm:order-none sm:mx-0 sm:basis-auto sm:border-t-0">
-          <Navegacao
-            contadorAprovacoes={
-              <LimiteDeErro fallback={null}>
-                <Suspense fallback={null}>
-                  <ContadorPendencias />
-                </Suspense>
-              </LimiteDeErro>
-            }
-          />
+          {/* usePathname suspende no prerender de rotas dinâmicas (/aprovacoes/[id]); o fallback é a lista sem item ativo. */}
+          <Suspense fallback={<ListaNavegacao pathname={null} contadorAprovacoes={null} />}>
+            <Navegacao
+              contadorAprovacoes={
+                <LimiteDeErro fallback={null}>
+                  <Suspense fallback={null}>
+                    <ContadorPendencias />
+                  </Suspense>
+                </LimiteDeErro>
+              }
+            />
+          </Suspense>
         </div>
 
         <div className="ml-auto flex h-14 items-center">

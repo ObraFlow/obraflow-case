@@ -92,7 +92,7 @@ export function FormularioPedido({
   const { execute, isPending } = useAction(criarPedidoAction, {
     onSuccess({ data }) {
       toast.success(`Pedido #${data.pedidoId} criado: ${formatarCentavos(data.totalCents)}.`);
-      router.push("/aprovacoes");
+      router.push(`/aprovacoes/${data.pedidoId}`);
     },
     onError({ error }) {
       setErroDoServidor(

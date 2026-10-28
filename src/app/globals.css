@@ -202,3 +202,33 @@
     transition: none !important;
   }
 }
+
+/*
+ * Classes que disparam os keyframes acima. Ficam fora de @layer de propósito: regra sem
+ * camada vence as utilities do Tailwind, então `.anima-preenche` sobrepõe `bg-foreground`
+ * enquanto anima. `forwards` mantém o estado final, que é igual às classes estáticas.
+ */
+.anima-preenche {
+  background-color: var(--sinalizacao);
+  background-image: linear-gradient(var(--foreground), var(--foreground));
+  background-repeat: no-repeat;
+  animation: cadeia-preenche 550ms ease-out forwards;
+}
+.anima-preenche-rejeicao {
+  background-color: var(--sinalizacao);
+  background-image: linear-gradient(var(--rejeitado), var(--rejeitado));
+  background-repeat: no-repeat;
+  animation: cadeia-preenche-rejeicao 550ms ease-out forwards;
+}
+.anima-acende {
+  animation: cadeia-acende 400ms ease-out 450ms both;
+}
+.anima-faixa-recolhe {
+  animation: faixa-recolhe 700ms ease-out forwards;
+}
+.anima-linha-pulsa-a {
+  animation: linha-pulsa-a 900ms ease-out forwards;
+}
+.anima-linha-pulsa-b {
+  animation: linha-pulsa-b 900ms ease-out forwards;
+}

@@ -62,7 +62,10 @@ export type AprovacaoDto = {
   decididoEm: string | null;
 };
 
-/** Linha da lista de pedidos. */
+/**
+ * Linha da lista de pedidos. Leva a cadeia inteira (com nomes) porque a coluna "Alçada"
+ * mostra concluídos, atual e próximos; os itens ficam só no detalhe, aqui vai a contagem.
+ */
 export type PedidoResumo = {
   id: number;
   obraId: number;
@@ -71,6 +74,7 @@ export type PedidoResumo = {
   criadoPorNome: string;
   /** "AAAA-MM-DD" */
   dataPedido: string;
+  totalItens: number;
   totalCents: number;
   status: StatusPedido;
   stepAtual: number;
@@ -78,8 +82,19 @@ export type PedidoResumo = {
   /** Quem precisa decidir agora; null quando a cadeia terminou. */
   aprovadorAtualId: number | null;
   aprovadorAtualNome: string | null;
+  /** Snapshot da cadeia, em ordem. */
+  aprovacoes: AprovacaoDto[];
   /** ISO 8601 */
   criadoEm: string;
+};
+
+/** Uma página da lista de pedidos, com o total para desenhar a paginação. */
+export type PaginaDePedidos = {
+  itens: PedidoResumo[];
+  total: number;
+  pagina: number;
+  porPagina: number;
+  totalPaginas: number;
 };
 
 /** Pedido completo para a tela de detalhe e para a API. */
@@ -89,5 +104,4 @@ export type PedidoDetalhe = PedidoResumo & {
   observacoes: string | null;
   regraId: number | null;
   itens: ItemPedidoDto[];
-  aprovacoes: AprovacaoDto[];
 };

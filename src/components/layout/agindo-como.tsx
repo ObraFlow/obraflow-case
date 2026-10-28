@@ -1,12 +1,22 @@
 import { SeletorAgindoComo } from "@/components/layout/seletor-agindo-como";
+import { SinoPendencias } from "@/components/layout/sino-pendencias";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listarUsuarios } from "@/server/services/cadastros";
 import { usuarioAtualId } from "@/server/usuario-atual";
 
-/** Lê a lista de usuários (cacheada) e o cookie, e entrega ao seletor client. */
+/**
+ * Lê a lista de usuários (cacheada) e o cookie, e entrega ao seletor client. O sino de
+ * pendências fica ao lado e remonta a cada troca de usuário (`key`), para a lista anterior
+ * não virar "novidade" do usuário seguinte.
+ */
 export async function AgindoComo() {
   const [usuarios, atualId] = await Promise.all([listarUsuarios(), usuarioAtualId()]);
-  return <SeletorAgindoComo usuarios={usuarios} usuarioAtualId={atualId} />;
+  return (
+    <div className="flex items-center gap-2 sm:gap-3">
+      <SeletorAgindoComo usuarios={usuarios} usuarioAtualId={atualId} />
+      {atualId !== null && <SinoPendencias key={atualId} usuarioAtualId={atualId} />}
+    </div>
+  );
 }
 
 /** Mesmo tamanho do seletor, para o header não pular quando o cookie chega. */
@@ -15,6 +25,7 @@ export function AgindoComoSkeleton() {
     <div className="flex items-center gap-2">
       <span className="text-sm text-white/75 max-sm:sr-only">Agindo como</span>
       <Skeleton className="h-10 w-40 rounded-sm bg-white/20 sm:h-8 sm:w-44" />
+      <Skeleton className="size-10 rounded-sm bg-white/20 sm:size-8" />
     </div>
   );
 }
