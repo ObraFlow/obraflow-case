@@ -5,13 +5,15 @@ import { validarFaixas, validarLimites, type FaixaParaValidar } from "./validarF
 
 const UM_NIVEL: NivelAlcada[] = [{ ordem: 0, usuarioId: 1 }];
 
+// Cada faixa de teste recebe um aprovador diferente: pessoa repetida entre faixas é outra regra.
+let proximoUsuarioId = 100;
 function faixa(
   minCents: number,
   maxCents: number | null,
   id: number | null = null,
   rotulo?: string,
 ): FaixaParaValidar {
-  return { id, minCents, maxCents, niveis: UM_NIVEL, rotulo };
+  return { id, minCents, maxCents, niveis: [{ ordem: 0, usuarioId: proximoUsuarioId++ }], rotulo };
 }
 
 describe("validarLimites", () => {
@@ -131,5 +133,47 @@ describe("validarFaixas (sobreposição)", () => {
     expect(() => validarFaixas([faixa(0, 1_000_000, 1), faixa(500_000, null, null)])).toThrow(
       "outra faixa já cadastrada",
     );
+  });
+});
+
+describe("validarFaixas (aprovador em duas faixas)", () => {
+  const baixa: FaixaParaValidar = {
+    id: 1,
+    minCents: 0,
+    maxCents: 1_000_000,
+    niveis: [{ ordem: 0, usuarioId: 1, nome: "João Mendes" }],
+    rotulo: "R$ 0,00 a R$ 10.000,00",
+  };
+
+  it("aceita pessoas diferentes em faixas diferentes", () => {
+    const alta: FaixaParaValidar = {
+      id: null,
+      minCents: 1_000_001,
+      maxCents: null,
+      niveis: [{ ordem: 0, usuarioId: 2 }],
+    };
+    expect(() => validarFaixas([baixa, alta])).not.toThrow();
+  });
+
+  it("rejeita a mesma pessoa em duas faixas, citando nome e faixa já cadastrada", () => {
+    const alta: FaixaParaValidar = {
+      id: null,
+      minCents: 1_000_001,
+      maxCents: null,
+      niveis: [
+        { ordem: 0, usuarioId: 1, nome: "João Mendes" },
+        { ordem: 1, usuarioId: 2, nome: "Amanda Ribeiro" },
+      ],
+    };
+    expect(() => validarFaixas([baixa, alta])).toThrow(FaixaInvalida);
+    expect(() => validarFaixas([baixa, alta])).toThrow(
+      "João Mendes já aprova pela faixa R$ 0,00 a R$ 10.000,00",
+    );
+  });
+
+  it("sem nome nem rótulo, a mensagem ainda é compreensível", () => {
+    const a: FaixaParaValidar = { id: 1, minCents: 0, maxCents: 100, niveis: UM_NIVEL };
+    const b: FaixaParaValidar = { id: null, minCents: 101, maxCents: null, niveis: [...UM_NIVEL] };
+    expect(() => validarFaixas([a, b])).toThrow("Este aprovador já aprova por outra faixa");
   });
 });

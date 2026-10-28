@@ -3,9 +3,9 @@
 // as faixas da obra e persistimos.
 
 import { resolverRegra } from "@/domain/alcada/resolverRegra";
-import type { FaixaAlcada } from "@/domain/alcada/tipos";
 import { validarFaixas, type FaixaParaValidar } from "@/domain/alcada/validarFaixas";
 import { NaoEncontrado } from "@/domain/erros";
+import { cadeiaAcumulada, paraFaixaAlcada } from "@/lib/cadeia";
 import type { FaixaAplicavelDto, RegraDto } from "@/lib/dto";
 import { formatarFaixa } from "@/lib/money";
 import type { SalvarFaixaInput } from "@/lib/schemas/regra";
@@ -21,20 +21,10 @@ export async function listarRegras(obraId: number): Promise<RegraDto[]> {
   return regras.map(paraRegraDto);
 }
 
-/** Converte o DTO para o tipo que o domínio entende (sem nomes, só ids e ordem). */
-export function paraFaixaAlcada(regra: RegraDto): FaixaAlcada {
-  return {
-    id: regra.id,
-    minCents: regra.minCents,
-    maxCents: regra.maxCents,
-    niveis: regra.niveis.map((nivel) => ({ ordem: nivel.ordem, usuarioId: nivel.usuarioId })),
-  };
-}
-
 /**
- * Preview da tela de novo pedido: qual faixa (e cadeia) um valor cairia nesta obra.
- * Devolve `faixa: null` em vez de lançar erro, porque aqui é só informação para o usuário;
- * quem bloqueia a criação é `criarPedido`.
+ * Preview (simulador na tela de regras e formulário de pedido): qual faixa um valor cairia
+ * nesta obra e a cadeia acumulada que aprovaria. Devolve `faixa: null` em vez de lançar
+ * erro, porque aqui é só informação para o usuário; quem bloqueia a criação é `criarPedido`.
  */
 export async function obterFaixaAplicavel(
   obraId: number,
@@ -44,13 +34,21 @@ export async function obterFaixaAplicavel(
   if (!obra) throw new NaoEncontrado("Obra", "f");
 
   const regras = await listarRegras(obraId);
-  const faixa = resolverRegra(regras.map(paraFaixaAlcada), valorCents);
+  const aplicavel = resolverRegra(regras.map(paraFaixaAlcada), valorCents);
+  const faixa = aplicavel ? (regras.find((regra) => regra.id === aplicavel.id) ?? null) : null;
 
   return {
     obraId,
     obraNome: obra.nome,
     valorCents,
-    faixa: faixa ? (regras.find((regra) => regra.id === faixa.id) ?? null) : null,
+    faixa,
+    cadeia: faixa
+      ? cadeiaAcumulada(regras, faixa).map(({ ordem, usuarioId, usuarioNome }) => ({
+          ordem,
+          usuarioId,
+          usuarioNome,
+        }))
+      : [],
   };
 }
 
@@ -72,10 +70,12 @@ export async function salvarFaixa(input: SalvarFaixaInput): Promise<RegraDto> {
       const obra = await tx.obra.findUnique({ where: { id: input.obraId }, select: { id: true } });
       if (!obra) throw new NaoEncontrado("Obra", "f");
 
-      const aprovadoresExistentes = await tx.usuario.count({
+      const aprovadores = await tx.usuario.findMany({
         where: { id: { in: niveis.map((nivel) => nivel.usuarioId) } },
+        select: { id: true, nome: true },
       });
-      if (aprovadoresExistentes !== niveis.length) throw new NaoEncontrado("Aprovador");
+      if (aprovadores.length !== niveis.length) throw new NaoEncontrado("Aprovador");
+      const nomePorId = new Map(aprovadores.map((usuario) => [usuario.id, usuario.nome]));
 
       if (input.id !== undefined) {
         const existente = await tx.regraAlcada.findUnique({
@@ -87,14 +87,15 @@ export async function salvarFaixa(input: SalvarFaixaInput): Promise<RegraDto> {
 
       const atuais = await tx.regraAlcada.findMany({
         where: { obraId: input.obraId },
-        include: { niveis: true },
+        include: { niveis: { include: { usuario: { select: { nome: true } } } } },
       });
 
+      // Nomes entram só para as mensagens de erro ("João já aprova pela faixa ...").
       const faixaEmEdicao: FaixaParaValidar = {
         id: input.id ?? null,
         minCents: input.minCents,
         maxCents: input.maxCents,
-        niveis,
+        niveis: niveis.map((nivel) => ({ ...nivel, nome: nomePorId.get(nivel.usuarioId) })),
       };
       const outras: FaixaParaValidar[] = atuais
         .filter((regra) => regra.id !== input.id)
@@ -102,7 +103,11 @@ export async function salvarFaixa(input: SalvarFaixaInput): Promise<RegraDto> {
           id: regra.id,
           minCents: regra.minCents,
           maxCents: regra.maxCents,
-          niveis: regra.niveis.map((nivel) => ({ ordem: nivel.ordem, usuarioId: nivel.usuarioId })),
+          niveis: regra.niveis.map((nivel) => ({
+            ordem: nivel.ordem,
+            usuarioId: nivel.usuarioId,
+            nome: nivel.usuario.nome,
+          })),
           rotulo: formatarFaixa(regra.minCents, regra.maxCents),
         }));
 

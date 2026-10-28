@@ -33,6 +33,11 @@ export type FaixaAplicavelDto = {
   valorCents: number;
   /** null quando nenhuma faixa da obra cobre o valor (decisão de produto 2). */
   faixa: RegraDto | null;
+  /**
+   * Cadeia acumulada: quem aprovaria um pedido nesse valor, na ordem (faixas abaixo
+   * primeiro, depois a aplicável). Vazia quando `faixa` é null.
+   */
+  cadeia: NivelDto[];
 };
 
 export type ItemPedidoDto = {

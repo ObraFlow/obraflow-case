@@ -6,7 +6,8 @@ export type FaixaParaValidar = {
   id: number | null;
   minCents: number;
   maxCents: number | null;
-  niveis: NivelAlcada[];
+  /** `nome` é opcional e só serve para a mensagem de aprovador repetido entre faixas. */
+  niveis: Array<NivelAlcada & { nome?: string }>;
   /** Texto já formatado para citar a faixa em mensagens ("R$ 0,00 a R$ 10.000,00"). Opcional. */
   rotulo?: string;
 };
@@ -46,12 +47,15 @@ export function validarLimites(faixa: FaixaParaValidar): void {
 }
 
 /**
- * Valida as faixas de UMA obra em conjunto (decisão de produto 3: sem sobreposição).
+ * Valida as faixas de UMA obra em conjunto: sem sobreposição (decisão de produto 3) e
+ * sem a mesma pessoa em duas faixas (decisão 1: a cadeia acumula as faixas de baixo,
+ * então alguém repetido aprovaria duas vezes o mesmo pedido).
  *
  * Recebe todas as faixas da obra, já incluindo a que está sendo criada ou editada
  * (a editada substitui a versão antiga, casada pelo `id`). Lança `FaixaSobreposta`
- * se dois intervalos cobrirem algum valor em comum. Buracos entre faixas são permitidos:
- * valor sem faixa é tratado na criação do pedido (decisão 2), não aqui.
+ * se dois intervalos cobrirem algum valor em comum e `FaixaInvalida` se um aprovador
+ * aparecer em duas faixas. Buracos entre faixas são permitidos: valor sem faixa é
+ * tratado na criação do pedido (decisão 2), não aqui.
  */
 export function validarFaixas(faixas: FaixaParaValidar[]): void {
   for (const faixa of faixas) {
@@ -73,6 +77,33 @@ export function validarFaixas(faixas: FaixaParaValidar[]): void {
         ? ` à faixa ${outra.rotulo}`
         : " a outra faixa já cadastrada para a obra";
       throw new FaixaSobreposta(`Esta faixa se sobrepõe${referencia}. Ajuste os limites de valor.`);
+    }
+  }
+
+  // Depois da sobreposição: o erro de limites é o mais fundamental e aparece primeiro.
+  validarAprovadorUnicoEntreFaixas(faixas);
+}
+
+/** Cada pessoa aparece em no máximo uma faixa da obra. Cita a faixa já cadastrada (com rótulo). */
+function validarAprovadorUnicoEntreFaixas(faixas: FaixaParaValidar[]): void {
+  for (let i = 0; i < faixas.length; i++) {
+    for (let j = i + 1; j < faixas.length; j++) {
+      const a = faixas[i];
+      const b = faixas[j];
+      const idsDeB = new Set(b.niveis.map((nivel) => nivel.usuarioId));
+      const repetido = a.niveis.find((nivel) => idsDeB.has(nivel.usuarioId));
+      if (!repetido) continue;
+
+      // A faixa em edição é a que não tem rótulo (o service rotula só as outras).
+      const outra = a.rotulo ? a : b;
+      const quem =
+        repetido.nome ??
+        b.niveis.find((nivel) => nivel.usuarioId === repetido.usuarioId)?.nome ??
+        "Este aprovador";
+      const onde = outra.rotulo ? ` pela faixa ${outra.rotulo}` : " por outra faixa desta obra";
+      throw new FaixaInvalida(
+        `${quem} já aprova${onde}. Na cadeia acumulada cada pessoa decide uma vez; remova de uma das faixas.`,
+      );
     }
   }
 }

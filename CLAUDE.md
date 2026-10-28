@@ -41,7 +41,7 @@ src/
     api/**/route.ts       REST fino: parse Zod → service → Response.json. _http.ts mapeia ErroDominio → status.
     (telas)/              layout (header com <Suspense> no "Agindo como"), aprovacoes, pedidos/novo, regras.
                           loading.tsx + error.tsx em cada rota.
-  components/             ui/ (shadcn) + layout/ aprovacoes/ pedidos/ regras/
+  components/             ui/ (shadcn) + layout/ alcada/ (CadeiaAlcada, compartilhado) aprovacoes/ pedidos/ regras/
 prisma/schema.prisma, prisma/seed.ts
 ```
 
@@ -69,7 +69,7 @@ Regra: UI nunca importa Prisma. Domain nunca importa nada. Services são o únic
 
 ## Decisões de produto (já tomadas — documentar no README, não reabrir)
 
-1. Cada faixa define sua cadeia completa e ordenada (não acumula com faixas inferiores).
+1. **Cadeia acumulada** (revisto em 28/10/2026): quem aprova um pedido são os aprovadores de todas as faixas da obra com mínimo abaixo da faixa aplicável, em ordem crescente de valor, e por fim os da própria faixa (enunciado: "João precisa aprovar primeiro. Só depois ... o Amanda"). Uma pessoa não pode estar em duas faixas da mesma obra (`validarFaixas`). `montarCadeia(faixas, faixaAplicavel)`; `niveisAcumulados` e `lib/cadeia.ts` dão a cadeia com nomes para tela e preview.
 2. Valor sem faixa aplicável: bloquear a criação no front e no back com mensagem clara indicando obra e valor.
 3. Faixas de uma mesma obra não podem se sobrepor — validado no service.
 4. Rejeição exige motivo (Zod + service), encerra o fluxo, pedido vira REJEITADO.
@@ -109,7 +109,7 @@ Regra: UI nunca importa Prisma. Domain nunca importa nada. Services são o únic
 - [ ] quantidade/preço inválido → erro no item, não envia
 - [ ] pedido sem itens → erro claro
 - [ ] obra/fornecedor/data/descrição vazios → erro no campo
-- [ ] nenhuma obra cadastrada → empty state
+- [x] nenhuma obra cadastrada → empty state (regras; repetir em pedidos/novo na Fase 6)
 - [x] API fora / 500 → estado de erro com retry (`error.tsx` + `ErroDeRota`; header com `LimiteDeErro`)
 - [ ] rejeitar sem motivo → validação antes do submit
 - [ ] cadeia concluída → botão desabilitado + explicação
@@ -124,8 +124,8 @@ Atualizado ao fim de cada fase (`/fim-de-fase`). Fases detalhadas em `docs/GUIA.
 - [x] Fase 2 — Domínio puro + testes: `src/domain/erros.ts`, `alcada/{tipos,resolverRegra,validarFaixas,montarCadeia,aplicarDecisao}.ts`, `pedido/calcularTotais.ts`, 78 testes Vitest.
 - [x] Fase 3 — Services, actions, API e cliente ky: `lib/schemas/*`, `lib/dto.ts`, `server/{dto,usuario-atual}.ts`, `server/services/{cadastros,regras,pedidos,decisoes}.ts`, `server/actions/*` (next-safe-action), `app/api/**` (+ `_http.ts`), `lib/api/*` (ky). API testada via curl: 201/200/400/404/409/422.
 - [x] Fase 4 — Layout e "Agindo como": `app/(telas)/layout.tsx`, `components/layout/{header,navegacao,agindo-como,seletor-agindo-como,contador-pendencias,limite-de-erro,erro-de-rota,skeleton-tabela}.tsx`, rotas `aprovacoes`, `pedidos/novo`, `regras` com `loading.tsx` + `error.tsx` (`retry`), `not-found.tsx`, redirect `/` → `/aprovacoes` em `next.config.ts`. Identidade "Canteiro" aplicada (`docs/design.md`, `globals.css`, Archivo).
-- [ ] Fase 5 — Tela de regras de alçada. **Próxima.**
-- [ ] Fase 6 — Tela de novo pedido.
+- [x] Fase 5 — Tela de regras: `app/(telas)/regras/page.tsx` (obra na URL, `connection()` antes de `listarRegras`), `components/regras/{seletor-obra,tabela-faixas,acoes-faixa,botao-nova-faixa,dialog-faixa,dialog-remover-faixa,simulador-alcada}.tsx`, `components/alcada/cadeia-alcada.tsx` (5 estados), `domain/alcada/encontrarLacunas.ts` (+8 testes), `lib/schemas/regra.ts` (`faixaFormSchema` + `paraSalvarFaixaInput`). Form: `useForm` + `useAction` com conversão explícita texto → centavos. Decisão 1 revista: cadeia acumulada (`niveisAcumulados`, `lib/cadeia.ts`, herdados em cinza na tabela).
+- [ ] Fase 6 — Tela de novo pedido. **Próxima.**
 - [ ] Fase 7 — Tela de aprovações.
 - [ ] Fase 8 — Estados, responsividade e revisão.
 - [ ] Fase 9 — README, screenshots e deploy.

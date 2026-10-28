@@ -31,9 +31,14 @@ export function centavosDeTexto(texto: string): number | null {
   return Math.round(reais * 100);
 }
 
-/** 123456 → "1234,56" (para preencher um input ao editar). */
+const formatadorDecimal = new Intl.NumberFormat("pt-BR", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+/** 1234567 → "12.345,67" (para preencher um input ao editar; `centavosDeTexto` lê de volta). */
 export function textoDeCentavos(cents: number): string {
-  return (cents / 100).toFixed(2).replace(".", ",");
+  return formatadorDecimal.format(cents / 100);
 }
 
 /**

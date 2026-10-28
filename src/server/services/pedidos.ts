@@ -53,7 +53,8 @@ export async function criarPedido(
     throw new SemFaixaAplicavel(obra.nome, formatarCentavos(totais.totalPedidoCents));
   }
 
-  const cadeia = montarCadeia(faixa);
+  // Cadeia acumulada: aprovadores das faixas abaixo, depois os da faixa aplicável (decisão 1).
+  const cadeia = montarCadeia(faixas, faixa);
 
   const criado = await prisma.pedido.create({
     data: {

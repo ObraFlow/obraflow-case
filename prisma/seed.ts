@@ -3,7 +3,7 @@
 //
 // O que fica no banco ao final:
 //   2 obras, 5 usuários, 2 fornecedores
-//   Obra 1: duas faixas (até R$ 10 mil → João; acima → João → Amanda)
+//   Obra 1: duas faixas (até R$ 10 mil → João; acima → Amanda, que acumula com João antes)
 //   Obra 2: faixa única sem teto (Carla → Beatriz)
 //   5 pedidos: pendente no step 0, pendente no step 1, aprovado (1 nível),
 //              aprovado (2 níveis) e rejeitado com motivo.
@@ -93,7 +93,9 @@ async function main() {
 
   // --- Regras de alçada -----------------------------------------------------
 
-  // Obra 1: até R$ 10.000,00 só o engenheiro residente; acima, ele e depois a diretora.
+  // Obra 1: até R$ 10.000,00 só o engenheiro residente; acima, a diretora entra depois dele.
+  // A cadeia acumula (decisão 1): a faixa alta cadastra só a Amanda, e a cadeia efetiva de um
+  // pedido acima de 10 mil é João (herdado da faixa baixa) e depois Amanda.
   const faixaBaixaResidencial = await prisma.regraAlcada.create({
     data: {
       obraId: residencial.id,
@@ -107,12 +109,7 @@ async function main() {
       obraId: residencial.id,
       minCents: 1_000_001,
       maxCents: null,
-      niveis: {
-        create: [
-          { ordem: 0, usuarioId: joao.id },
-          { ordem: 1, usuarioId: amanda.id },
-        ],
-      },
+      niveis: { create: [{ ordem: 0, usuarioId: amanda.id }] },
     },
   });
 

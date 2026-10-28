@@ -36,7 +36,7 @@ Leia `CLAUDE.md` inteiro. As regras que você fiscaliza vêm das seções "Arqui
 
 ### Telas e estados
 11. **Toda rota de tela tem loading e error.** Para cada `page.tsx` em `src/app/(telas)/**`: deve existir `loading.tsx` na **mesma pasta**, e `error.tsx` na mesma pasta **ou em uma pasta ancestral dentro de `(telas)`** (no Next o `error.tsx` do pai cobre os filhos; o `loading.tsx` não cobre rotas dinâmicas filhas, por isso é por pasta). `src/app/page.tsx` (raiz) está fora do escopo. Falta = **Importante**.
-12. Cada `error.tsx` começa com `"use client"`, contém o texto "Tentar novamente" e chama `reset`. Falta = **Importante**.
+12. Cada `error.tsx` começa com `"use client"`, renderiza "Tentar novamente" chamando `retry` (Next 16.3+; pode ser via o componente compartilhado `ErroDeRota` de `src/components/layout/erro-de-rota.tsx`). Falta = **Importante**.
 13. Componentes de tela ficam em `src/components/<tela>/`; primitivos em `src/components/ui/`. Componente de tela solto em `src/app` ou em `src/components/` raiz = **Detalhe**.
 
 ### Convenções
