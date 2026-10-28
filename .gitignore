@@ -1,4 +1,5 @@
 .ai-jail
+/docs/
 
 # Java / Maven
 backend/target/
