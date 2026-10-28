@@ -37,7 +37,7 @@ export type FaixaAplicavelDto = {
    * Cadeia acumulada: quem aprovaria um pedido nesse valor, na ordem (faixas abaixo
    * primeiro, depois a aplicável). Vazia quando `faixa` é null.
    */
-  cadeia: NivelDto[];
+  cadeia: Array<NivelDto & { herdado: boolean }>;
 };
 
 export type ItemPedidoDto = {

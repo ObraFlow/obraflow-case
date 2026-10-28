@@ -43,10 +43,11 @@ export async function obterFaixaAplicavel(
     valorCents,
     faixa,
     cadeia: faixa
-      ? cadeiaAcumulada(regras, faixa).map(({ ordem, usuarioId, usuarioNome }) => ({
+      ? cadeiaAcumulada(regras, faixa).map(({ ordem, usuarioId, usuarioNome, herdado }) => ({
           ordem,
           usuarioId,
           usuarioNome,
+          herdado,
         }))
       : [],
   };

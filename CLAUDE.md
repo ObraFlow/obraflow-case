@@ -106,10 +106,10 @@ Regra: UI nunca importa Prisma. Domain nunca importa nada. Services são o únic
 
 ## Checklist de validações exigidas (DESAFIO.md)
 
-- [ ] quantidade/preço inválido → erro no item, não envia
-- [ ] pedido sem itens → erro claro
-- [ ] obra/fornecedor/data/descrição vazios → erro no campo
-- [x] nenhuma obra cadastrada → empty state (regras; repetir em pedidos/novo na Fase 6)
+- [x] quantidade/preço inválido → erro no item, não envia (`pedidoFormSchema`, botão desabilitado)
+- [x] pedido sem itens → o último item não pode ser removido, com explicação; `itens.min(1)` no schema
+- [x] obra/fornecedor/data/descrição vazios → erro no campo
+- [x] nenhuma obra cadastrada → empty state (regras e pedidos/novo)
 - [x] API fora / 500 → estado de erro com retry (`error.tsx` + `ErroDeRota`; header com `LimiteDeErro`)
 - [ ] rejeitar sem motivo → validação antes do submit
 - [ ] cadeia concluída → botão desabilitado + explicação
@@ -125,8 +125,8 @@ Atualizado ao fim de cada fase (`/fim-de-fase`). Fases detalhadas em `docs/GUIA.
 - [x] Fase 3 — Services, actions, API e cliente ky: `lib/schemas/*`, `lib/dto.ts`, `server/{dto,usuario-atual}.ts`, `server/services/{cadastros,regras,pedidos,decisoes}.ts`, `server/actions/*` (next-safe-action), `app/api/**` (+ `_http.ts`), `lib/api/*` (ky). API testada via curl: 201/200/400/404/409/422.
 - [x] Fase 4 — Layout e "Agindo como": `app/(telas)/layout.tsx`, `components/layout/{header,navegacao,agindo-como,seletor-agindo-como,contador-pendencias,limite-de-erro,erro-de-rota,skeleton-tabela}.tsx`, rotas `aprovacoes`, `pedidos/novo`, `regras` com `loading.tsx` + `error.tsx` (`retry`), `not-found.tsx`, redirect `/` → `/aprovacoes` em `next.config.ts`. Identidade "Canteiro" aplicada (`docs/design.md`, `globals.css`, Archivo).
 - [x] Fase 5 — Tela de regras: `app/(telas)/regras/page.tsx` (obra na URL, `connection()` antes de `listarRegras`), `components/regras/{seletor-obra,tabela-faixas,acoes-faixa,botao-nova-faixa,dialog-faixa,dialog-remover-faixa,simulador-alcada}.tsx`, `components/alcada/cadeia-alcada.tsx` (5 estados), `domain/alcada/encontrarLacunas.ts` (+8 testes), `lib/schemas/regra.ts` (`faixaFormSchema` + `paraSalvarFaixaInput`). Form: `useForm` + `useAction` com conversão explícita texto → centavos. Decisão 1 revista: cadeia acumulada (`niveisAcumulados`, `lib/cadeia.ts`, herdados em cinza na tabela).
-- [ ] Fase 6 — Tela de novo pedido. **Próxima.**
-- [ ] Fase 7 — Tela de aprovações.
+- [x] Fase 6 — Tela de novo pedido: `app/(telas)/pedidos/novo/page.tsx`, `components/pedidos/{formulario-pedido,itens-pedido,preview-alcada}.tsx` + `use-preview-alcada.ts`, `lib/schemas/pedido.ts` (`pedidoFormSchema` + `paraCriarPedidoInput`), `lib/totais.ts` (totais de exibição via domínio). Preview da cadeia acumulada por ky; botão desabilitado com a frase do que falta; redirect para `/aprovacoes` com toast.
+- [ ] Fase 7 — Tela de aprovações. **Próxima.**
 - [ ] Fase 8 — Estados, responsividade e revisão.
 - [ ] Fase 9 — README, screenshots e deploy.
 - [ ] Fase 10 — PR e ensaio de entrevista.

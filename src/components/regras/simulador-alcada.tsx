@@ -95,7 +95,7 @@ export function SimuladorAlcada({ obraId }: { obraId: number }) {
                 setTentativa((atual) => atual + 1);
               }}
             >
-              Tentar de novo
+              Tentar novamente
             </Button>
           </div>
         )}
@@ -124,7 +124,7 @@ export function SimuladorAlcada({ obraId }: { obraId: number }) {
               <CadeiaAlcada
                 niveis={respostaAtual.resultado.cadeia.map((nivel) => ({
                   nome: nivel.usuarioNome,
-                  estado: "proximo",
+                  estado: nivel.herdado ? "herdado" : "proximo",
                 }))}
               />
             </div>
