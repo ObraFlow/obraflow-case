@@ -93,8 +93,9 @@ export class ValorExcedeLimite extends ErroDominio {
   }
 }
 
+/** Registro que não existe (ou não pertence ao contexto esperado). `genero` só ajusta a concordância. */
 export class NaoEncontrado extends ErroDominio {
-  constructor(oQue: string) {
-    super("NAO_ENCONTRADO", `${oQue} não encontrado.`);
+  constructor(oQue: string, genero: "m" | "f" = "m") {
+    super("NAO_ENCONTRADO", `${oQue} não ${genero === "f" ? "encontrada" : "encontrado"}.`);
   }
 }

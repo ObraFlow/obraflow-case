@@ -19,5 +19,6 @@ describe("erros de domínio", () => {
 
   it("NaoEncontrado monta a mensagem a partir do que faltou", () => {
     expect(new NaoEncontrado("Pedido").message).toBe("Pedido não encontrado.");
+    expect(new NaoEncontrado("Faixa", "f").message).toBe("Faixa não encontrada.");
   });
 });

@@ -28,12 +28,13 @@ src/
                           DecisaoForaDeOrdem, ConflitoDeDecisao, MotivoObrigatorio, QuantidadeInvalida, PrecoInvalido, ValorExcedeLimite, NaoEncontrado)
   lib/                    COMPARTILHADO client/server. Sem Prisma.
     schemas/              Zod por caso de uso (CriarPedidoInput, DecisaoInput, SalvarFaixaInput...)
-    money.ts              centavos ↔ BRL
+    dto.ts                TIPOS de saída (PedidoResumo, PedidoDetalhe, RegraDto, FaixaAplicavelDto). Client importa daqui.
+    money.ts              centavos ↔ BRL, formatarFaixa
     api/                  cliente ky (client.ts) + funções tipadas para client components lerem /api
   server/                 SÓ SERVER.
     prisma.ts             singleton PrismaClient (adapter pg). Só services e o seed importam daqui.
-    usuario-atual.ts      lê o cookie "agindo-como" (cookies() é async)
-    dto.ts                tipos de saída (PedidoResumo, PedidoDetalhe, RegraDto) + mappers Prisma → DTO
+    usuario-atual.ts      lê/grava o cookie "agindo-como" (cookies() é async)
+    dto.ts                mappers Prisma → DTO + `include`s canônicos. Re-exporta os tipos de lib/dto.ts.
     services/             CASOS DE USO. Única camada que escreve. $transaction aqui. Sempre devolvem DTO.
     actions/              next-safe-action. client.ts = actionClient (handleServerError) + actionComUsuario
   app/
@@ -50,7 +51,7 @@ prisma/schema.prisma, prisma/seed.ts
 - Usuário muda algo → **server action via `next-safe-action`** + `revalidatePath`.
 - Client component lê algo em reação a interação (preview da faixa, filtro) → **`ky` → `GET /api/...`**. O mesmo endpoint é a API documentada.
 
-**Erros:** `domain` lança `ErroDominio`; services deixam propagar; `handleServerError` traduz para mensagem pt-BR na action; `_http.ts` traduz para status na API (422 sem faixa, 409 conflito/ordem/sobreposição, 404). Nada de `try/catch` que engole erro de domínio.
+**Erros:** `domain` lança `ErroDominio`; services deixam propagar; `handleServerError` traduz para mensagem pt-BR na action; `_http.ts` traduz para status na API (422 sem faixa, 409 conflito/ordem/sobreposição, 404). Nada de `try/catch` que engole erro de domínio. Duas exceções intencionais fora da hierarquia, por serem erros de transporte e não de negócio: `UsuarioNaoSelecionado` (cookie ausente, em `actions/client.ts`) e `CorpoInvalido` (JSON malformado, em `api/_http.ts`); ambas já são traduzidas onde nascem.
 
 **Fronteira RSC → client:** nunca passar `Decimal` nem `Date`. Services devolvem DTO (`quantidade: string`, datas ISO, `*Cents: number`).
 
@@ -121,8 +122,8 @@ Atualizado ao fim de cada fase (`/fim-de-fase`). Fases detalhadas em `docs/GUIA.
 - [x] Fase 0 — Setup: scaffold Next 16, Prisma 7 + Postgres (docker), Zod, shadcn, Vitest, Prettier/ESLint/husky, skills e agentes, `docs/ARQUITETURA.md`.
 - [x] Fase 1 — Modelagem do banco: `prisma/schema.prisma` (8 tabelas, 2 enums), migration `inicial`, `src/server/prisma.ts` (singleton + adapter pg), `src/lib/money.ts`, `prisma/seed.ts` (2 obras, 5 usuários, 3 faixas, 5 pedidos em todos os estados).
 - [x] Fase 2 — Domínio puro + testes: `src/domain/erros.ts`, `alcada/{tipos,resolverRegra,validarFaixas,montarCadeia,aplicarDecisao}.ts`, `pedido/calcularTotais.ts`, 78 testes Vitest.
-- [ ] Fase 3 — Services, actions (next-safe-action), API REST e cliente ky. **Próxima.**
-- [ ] Fase 4 — Layout e seletor "Agindo como".
+- [x] Fase 3 — Services, actions, API e cliente ky: `lib/schemas/*`, `lib/dto.ts`, `server/{dto,usuario-atual}.ts`, `server/services/{cadastros,regras,pedidos,decisoes}.ts`, `server/actions/*` (next-safe-action), `app/api/**` (+ `_http.ts`), `lib/api/*` (ky). API testada via curl: 201/200/400/404/409/422.
+- [ ] Fase 4 — Layout e seletor "Agindo como". **Próxima.**
 - [ ] Fase 5 — Tela de regras de alçada.
 - [ ] Fase 6 — Tela de novo pedido.
 - [ ] Fase 7 — Tela de aprovações.
