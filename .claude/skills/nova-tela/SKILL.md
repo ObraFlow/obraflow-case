@@ -17,7 +17,7 @@ Siga a ordem. Cada passo cita a regra do `CLAUDE.md` que ele cumpre.
 ## 1. Página (Server Component)
 
 `src/app/(telas)/<rota>/page.tsx`
-- `async function Page()`; lê dados chamando o service diretamente (sem fetch para a própria API).
+- `async function Page()`; lê dados chamando o service diretamente (sem fetch para a própria API). Leitura sem cache (pedidos, regras) vem depois de `await connection()` de `next/server`, dentro do `<Suspense>` (ver CLAUDE.md > Next 16).
 - Lê o usuário "Agindo como" do cookie via helper em `src/server/` (nunca direto na UI).
 - Passa dados **serializáveis** para componentes client: `Decimal` → string, `Date` → ISO string, centavos como `number`.
 - Sem `"use client"` aqui.
@@ -25,7 +25,7 @@ Siga a ordem. Cada passo cita a regra do `CLAUDE.md` que ele cumpre.
 ## 2. Estados da rota
 
 - `loading.tsx`: `Skeleton` com o mesmo formato da tabela/formulário da tela.
-- `error.tsx`: `"use client"`, recebe `{ error, reset }`, mostra mensagem em pt-BR e botão "Tentar novamente" chamando `reset()`.
+- `error.tsx`: `"use client"`, recebe `{ error, retry }` (Next 16.3+; `reset` só limpa o estado sem rebuscar) e usa o componente compartilhado `ErroDeRota` de `src/components/layout/erro-de-rota.tsx`, que mostra mensagem em pt-BR e o botão "Tentar novamente" chamando `retry()`.
 - Empty state dentro do componente de lista, não em arquivo separado.
 
 ## 3. Componentes de tela

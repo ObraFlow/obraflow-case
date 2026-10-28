@@ -55,7 +55,7 @@ prisma/schema.prisma, prisma/seed.ts
 
 **Fronteira RSC → client:** nunca passar `Decimal` nem `Date`. Services devolvem DTO (`quantidade: string`, datas ISO, `*Cents: number`).
 
-**Next 16 com `cacheComponents`:** toda leitura de cookie/banco fica dentro de um `<Suspense>` (`loading.tsx` cobre a página; o header precisa do seu próprio). Cadastros (obras, usuários, fornecedores) com `"use cache"` + `cacheLife` + `cacheTag("cadastros")`; pedidos e regras sem cache. Nunca `cookies()` dentro de `"use cache"`.
+**Next 16 com `cacheComponents`:** toda leitura de cookie/banco fica dentro de um `<Suspense>` (`loading.tsx` cobre a página; o header precisa do seu próprio). Cadastros (obras, usuários, fornecedores) com `"use cache"` + `cacheLife` + `cacheTag("cadastros")`; pedidos e regras sem cache. Nunca `cookies()` dentro de `"use cache"`. **Leitura sem cache em RSC (pedidos, regras) vem depois de `await connection()`** (`next/server`): com `partialPrefetching` o cookie entra no App Shell e a consulta rodaria no prerender, que rejeita o `crypto` que o `pg` usa ao abrir conexão (`blocking-prerender-crypto`). Ver `ContadorPendencias`.
 
 Regra: UI nunca importa Prisma. Domain nunca importa nada. Services são o único ponto de escrita e nunca vazam tipos do Prisma. Sem camada de repositório sobre o Prisma (decisão consciente, ver ARQUITETURA.md §4).
 
@@ -110,7 +110,7 @@ Regra: UI nunca importa Prisma. Domain nunca importa nada. Services são o únic
 - [ ] pedido sem itens → erro claro
 - [ ] obra/fornecedor/data/descrição vazios → erro no campo
 - [ ] nenhuma obra cadastrada → empty state
-- [ ] API fora / 500 → estado de erro com retry
+- [x] API fora / 500 → estado de erro com retry (`error.tsx` + `ErroDeRota`; header com `LimiteDeErro`)
 - [ ] rejeitar sem motivo → validação antes do submit
 - [ ] cadeia concluída → botão desabilitado + explicação
 - [ ] loading em toda lista
@@ -123,8 +123,8 @@ Atualizado ao fim de cada fase (`/fim-de-fase`). Fases detalhadas em `docs/GUIA.
 - [x] Fase 1 — Modelagem do banco: `prisma/schema.prisma` (8 tabelas, 2 enums), migration `inicial`, `src/server/prisma.ts` (singleton + adapter pg), `src/lib/money.ts`, `prisma/seed.ts` (2 obras, 5 usuários, 3 faixas, 5 pedidos em todos os estados).
 - [x] Fase 2 — Domínio puro + testes: `src/domain/erros.ts`, `alcada/{tipos,resolverRegra,validarFaixas,montarCadeia,aplicarDecisao}.ts`, `pedido/calcularTotais.ts`, 78 testes Vitest.
 - [x] Fase 3 — Services, actions, API e cliente ky: `lib/schemas/*`, `lib/dto.ts`, `server/{dto,usuario-atual}.ts`, `server/services/{cadastros,regras,pedidos,decisoes}.ts`, `server/actions/*` (next-safe-action), `app/api/**` (+ `_http.ts`), `lib/api/*` (ky). API testada via curl: 201/200/400/404/409/422.
-- [ ] Fase 4 — Layout e seletor "Agindo como". **Próxima.**
-- [ ] Fase 5 — Tela de regras de alçada.
+- [x] Fase 4 — Layout e "Agindo como": `app/(telas)/layout.tsx`, `components/layout/{header,navegacao,agindo-como,seletor-agindo-como,contador-pendencias,limite-de-erro,erro-de-rota,skeleton-tabela}.tsx`, rotas `aprovacoes`, `pedidos/novo`, `regras` com `loading.tsx` + `error.tsx` (`retry`), `not-found.tsx`, redirect `/` → `/aprovacoes` em `next.config.ts`. Identidade "Canteiro" aplicada (`docs/design.md`, `globals.css`, Archivo).
+- [ ] Fase 5 — Tela de regras de alçada. **Próxima.**
 - [ ] Fase 6 — Tela de novo pedido.
 - [ ] Fase 7 — Tela de aprovações.
 - [ ] Fase 8 — Estados, responsividade e revisão.

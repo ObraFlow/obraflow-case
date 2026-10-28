@@ -112,7 +112,8 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    /* Corpo 14px / 1.4 (docs/design.md > Tipografia). */
+    @apply bg-background text-sm leading-[1.4] text-foreground;
   }
   html {
     @apply font-sans;

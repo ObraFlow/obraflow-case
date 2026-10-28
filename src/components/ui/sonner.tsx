@@ -34,7 +34,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }
       toastOptions={{
         classNames: {
-          toast: "cn-toast",
+          // Sem sombra (docs/design.md); erro se distingue por borda e texto, não só pelo ícone.
+          toast: "cn-toast shadow-none!",
+          error: "border-rejeitado text-rejeitado-texto-escuro",
         },
       }}
       {...props}

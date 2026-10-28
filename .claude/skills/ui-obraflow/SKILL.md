@@ -45,7 +45,7 @@ Cores, acento, tipografia, espaçamento, raio e sombra **não são definidos aqu
 
 - **Loading**: `loading.tsx` com `Skeleton` no **mesmo formato** da tabela ou do formulário (mesmo número de colunas, 5–8 linhas). Nada de três retângulos genéricos.
 - **Empty**: uma frase dizendo o que não existe e uma ação quando fizer sentido ("Nenhuma regra para esta obra. Criar primeira faixa"). Sem ilustração.
-- **Erro**: `error.tsx` com a mensagem e botão "Tentar novamente" (`reset()`). Erro de server action vira toast (`sonner`) com a mensagem específica do service.
+- **Erro**: `error.tsx` com a mensagem e botão "Tentar novamente" (`retry()`, que no Next 16.3+ refaz a busca; `reset` só limpa o estado). Pedaços de layout que leem banco (header) ficam dentro de um error boundary próprio (`LimiteDeErro`) para não derrubar a navegação. Erro de server action vira toast (`sonner`) com a mensagem específica do service.
 - **Desabilitado**: todo botão desabilitado tem explicação textual visível (não só tooltip).
 
 ## Microcopy em pt-BR
