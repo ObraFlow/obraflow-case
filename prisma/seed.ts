@@ -1,4 +1,4 @@
-// Dados de demonstração. Rodar com `npm run db:seed` (prisma db seed → tsx prisma/seed.ts).
+// Dados de demonstração. Rodar com `npm run db:seed` (prisma db seed → tsx prisma/seed.ts; o CLI carrega o .env).
 // Apaga tudo e recria, com ids reiniciados, para a demo sempre começar igual.
 //
 // O que fica no banco ao final:
@@ -7,11 +7,6 @@
 //   Obra 2: faixa única sem teto (Carla → Beatriz)
 //   5 pedidos: pendente no step 0, pendente no step 1, aprovado (1 nível),
 //              aprovado (2 níveis) e rejeitado com motivo.
-
-// Quando rodado fora do Prisma CLI (ex.: `npx tsx prisma/seed.ts`), o .env não está carregado.
-try {
-  process.loadEnvFile();
-} catch {}
 
 import { prisma } from "../src/server/prisma";
 

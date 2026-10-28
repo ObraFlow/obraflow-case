@@ -24,8 +24,8 @@ src/
   domain/                 NÚCLEO. Zero imports de next/prisma/fs. Testado no Vitest.
     alcada/               tipos, resolverRegra, montarCadeia, aplicarDecisao, validarFaixas (+ *.test.ts)
     pedido/               calcularTotais (centavos)
-    erros.ts              ErroDominio + subclasses com `codigo` (SemFaixaAplicavel, FaixaSobreposta,
-                          DecisaoForaDeOrdem, ConflitoDeDecisao, NaoEncontrado)
+    erros.ts              ErroDominio + subclasses com `codigo` (SemFaixaAplicavel, FaixaSobreposta, FaixaInvalida,
+                          DecisaoForaDeOrdem, ConflitoDeDecisao, MotivoObrigatorio, QuantidadeInvalida, PrecoInvalido, ValorExcedeLimite, NaoEncontrado)
   lib/                    COMPARTILHADO client/server. Sem Prisma.
     schemas/              Zod por caso de uso (CriarPedidoInput, DecisaoInput, SalvarFaixaInput...)
     money.ts              centavos ↔ BRL
@@ -119,9 +119,9 @@ Regra: UI nunca importa Prisma. Domain nunca importa nada. Services são o únic
 Atualizado ao fim de cada fase (`/fim-de-fase`). Fases detalhadas em `docs/GUIA.md`.
 
 - [x] Fase 0 — Setup: scaffold Next 16, Prisma 7 + Postgres (docker), Zod, shadcn, Vitest, Prettier/ESLint/husky, skills e agentes, `docs/ARQUITETURA.md`.
-- [ ] Fase 1 — Modelagem do banco: `schema.prisma`, migration inicial, `lib/money.ts`, `prisma/seed.ts`. **Em andamento.**
-- [ ] Fase 2 — Domínio puro + testes (`src/domain`).
-- [ ] Fase 3 — Services, actions (next-safe-action), API REST e cliente ky.
+- [x] Fase 1 — Modelagem do banco: `prisma/schema.prisma` (8 tabelas, 2 enums), migration `inicial`, `src/server/prisma.ts` (singleton + adapter pg), `src/lib/money.ts`, `prisma/seed.ts` (2 obras, 5 usuários, 3 faixas, 5 pedidos em todos os estados).
+- [x] Fase 2 — Domínio puro + testes: `src/domain/erros.ts`, `alcada/{tipos,resolverRegra,validarFaixas,montarCadeia,aplicarDecisao}.ts`, `pedido/calcularTotais.ts`, 78 testes Vitest.
+- [ ] Fase 3 — Services, actions (next-safe-action), API REST e cliente ky. **Próxima.**
 - [ ] Fase 4 — Layout e seletor "Agindo como".
 - [ ] Fase 5 — Tela de regras de alçada.
 - [ ] Fase 6 — Tela de novo pedido.
