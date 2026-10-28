@@ -1,0 +1,50 @@
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #202b25;
+  background: #f6f7f4;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-optical-sizing: auto;
+  font-weight: 400;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; min-height: 100vh; }
+button, a { font: inherit; }
+.shell { display: flex; flex-direction: column; min-height: 100vh; padding: 28px clamp(24px, 7vw, 104px) 24px; }
+.topbar { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e4e8e2; padding-bottom: 21px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: #24332a; font-size: 20px; font-weight: 800; letter-spacing: -1px; text-decoration: none; }
+.brand-mark { display: grid; width: 31px; height: 31px; place-items: center; border-radius: 10px 10px 10px 3px; background: #235d42; color: #fff; font-size: 18px; }
+.brand-accent { color: #52936d; }
+.product-label, footer { color: #748078; font-size: 10px; font-weight: 700; letter-spacing: 1.7px; }
+.product-label span, footer span { color: #a2b1a6; padding: 0 4px; }
+.welcome { width: min(100%, 700px); margin: auto; padding: 80px 0 96px; }
+.eyebrow { margin: 0 0 20px; color: #48825f; font-size: 11px; font-weight: 700; letter-spacing: 2px; }
+h1 { margin: 0; font-size: clamp(42px, 7vw, 72px); line-height: 1.08; letter-spacing: -4px; }
+h1 span { color: #588166; }
+.intro { margin: 23px 0 36px; color: #68756d; font-size: 16px; line-height: 1.7; }
+.status-card { display: flex; align-items: center; gap: 14px; max-width: 600px; min-height: 78px; padding: 17px 20px; border: 1px solid #e1e7e0; border-radius: 12px; background: #fff; box-shadow: 0 8px 24px #1e3e2910; }
+.status-indicator { width: 10px; height: 10px; flex: 0 0 auto; border-radius: 50%; background: #d9a343; box-shadow: 0 0 0 4px #d9a34322; }
+.status-indicator.online { background: #39835a; box-shadow: 0 0 0 4px #39835a22; }
+.status-indicator.offline { background: #c55849; box-shadow: 0 0 0 4px #c5584922; }
+.status-copy { display: flex; flex: 1; flex-direction: column; gap: 3px; }
+.status-copy strong { font-size: 13px; font-weight: 700; }
+.status-copy span { color: #748078; font-size: 12px; line-height: 1.5; }
+.retry-button { padding: 9px 12px; border: 1px solid #d8e3db; border-radius: 7px; background: #f5f8f5; color: #285e40; cursor: pointer; font-size: 12px; font-weight: 700; }
+.retry-button:hover { background: #e9f1eb; }
+.retry-button:focus-visible, .brand:focus-visible { outline: 3px solid #76a889; outline-offset: 3px; }
+footer { border-top: 1px solid #e4e8e2; padding-top: 18px; }
+@media (max-width: 520px) {
+  .shell { padding: 22px 20px; }
+  .product-label { font-size: 8px; letter-spacing: 1px; }
+  .welcome { padding: 64px 0 78px; }
+  h1 { letter-spacing: -2.5px; }
+  .status-card { align-items: flex-start; }
+  .retry-button { align-self: center; }
+}
+@media (max-width: 390px) {
+  .status-card { flex-wrap: wrap; }
+  .retry-button { margin-left: 24px; }
+}

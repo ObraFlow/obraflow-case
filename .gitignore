@@ -1,0 +1,18 @@
+.ai-jail
+/docs/
+
+# Java / Maven
+backend/target/
+*.class
+
+# Vue / Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Local environment and IDE files
+.env
+.idea/
+.vscode/
+*.iml
+.DS_Store
