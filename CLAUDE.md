@@ -101,7 +101,7 @@ Regra: UI nunca importa Prisma. Domain nunca importa nada. Services são o únic
 - Terminal do João é PowerShell 5.1: comandos sugeridos vão **um por bloco**, sem `&&`.
 - Antes de usar API do Next, leia o doc local indicado pela skill `next16`. Antes de criar tela, leia a skill `ui-obraflow` (ou use `/nova-tela`).
 - Ao terminar uma tela, rode o agente `critico-visual` na rota. Ao fechar uma fase, use `/fim-de-fase`.
-- Identidade visual (cores, tipos) ainda **não** está definida: até existir `design.md`, defaults neutros do shadcn, sem inventar.
+- Identidade visual definida em `docs/design.md` ("Canteiro", 28/10/2026) e implementada como tokens em `src/app/globals.css` (Archivo via `next/font`, raio 2px, classes `bg-sinalizacao`, `text-aprovado`, `bg-rejeitado-fundo`...). Amarelo **só** onde o usuário atual precisa agir. Animação só em resposta a ação, com os keyframes já definidos no `globals.css`. Sem modo escuro.
 - Atualize `README.md > ## Decisões técnicas` quando uma decisão nova for tomada.
 
 ## Checklist de validações exigidas (DESAFIO.md)
