@@ -187,3 +187,46 @@ IA é permitida — mas você precisará explicar cada decisão na entrevista de
 **Jonathan Bispo**  
 WhatsApp: [+55 71 99204-4335](https://wa.me/5571992044335)  
 E-mail: [contrato@obraflow.io](mailto:contrato@obraflow.io)
+
+## Desenvolvimento local
+
+### Pré-requisitos
+
+- Java 21;
+- Node.js 22.12+ e npm;
+- Docker com Docker Compose.
+
+### Iniciar os serviços
+
+Na raiz do repositório, prepare as variáveis locais e inicie o PostgreSQL:
+
+```bash
+cp .env.example .env
+docker compose up -d db
+```
+
+Inicie a API em outro terminal. O Maven Wrapper baixa a versão do Maven definida pelo projeto; a primeira execução também baixa as dependências:
+
+```bash
+set -a; source .env; set +a
+./mvnw -f backend/pom.xml spring-boot:run
+```
+
+O backend executa as migrações Flyway automaticamente ao iniciar. Em seguida, instale as dependências do frontend e inicie o Vite:
+
+```bash
+cd frontend
+npm ci
+npm run dev
+```
+
+Abra <http://localhost:5173>. A página inicial mostra se a API e o PostgreSQL estão acessíveis. O endpoint `GET http://localhost:8080/api/health` retorna o estado de ambos. O endpoint `GET http://localhost:8080/actuator/health` também está disponível para inspeção operacional.
+
+Para gerar a versão de produção do frontend:
+
+```bash
+cd frontend
+npm run build
+```
+
+As portas, credenciais locais e endereços podem ser ajustados no `.env`; no terminal do backend, carregue as variáveis com `set -a; source .env; set +a`. Use apenas valores de desenvolvimento. O arquivo `.env.example` contém os nomes e valores iniciais dessas configurações.
