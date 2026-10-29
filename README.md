@@ -26,12 +26,34 @@ Sistema de pedidos de compra para obras, com aprovação em sequência definida 
 
 Tudo roda localmente, sem serviços pagos.
 
-**Pré-requisitos:** Node.js 22+, pnpm 10+ e Docker (para o PostgreSQL).
+### Opção 1: tudo no Docker (recomendado)
 
-**1. Banco de dados** (PostgreSQL 18 na porta **5433**, para não conflitar com um Postgres local na 5432):
+**Pré-requisito:** Docker.
 
 ```bash
-docker compose up -d
+docker compose up --build
+```
+
+Abra **http://localhost:8080** e escolha um usuário. O Swagger fica em **http://localhost:8080/api/docs**.
+
+Sobem três containers:
+
+| Container | O que faz |
+|---|---|
+| `db` | PostgreSQL 18 (também exposto na porta **5433** do host, para não conflitar com um Postgres local na 5432) |
+| `api` | Aplica as migrations, carrega os dados de demonstração **só se o banco estiver vazio** e inicia a API. Reiniciar não apaga o que foi criado. |
+| `web` | Front-end compilado, servido pelo nginx, que também encaminha `/api` para a API. Assim, como no proxy do Vite, o cookie de sessão é da mesma origem. |
+
+Para voltar aos dados de demonstração: `docker compose down -v` (apaga o volume do banco) e `docker compose up` de novo.
+
+### Opção 2: desenvolvimento (com hot reload)
+
+**Pré-requisitos:** Node.js 22+, pnpm 10+ e Docker (para o PostgreSQL).
+
+**1. Banco de dados:**
+
+```bash
+docker compose up -d db
 ```
 
 **2. API** (NestJS, porta 3000):
@@ -53,7 +75,7 @@ pnpm install
 pnpm dev
 ```
 
-Abra **http://localhost:5173** e escolha um usuário. A documentação interativa da API (Swagger) fica em **http://localhost:3000/api/docs**.
+Abra **http://localhost:5173**. O Swagger fica em **http://localhost:3000/api/docs**.
 
 | Comando | Onde | O que faz |
 |---|---|---|
@@ -168,7 +190,7 @@ web/                    React + Vite
     features/           orders, tiers, session, catalog (organizado por funcionalidade)
     components/         layout, estados (loading/empty/erro), componentes compartilhados
     lib/                cliente HTTP, dinheiro, formatação
-docker-compose.yml      PostgreSQL
+docker-compose.yml      PostgreSQL, API e front-end (nginx)
 ```
 
 Código em inglês; interface e documentação em português.
@@ -311,5 +333,5 @@ pnpm --dir web test
 - **Delegação e prazos:** substituto em férias, escalonamento quando uma etapa fica parada.
 - **Testes automatizados de integração e e2e** (API com banco real e Playwright no front) rodando em CI, junto com lint, build e migrations.
 - **Observabilidade:** logs estruturados, métricas e tracing; alertas no health.
-- **Infraestrutura:** imagens Docker da API e do front, migrations aplicadas no deploy, backups do banco, rate limiting.
+- **Infraestrutura:** imagem da API em dois estágios (sem dependências de desenvolvimento, migrations como passo separado do deploy em vez de no início do container), HTTPS com `NODE_ENV=production` (cookie `Secure`), segredos fora do compose, backups do banco, rate limiting.
 - **Idempotência com expiração** das chaves e respostas tipadas no OpenAPI, para gerar o cliente do front automaticamente.
