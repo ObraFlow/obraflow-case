@@ -3,7 +3,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 /** Mesmo formato do detalhe: cabeçalho, faixa de decisão, tabela de itens e timeline. */
 export default function Loading() {
   return (
-    <div className="flex flex-col gap-5" aria-busy="true" aria-label="Carregando pedido">
+    <div
+      role="status"
+      className="flex flex-col gap-5"
+      aria-busy="true"
+      aria-label="Carregando pedido"
+    >
       <div className="flex flex-col gap-3">
         <Skeleton className="h-4 w-40 rounded-sm" />
         <div className="flex flex-wrap items-end justify-between gap-3">

@@ -1,5 +1,4 @@
 import { lerCorpo, lerId, ok, tratarErros } from "@/app/api/_http";
-import type { Decisao } from "@/domain/alcada/tipos";
 import { decisaoApiSchema } from "@/lib/schemas/decisao";
 import { registrarDecisao } from "@/server/services/decisoes";
 
@@ -13,9 +12,8 @@ type Contexto = { params: Promise<{ id: string }> };
 export function POST(request: Request, contexto: Contexto) {
   return tratarErros(async () => {
     const { id } = await contexto.params;
+    // O corpo validado já tem a forma de `Decisao` (`tipo` e, na rejeição, `motivo`).
     const corpo = await lerCorpo(request, decisaoApiSchema);
-    const decisao: Decisao =
-      corpo.tipo === "APROVAR" ? { tipo: "APROVAR" } : { tipo: "REJEITAR", motivo: corpo.motivo };
-    return ok(await registrarDecisao(lerId(id), decisao, corpo.usuarioId));
+    return ok(await registrarDecisao(lerId(id), corpo, corpo.usuarioId));
   });
 }

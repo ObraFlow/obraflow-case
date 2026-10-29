@@ -4,11 +4,15 @@
 import { z } from "zod";
 import { MAX_CENTS } from "@/domain/pedido/calcularTotais";
 
+/** Ids são `Int` (32 bits) no banco: acima disto não é um id, e o Prisma recusaria a consulta. */
+export const MAX_ID = 2_147_483_647;
+
 /** Id de banco (Int autoincrement). Aceita número ou texto numérico (vem de <select> e de query string). */
 export const idSchema = z.coerce
   .number({ error: "Selecione uma opção." })
   .int("Id inválido.")
-  .positive("Selecione uma opção.");
+  .positive("Selecione uma opção.")
+  .max(MAX_ID, "Id inválido.");
 
 /** Dinheiro em centavos inteiros, zero ou positivo, dentro do `Int` do banco. */
 export const centavosSchema = z
@@ -24,14 +28,18 @@ export const dataSchema = z.iso.date({
 });
 
 /**
- * Quantidade como texto decimal ("150", "2,5", "0.750"): até 9 dígitos inteiros e 3 casas.
+ * Formato de quantidade: até 9 dígitos inteiros e 3 casas, com vírgula ou ponto. É o mesmo
+ * limite de `quantidadeParaMilesimos` no domínio (Decimal(12,3) no banco); form, schema da
+ * action e totais de exibição usam esta constante para não divergirem.
+ */
+export const REGEX_QUANTIDADE = /^\d{1,9}([.,]\d{1,3})?$/;
+
+/**
+ * Quantidade como texto decimal ("150", "2,5", "0.750").
  * O domínio (`quantidadeParaMilesimos`) faz a conversão; aqui só barramos o formato cedo.
  */
 export const quantidadeSchema = z
   .string({ error: "Informe a quantidade." })
   .trim()
-  .regex(
-    /^\d{1,9}([.,]\d{1,3})?$/,
-    "Quantidade deve ser um número positivo com até 3 casas decimais.",
-  )
+  .regex(REGEX_QUANTIDADE, "Quantidade deve ser um número positivo com até 3 casas decimais.")
   .refine((texto) => Number(texto.replace(",", ".")) > 0, "Quantidade deve ser maior que zero.");

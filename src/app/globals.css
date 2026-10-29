@@ -194,6 +194,26 @@
   }
 }
 
+/* Linha que acabou de entrar ou mudar por ação do usuário (item adicionado, faixa salva).
+   Duas variantes idênticas, como no pulso: alternar o nome reinicia a animação na mesma linha. */
+@keyframes linha-entra-a {
+  0% {
+    background-color: var(--muted);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes linha-entra-b {
+  0% {
+    background-color: var(--muted);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -231,4 +251,10 @@
 }
 .anima-linha-pulsa-b {
   animation: linha-pulsa-b 900ms ease-out forwards;
+}
+.anima-linha-entra-a {
+  animation: linha-entra-a 450ms ease-out;
+}
+.anima-linha-entra-b {
+  animation: linha-entra-b 450ms ease-out;
 }

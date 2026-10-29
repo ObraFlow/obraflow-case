@@ -3,7 +3,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 /** Mesmo formato da lista: título, abas e tabela de pedidos com 6 linhas. */
 export default function Loading() {
   return (
-    <div className="flex flex-col gap-5" aria-busy="true" aria-label="Carregando aprovações">
+    <div
+      role="status"
+      className="flex flex-col gap-5"
+      aria-busy="true"
+      aria-label="Carregando aprovações"
+    >
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold tracking-[-0.015em]">Aprovações</h1>
         <Skeleton className="h-4 w-64 rounded-sm" />

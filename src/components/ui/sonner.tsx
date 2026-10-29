@@ -1,6 +1,5 @@
 "use client";
 
-import { useTheme } from "next-themes";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
 import {
   CircleCheckIcon,
@@ -10,12 +9,12 @@ import {
   Loader2Icon,
 } from "lucide-react";
 
+// Tema fixo: o produto não tem modo escuro (docs/design.md). Sem isso o sonner seguiria o
+// sistema operacional e mostraria toasts escuros em uma tela clara.
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme();
-
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme="light"
       className="toaster group"
       icons={{
         success: <CircleCheckIcon className="size-4" />,

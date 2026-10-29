@@ -32,12 +32,16 @@ export function SeletorAgindoComo({
 
   return (
     <div className="flex items-center gap-2">
-      {/* No celular o rótulo fica só para leitor de tela, para o seletor caber ao lado da marca. */}
+      {/* No celular o rótulo encurta para "Como", para o seletor caber ao lado da marca;
+          o nome completo continua para o leitor de tela. */}
       <label
         htmlFor="agindo-como"
-        className="text-sm whitespace-nowrap text-white/75 max-sm:sr-only"
+        className="text-sm whitespace-nowrap text-white/75 max-sm:text-xs"
       >
-        Agindo como
+        <span className="sm:hidden" aria-hidden="true">
+          Como
+        </span>
+        <span className="max-sm:sr-only">Agindo como</span>
       </label>
       <select
         key={`${usuarioAtualId ?? "nenhum"}-${tentativasComErro}`}

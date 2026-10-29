@@ -120,6 +120,9 @@ export function FormularioPedido({
   else if (preview.estado === "carregando") faltando = "Verificando a alçada…";
   else if (preview.estado === "erro") faltando = "Não foi possível verificar a alçada.";
   else if (!temFaixa) faltando = "Sem faixa de alçada para este valor.";
+  // O resolver valida de forma assíncrona: por um instante `isValid` é false sem erro
+  // apontado. O botão fica desabilitado nesse instante, então a frase também precisa existir.
+  else if (!isValid) faltando = "Conferindo os campos…";
 
   const podeEnviar = faltando === null && isValid && !isPending;
 
@@ -207,11 +210,14 @@ export function FormularioPedido({
         form={form}
         itens={itens.fields}
         totaisItensCents={totais.totaisItensCents}
-        aoAdicionar={() => itens.append(ITEM_EM_BRANCO)}
+        // `shouldFocus`: o cursor vai para a descrição do item novo, e o browser rola até ele.
+        aoAdicionar={() => itens.append(ITEM_EM_BRANCO, { shouldFocus: true })}
         aoRemover={(indice) => itens.remove(indice)}
       />
 
-      <div className="flex flex-col gap-4 border-t-2 border-foreground pt-4">
+      {/* Abaixo de `lg` o rodapé gruda no fim da tela: total, faixa aplicada e o botão
+          ficam visíveis enquanto a pessoa rola pelos itens. */}
+      <div className="sticky bottom-0 -mx-6 -mb-5 flex flex-col gap-4 border-t-2 border-foreground bg-card px-6 pt-4 pb-5 lg:static lg:mx-0 lg:mb-0 lg:px-0 lg:pb-0">
         <div className="flex flex-wrap items-baseline justify-between gap-2 lg:pr-[92px]">
           <span className="text-sm font-medium">Total do pedido</span>
           <output className="text-xl font-bold tabular-nums" aria-live="polite">
@@ -233,8 +239,13 @@ export function FormularioPedido({
           </Alert>
         )}
 
-        <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
-          {faltando && <p className="text-sm text-muted-foreground sm:mr-auto">{faltando}</p>}
+        {/* A frase do que falta fica encostada no botão que ela explica. */}
+        <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+          {faltando && (
+            <p className="text-sm text-muted-foreground sm:text-right" aria-live="polite">
+              {faltando}
+            </p>
+          )}
           <Button type="submit" className="h-10 lg:h-[38px]" disabled={!podeEnviar}>
             {isPending ? "Cadastrando…" : "Cadastrar pedido"}
           </Button>

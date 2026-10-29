@@ -43,8 +43,6 @@ export function cadeiaAcumulada(regras: RegraDto[], faixa: RegraDto): NivelAcumu
   );
 }
 
-// --- Cadeia de um pedido já criado (snapshot) -----------------------------------
-
 /** Estado de um aprovador dentro da cadeia, como a tela desenha (docs/design.md). */
 export type EstadoNivel = "proximo" | "herdado" | "atual" | "aprovou" | "rejeitou" | "cancelado";
 
@@ -52,6 +50,30 @@ export type NivelCadeia = {
   nome: string;
   estado: EstadoNivel;
 };
+
+/** Cadeia de uma faixa (sem pedido): herdados em cinza, os da própria faixa como próximos. */
+export function niveisDaFaixa(
+  cadeia: ReadonlyArray<{ usuarioNome: string; herdado: boolean }>,
+): NivelCadeia[] {
+  return cadeia.map((nivel) => ({
+    nome: nivel.usuarioNome,
+    estado: nivel.herdado ? "herdado" : "proximo",
+  }));
+}
+
+// --- Cadeia de um pedido já criado (snapshot) -----------------------------------
+
+/**
+ * "É a sua vez": o usuário é o aprovador do step atual. `aprovadorAtualId` só é preenchido
+ * em pedido pendente (server/dto.ts), então basta comparar. Única definição, usada pela
+ * lista, pelo detalhe, pela timeline e pela ordenação da página.
+ */
+export function ehSuaVez(
+  pedido: { aprovadorAtualId: number | null },
+  usuarioId: number | null,
+): boolean {
+  return usuarioId !== null && pedido.aprovadorAtualId === usuarioId;
+}
 
 /**
  * Converte o snapshot do pedido para os estados da tela: concluídos, o atual (só enquanto

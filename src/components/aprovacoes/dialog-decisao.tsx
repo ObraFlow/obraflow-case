@@ -1,15 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAction } from "next-safe-action/hooks";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm, useFormState, useWatch } from "react-hook-form";
-import { toast } from "sonner";
 import { CampoMotivo } from "@/components/aprovacoes/campo-motivo";
+import { useRegistrarDecisao } from "@/components/aprovacoes/use-registrar-decisao";
 import { CadeiaAlcada } from "@/components/alcada/cadeia-alcada";
-import { avisarPendenciasMudaram } from "@/components/layout/sino-pendencias";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,8 +23,8 @@ import { niveisDoPedido } from "@/lib/cadeia";
 import { formatarData } from "@/lib/datas";
 import type { PedidoDetalhe, PedidoResumo } from "@/lib/dto";
 import { formatarCentavos } from "@/lib/money";
+import { formatarQuantidade } from "@/lib/quantidade";
 import { rejeicaoFormSchema, type RejeicaoFormInput } from "@/lib/schemas/decisao";
-import { registrarDecisaoAction } from "@/server/actions/decisoes";
 
 type EstadoItens =
   | { estado: "carregando" }
@@ -49,6 +46,7 @@ export function DialogDecisao({ pedido }: { pedido: PedidoResumo }) {
         type="button"
         size="sm"
         className="relative h-10 md:h-8"
+        aria-label={`Decidir pedido #${pedido.id}`}
         onClick={() => setAberto(true)}
       >
         Decidir
@@ -59,9 +57,14 @@ export function DialogDecisao({ pedido }: { pedido: PedidoResumo }) {
 }
 
 function ConteudoDecisao({ pedido, aoFechar }: { pedido: PedidoResumo; aoFechar: () => void }) {
-  const router = useRouter();
   const [itens, setItens] = useState<EstadoItens>({ estado: "carregando" });
+  const [tentativa, setTentativa] = useState(0);
   const [rejeitando, setRejeitando] = useState(false);
+
+  const tentarDeNovo = () => {
+    setItens({ estado: "carregando" });
+    setTentativa((atual) => atual + 1);
+  };
 
   useEffect(() => {
     let cancelado = false;
@@ -76,7 +79,7 @@ function ConteudoDecisao({ pedido, aoFechar }: { pedido: PedidoResumo; aoFechar:
     return () => {
       cancelado = true;
     };
-  }, [pedido.id]);
+  }, [pedido.id, tentativa]);
 
   const form = useForm<RejeicaoFormInput>({
     resolver: zodResolver(rejeicaoFormSchema),
@@ -86,37 +89,22 @@ function ConteudoDecisao({ pedido, aoFechar }: { pedido: PedidoResumo; aoFechar:
   const { errors: erros, isValid } = useFormState({ control: form.control });
   const motivo = useWatch({ control: form.control, name: "motivo" });
 
-  const { execute, isPending } = useAction(registrarDecisaoAction, {
-    onSuccess({ data, input }) {
-      toast.success(
-        input.tipo === "REJEITAR"
-          ? `Pedido #${data.id} rejeitado.`
-          : data.status === "APROVADO"
-            ? `Pedido #${data.id} aprovado. Cadeia concluída.`
-            : `Pedido #${data.id} aprovado. Agora aguarda ${data.aprovadorAtualNome}.`,
-      );
-      avisarPendenciasMudaram();
-      aoFechar();
-    },
-    onError({ error }) {
-      toast.error(error.serverError ?? "Não foi possível registrar a decisão. Tente de novo.");
-      router.refresh();
-      aoFechar();
-    },
+  // Sucesso ou erro, o dialog fecha: a lista chega revalidada (ou recarregada) do server.
+  const { aprovar, rejeitar, enviando } = useRegistrarDecisao({
+    aoConcluir: aoFechar,
+    aoFalhar: aoFechar,
   });
 
-  const confirmarRejeicao = form.handleSubmit((valores) =>
-    execute({ pedidoId: pedido.id, tipo: "REJEITAR", motivo: valores.motivo }),
-  );
+  const confirmarRejeicao = form.handleSubmit((valores) => rejeitar(pedido.id, valores.motivo));
 
   return (
     <Dialog
       open
       onOpenChange={(abrir) => {
-        if (!abrir && !isPending) aoFechar();
+        if (!abrir && !enviando) aoFechar();
       }}
     >
-      <DialogContent className="rounded-sm sm:max-w-xl">
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold tabular-nums">
             Decidir o pedido #{pedido.id}
@@ -135,7 +123,7 @@ function ConteudoDecisao({ pedido, aoFechar }: { pedido: PedidoResumo; aoFechar:
             </span>
           </div>
 
-          <ItensDoDialog estado={itens} />
+          <ItensDoDialog estado={itens} tentarDeNovo={tentarDeNovo} />
 
           {rejeitando ? (
             <form
@@ -177,7 +165,7 @@ function ConteudoDecisao({ pedido, aoFechar }: { pedido: PedidoResumo; aoFechar:
               <Button
                 type="button"
                 variant="outline"
-                disabled={isPending}
+                disabled={enviando}
                 onClick={() => setRejeitando(false)}
               >
                 Voltar
@@ -185,32 +173,41 @@ function ConteudoDecisao({ pedido, aoFechar }: { pedido: PedidoResumo; aoFechar:
               <Button
                 type="submit"
                 form="form-rejeicao"
-                disabled={!isValid || isPending}
+                disabled={!isValid || enviando}
                 className="bg-rejeitado text-white hover:bg-rejeitado/85"
               >
-                {isPending ? "Rejeitando…" : "Confirmar rejeição"}
+                {enviando ? "Rejeitando…" : "Rejeitar pedido"}
               </Button>
             </>
           ) : (
             <>
-              <Button type="button" variant="ghost" disabled={isPending} onClick={aoFechar}>
+              {/* Aprovar só depois de ver os itens; rejeitar pode, porque é o caminho
+                  conservador e exige motivo. */}
+              {itens.estado !== "pronto" && (
+                <p className="text-sm text-muted-foreground sm:mr-auto">
+                  {itens.estado === "carregando"
+                    ? "Aprovar libera quando os itens carregarem."
+                    : "Aprovar só com os itens carregados."}
+                </p>
+              )}
+              <Button type="button" variant="ghost" disabled={enviando} onClick={aoFechar}>
                 Cancelar
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 className="text-rejeitado"
-                disabled={isPending}
+                disabled={enviando}
                 onClick={() => setRejeitando(true)}
               >
                 Rejeitar
               </Button>
               <Button
                 type="button"
-                disabled={isPending}
-                onClick={() => execute({ pedidoId: pedido.id, tipo: "APROVAR" })}
+                disabled={enviando || itens.estado !== "pronto"}
+                onClick={() => aprovar(pedido.id)}
               >
-                {isPending ? "Aprovando…" : "Aprovar"}
+                {enviando ? "Aprovando…" : "Aprovar"}
               </Button>
             </>
           )}
@@ -220,10 +217,21 @@ function ConteudoDecisao({ pedido, aoFechar }: { pedido: PedidoResumo; aoFechar:
   );
 }
 
-function ItensDoDialog({ estado }: { estado: EstadoItens }) {
+function ItensDoDialog({
+  estado,
+  tentarDeNovo,
+}: {
+  estado: EstadoItens;
+  tentarDeNovo: () => void;
+}) {
   if (estado.estado === "carregando") {
     return (
-      <div className="flex flex-col gap-2" aria-busy="true" aria-label="Carregando itens">
+      <div
+        role="status"
+        className="flex flex-col gap-2"
+        aria-busy="true"
+        aria-label="Carregando itens"
+      >
         <Skeleton className="h-4 w-full rounded-sm" />
         <Skeleton className="h-4 w-4/5 rounded-sm" />
       </div>
@@ -231,18 +239,29 @@ function ItensDoDialog({ estado }: { estado: EstadoItens }) {
   }
   if (estado.estado === "erro") {
     return (
-      <p className="text-sm text-rejeitado">
-        Não foi possível carregar os itens: {estado.mensagem}
-      </p>
+      <div className="flex flex-wrap items-center gap-3">
+        <p className="text-sm text-rejeitado">
+          Não foi possível carregar os itens: {estado.mensagem}
+        </p>
+        <Button type="button" variant="outline" size="sm" onClick={tentarDeNovo}>
+          Tentar novamente
+        </Button>
+      </div>
     );
   }
   return (
     <table className="w-full border-collapse text-sm">
       <thead>
         <tr className="border-b-2 border-foreground text-left text-xs font-semibold text-muted-foreground">
-          <th className="py-1.5 pr-2">Item</th>
-          <th className="py-1.5 pr-2 text-right whitespace-nowrap">Qtd.</th>
-          <th className="py-1.5 text-right whitespace-nowrap">Total</th>
+          <th scope="col" className="py-1.5 pr-2">
+            Item
+          </th>
+          <th scope="col" className="py-1.5 pr-2 text-right whitespace-nowrap">
+            Qtd.
+          </th>
+          <th scope="col" className="py-1.5 text-right whitespace-nowrap">
+            Total
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -250,7 +269,7 @@ function ItensDoDialog({ estado }: { estado: EstadoItens }) {
           <tr key={item.id} className="border-b border-linha last:border-b-0">
             <td className="py-1.5 pr-2">{item.descricao}</td>
             <td className="py-1.5 pr-2 text-right whitespace-nowrap tabular-nums">
-              {item.quantidade.replace(".", ",")} {item.unidade}
+              {formatarQuantidade(item.quantidade)} {item.unidade}
             </td>
             <td className="py-1.5 text-right whitespace-nowrap tabular-nums">
               {formatarCentavos(item.totalCents)}

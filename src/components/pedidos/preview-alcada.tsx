@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CadeiaAlcada } from "@/components/alcada/cadeia-alcada";
 import type { EstadoPreview } from "@/components/pedidos/use-preview-alcada";
 import { Button } from "@/components/ui/button";
+import { niveisDaFaixa } from "@/lib/cadeia";
 import { formatarCentavos, formatarFaixa } from "@/lib/money";
 
 /** Bloco abaixo do total: qual faixa e cadeia o pedido vai seguir, ou por que será bloqueado. */
@@ -58,12 +59,7 @@ export function PreviewAlcada({
             </strong>
             . Quem aprova, nesta ordem:
           </p>
-          <CadeiaAlcada
-            niveis={preview.resultado.cadeia.map((nivel) => ({
-              nome: nivel.usuarioNome,
-              estado: nivel.herdado ? "herdado" : "proximo",
-            }))}
-          />
+          <CadeiaAlcada niveis={niveisDaFaixa(preview.resultado.cadeia)} />
         </>
       )}
     </div>

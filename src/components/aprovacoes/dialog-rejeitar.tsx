@@ -21,13 +21,11 @@ import { rejeicaoFormSchema, type RejeicaoFormInput } from "@/lib/schemas/decisa
  */
 export function DialogRejeitar({
   pedidoId,
-  aberto,
   aoFechar,
   confirmar,
   enviando,
 }: {
   pedidoId: number;
-  aberto: boolean;
   aoFechar: () => void;
   confirmar: (motivo: string) => void;
   enviando: boolean;
@@ -44,12 +42,12 @@ export function DialogRejeitar({
 
   return (
     <Dialog
-      open={aberto}
+      open
       onOpenChange={(abrir) => {
         if (!abrir && !enviando) aoFechar();
       }}
     >
-      <DialogContent className="rounded-sm">
+      <DialogContent>
         <form onSubmit={enviar} noValidate className="flex min-w-0 flex-col gap-5">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold">Rejeitar o pedido #{pedidoId}?</DialogTitle>

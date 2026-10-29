@@ -8,7 +8,9 @@ import { NaoEncontrado, SemFaixaAplicavel } from "@/domain/erros";
 import { calcularTotais } from "@/domain/pedido/calcularTotais";
 import type { Prisma } from "@/generated/prisma/client";
 import type { PaginaDePedidos, PedidoDetalhe, PedidoResumo } from "@/lib/dto";
+import { cache } from "react";
 import { formatarCentavos } from "@/lib/money";
+import { idSchema } from "@/lib/schemas/comum";
 import type { CriarPedidoInput, FiltroPedidos, Paginacao } from "@/lib/schemas/pedido";
 import {
   includePedidoDetalhe,
@@ -107,6 +109,14 @@ export async function listarPedidos(filtro: FiltroPedidos = {}): Promise<PedidoR
 }
 
 /**
+ * Pendências do usuário atual. O header (contador) e a página de aprovações (número da aba)
+ * perguntam isso na mesma request; `cache` do React faz a consulta rodar uma vez por request.
+ */
+export const listarPendentesPara = cache((usuarioId: number) =>
+  listarPedidos({ pendentesPara: usuarioId }),
+);
+
+/**
  * Página da lista para a tela de aprovações. Filtra e pagina no banco (`skip`/`take` + `count`
  * na mesma transação). A exceção é `pendentesPara`: como o ajuste fino é em memória, os
  * candidatos são carregados inteiros e a página é recortada depois. São poucos por pessoa.
@@ -161,9 +171,6 @@ const ORDEM_LISTA = [
   ...ORDEM_PEDIDOS,
 ] satisfies Prisma.PedidoOrderByWithRelationInput[];
 
-/** `id` é Int de 32 bits: um número maior não é um pedido, e o Prisma recusaria a consulta. */
-const MAX_ID = 2_147_483_647;
-
 /**
  * `busca` aceita o número do pedido ("12" ou "#12") ou um trecho do nome da obra ou do
  * fornecedor, sem diferenciar maiúsculas. `pendentesPara` reduz no banco aos pedidos
@@ -171,7 +178,8 @@ const MAX_ID = 2_147_483_647;
  */
 function wherePedidos(filtro: FiltroPedidos): Prisma.PedidoWhereInput {
   const busca = filtro.busca?.replace(/^#/, "").trim();
-  const numero = busca && /^\d+$/.test(busca) && Number(busca) <= MAX_ID ? Number(busca) : null;
+  // Só vira filtro por id o que seria um id válido (inteiro positivo dentro do Int do banco).
+  const numero = busca && /^\d+$/.test(busca) ? idSchema.safeParse(busca) : null;
 
   return {
     status: statusDoFiltro(filtro),
@@ -181,7 +189,7 @@ function wherePedidos(filtro: FiltroPedidos): Prisma.PedidoWhereInput {
       : undefined,
     OR: busca
       ? [
-          ...(numero !== null ? [{ id: numero }] : []),
+          ...(numero?.success ? [{ id: numero.data }] : []),
           { obra: { nome: { contains: busca, mode: "insensitive" } } },
           { fornecedor: { nome: { contains: busca, mode: "insensitive" } } },
         ]

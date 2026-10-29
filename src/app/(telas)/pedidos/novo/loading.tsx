@@ -3,7 +3,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 /** Mesmo formato do formulário: título, dados gerais em duas colunas, itens, rodapé com total. */
 export default function Loading() {
   return (
-    <div className="flex flex-col gap-5" aria-busy="true" aria-label="Carregando novo pedido">
+    <div
+      role="status"
+      className="flex flex-col gap-5"
+      aria-busy="true"
+      aria-label="Carregando novo pedido"
+    >
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold tracking-[-0.015em]">Novo pedido</h1>
         <Skeleton className="h-4 w-[520px] max-w-full rounded-sm" />

@@ -1,54 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CadeiaAlcada } from "@/components/alcada/cadeia-alcada";
+import { usePreviewAlcada } from "@/components/pedidos/use-preview-alcada";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { mensagemDeErro } from "@/lib/api/client";
-import { previewAlcada } from "@/lib/api/regras";
-import type { FaixaAplicavelDto } from "@/lib/dto";
-import { centavosDeTexto, formatarCentavos, formatarFaixa } from "@/lib/money";
-
-/** Última resposta da API, amarrada ao valor consultado para saber se ainda vale. */
-type Resposta =
-  { valorCents: number; resultado: FaixaAplicavelDto } | { valorCents: number; erro: string };
+import { niveisDaFaixa } from "@/lib/cadeia";
+import { centavosDeTexto, formatarCentavos, formatarFaixa, textoDeCentavos } from "@/lib/money";
 
 /**
- * "Testar um valor": terceiro canal da arquitetura (client → ky → GET /api/regras/aplicavel).
- * Reusa `resolverRegra` pelo mesmo endpoint que o formulário de pedido usa no preview.
- * Só a resposta da rede é estado; vazio, inválido e carregando são derivados do texto.
+ * "Testar um valor": terceiro canal da arquitetura (client → ky → GET /api/regras/aplicavel),
+ * pelo mesmo hook que o formulário de pedido usa no preview (`usePreviewAlcada`: espera o
+ * usuário parar de digitar e descarta resposta atrasada). Só o texto digitado é estado aqui.
  */
 export function SimuladorAlcada({ obraId }: { obraId: number }) {
   const [texto, setTexto] = useState("");
-  const [resposta, setResposta] = useState<Resposta | null>(null);
-  const [tentativa, setTentativa] = useState(0);
 
   const vazio = texto.trim() === "";
   const valorCents = vazio ? null : centavosDeTexto(texto);
   const valorInvalido = !vazio && (valorCents === null || valorCents < 0);
-  const respostaAtual = resposta !== null && resposta.valorCents === valorCents ? resposta : null;
-  const carregando = valorCents !== null && !valorInvalido && respostaAtual === null;
-
-  useEffect(() => {
-    if (valorCents === null || valorCents < 0) return;
-
-    // Espera o usuário parar de digitar; descarta a resposta se o valor mudou no meio.
-    let cancelado = false;
-    const timer = setTimeout(async () => {
-      try {
-        const resultado = await previewAlcada(obraId, valorCents);
-        if (!cancelado) setResposta({ valorCents, resultado });
-      } catch (causa) {
-        const erro = await mensagemDeErro(causa);
-        if (!cancelado) setResposta({ valorCents, erro });
-      }
-    }, 300);
-
-    return () => {
-      cancelado = true;
-      clearTimeout(timer);
-    };
-  }, [obraId, valorCents, tentativa]);
+  const { preview, tentarDeNovo } = usePreviewAlcada(obraId, valorInvalido ? null : valorCents);
 
   return (
     <section
@@ -71,6 +42,10 @@ export function SimuladorAlcada({ obraId }: { obraId: number }) {
           placeholder="Ex.: 12.500,00"
           value={texto}
           onChange={(evento) => setTexto(evento.target.value)}
+          // Ao sair, o campo mostra como o valor foi lido ("1500" → "1.500,00").
+          onBlur={() => {
+            if (valorCents !== null && valorCents >= 0) setTexto(textoDeCentavos(valorCents));
+          }}
           aria-invalid={valorInvalido || undefined}
           className="h-[38px] rounded-sm tabular-nums"
         />
@@ -80,55 +55,35 @@ export function SimuladorAlcada({ obraId }: { obraId: number }) {
         {valorInvalido && (
           <p className="text-rejeitado">Valor inválido. Use números, como 12.500,00.</p>
         )}
-        {carregando && valorCents !== null && (
+        {preview.estado === "carregando" && valorCents !== null && (
           <p className="text-muted-foreground">Consultando {formatarCentavos(valorCents)}…</p>
         )}
-        {respostaAtual !== null && "erro" in respostaAtual && (
+        {preview.estado === "erro" && (
           <div className="flex flex-wrap items-center gap-3">
-            <p className="text-rejeitado">{respostaAtual.erro}</p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setResposta(null);
-                setTentativa((atual) => atual + 1);
-              }}
-            >
+            <p className="text-rejeitado">{preview.mensagem}</p>
+            <Button type="button" variant="outline" size="sm" onClick={tentarDeNovo}>
               Tentar novamente
             </Button>
           </div>
         )}
-        {respostaAtual !== null &&
-          "resultado" in respostaAtual &&
-          respostaAtual.resultado.faixa === null && (
+        {preview.estado === "pronto" && preview.resultado.faixa === null && (
+          <p>
+            Nenhuma faixa cobre {formatarCentavos(preview.resultado.valorCents)} na obra{" "}
+            {preview.resultado.obraNome}. Um pedido nesse valor seria bloqueado.
+          </p>
+        )}
+        {preview.estado === "pronto" && preview.resultado.faixa !== null && (
+          <div className="flex flex-col gap-2">
             <p>
-              Nenhuma faixa cobre {formatarCentavos(respostaAtual.resultado.valorCents)} na obra{" "}
-              {respostaAtual.resultado.obraNome}. Um pedido nesse valor seria bloqueado.
+              {formatarCentavos(preview.resultado.valorCents)} cai na faixa{" "}
+              <strong>
+                {formatarFaixa(preview.resultado.faixa.minCents, preview.resultado.faixa.maxCents)}
+              </strong>
+              . Quem aprova, nesta ordem:
             </p>
-          )}
-        {respostaAtual !== null &&
-          "resultado" in respostaAtual &&
-          respostaAtual.resultado.faixa !== null && (
-            <div className="flex flex-col gap-2">
-              <p>
-                {formatarCentavos(respostaAtual.resultado.valorCents)} cai na faixa{" "}
-                <strong>
-                  {formatarFaixa(
-                    respostaAtual.resultado.faixa.minCents,
-                    respostaAtual.resultado.faixa.maxCents,
-                  )}
-                </strong>
-                . Quem aprova, nesta ordem:
-              </p>
-              <CadeiaAlcada
-                niveis={respostaAtual.resultado.cadeia.map((nivel) => ({
-                  nome: nivel.usuarioNome,
-                  estado: nivel.herdado ? "herdado" : "proximo",
-                }))}
-              />
-            </div>
-          )}
+            <CadeiaAlcada niveis={niveisDaFaixa(preview.resultado.cadeia)} />
+          </div>
+        )}
       </div>
     </section>
   );

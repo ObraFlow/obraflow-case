@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
-import { useFieldArray, useForm, useWatch } from "react-hook-form";
+import { useFieldArray, useForm, useFormState, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ type Props = {
   faixa?: RegraDto;
   /** Ao criar a partir de uma lacuna: valores já preenchidos com o buraco. */
   sugestao?: { minCents: number; maxCents: number | null };
-  aberto: boolean;
+  /** Montado só enquanto aberto: o form nasce com os valores iniciais a cada abertura. */
   aoFechar: () => void;
 };
 
@@ -68,26 +68,31 @@ const CLASSE_BOTAO_LINHA = "h-10 md:h-7";
  * da API. Erros de domínio (sobreposição, aprovador inexistente) voltam como `serverError`
  * e aparecem no Alert, porque a correção é aqui no form, não em um toast.
  * Reordenação por botões "Subir"/"Descer": teclado e celular, sem dependência de arrastar.
+ * "Salvar faixa" fica desabilitado enquanto o form é inválido, com a frase do que falta ao
+ * lado: o mesmo padrão do formulário de pedido (ui-obraflow > Formulário).
  */
-export function DialogFaixa({
-  obraId,
-  usuarios,
-  faixas,
-  faixa,
-  sugestao,
-  aberto,
-  aoFechar,
-}: Props) {
+export function DialogFaixa({ obraId, usuarios, faixas, faixa, sugestao, aoFechar }: Props) {
   const [erroDoServidor, setErroDoServidor] = useState<string | null>(null);
 
   const form = useForm<FaixaFormInput>({
     resolver: zodResolver(faixaFormSchema),
     defaultValues: valoresIniciais(obraId, faixa, sugestao),
-    mode: "onTouched",
+    mode: "all",
   });
   const aprovadores = useFieldArray({ control: form.control, name: "aprovadores" });
   const semTeto = useWatch({ control: form.control, name: "semTeto" });
   const minimo = useWatch({ control: form.control, name: "minimo" });
+  const maximo = useWatch({ control: form.control, name: "maximo" });
+  const aprovadoresDigitados = useWatch({ control: form.control, name: "aprovadores" });
+  // useFormState assina errors/isValid de verdade; ler form.formState direto não re-renderiza.
+  const { errors: erros, isValid } = useFormState({ control: form.control });
+
+  /** Ao sair do campo, mostra como o valor foi lido ("1500" → "1.500,00"). */
+  const formatarValor = (campo: "minimo" | "maximo", texto: string) => {
+    const cents = centavosDeTexto(texto);
+    if (cents === null || cents < 0) return;
+    form.setValue(campo, textoDeCentavos(cents), { shouldValidate: true });
+  };
 
   // Quem aprova antes desta faixa (decisão 1): aprovadores das faixas com mínimo abaixo do
   // mínimo digitado, em ordem crescente. Recalcula enquanto o usuário digita o mínimo.
@@ -121,21 +126,36 @@ export function DialogFaixa({
     execute(paraSalvarFaixaInput(valores));
   });
 
-  const erros = form.formState.errors;
-  const faltando = !form.formState.isValid
-    ? erros.aprovadores?.root?.message ||
-      erros.aprovadores?.message ||
-      "Preencha os valores e os aprovadores."
-    : null;
+  // O que ainda falta, na ordem em que a pessoa preenche. Uma frase só, sempre visível,
+  // porque o botão desabilitado não explica nada sozinho.
+  let faltando: string | null = null;
+  if (!isValid) {
+    const erroDeAprovador = Array.isArray(erros.aprovadores)
+      ? erros.aprovadores.find((erro) => erro?.usuarioId)?.usuarioId?.message
+      : undefined;
+    if (minimo.trim() === "" || erros.minimo) {
+      faltando = erros.minimo?.message ?? "Informe o valor mínimo.";
+    } else if (!semTeto && (maximo.trim() === "" || erros.maximo)) {
+      faltando = erros.maximo?.message ?? "Informe o valor máximo ou marque “Sem teto”.";
+    } else if ((aprovadoresDigitados ?? []).some((aprovador) => aprovador.usuarioId === "")) {
+      faltando = "Selecione todos os aprovadores.";
+    } else {
+      faltando =
+        erroDeAprovador ??
+        erros.aprovadores?.root?.message ??
+        erros.aprovadores?.message ??
+        "Confira os valores e os aprovadores.";
+    }
+  }
 
   return (
     <Dialog
-      open={aberto}
+      open
       onOpenChange={(abrir) => {
-        if (!abrir) aoFechar();
+        if (!abrir && !isPending) aoFechar();
       }}
     >
-      <DialogContent className="rounded-sm sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg">
         <form
           onSubmit={(evento) => {
             setErroDoServidor(null);
@@ -164,7 +184,9 @@ export function DialogFaixa({
                 placeholder="0,00"
                 aria-invalid={!!erros.minimo || undefined}
                 className="h-[38px] rounded-sm tabular-nums"
-                {...form.register("minimo")}
+                {...form.register("minimo", {
+                  onBlur: (evento) => formatarValor("minimo", evento.target.value),
+                })}
               />
               <FieldError errors={[erros.minimo]} />
             </Field>
@@ -178,7 +200,9 @@ export function DialogFaixa({
                 disabled={semTeto}
                 aria-invalid={!!erros.maximo || undefined}
                 className="h-[38px] rounded-sm tabular-nums"
-                {...form.register("maximo")}
+                {...form.register("maximo", {
+                  onBlur: (evento) => formatarValor("maximo", evento.target.value),
+                })}
               />
               <FieldError errors={[erros.maximo]} />
               <label className="flex items-center gap-2 text-sm">
@@ -295,13 +319,15 @@ export function DialogFaixa({
           </fieldset>
 
           <DialogFooter className="flex-col items-stretch gap-2 sm:flex-row sm:items-center">
-            {faltando && form.formState.isSubmitted && (
-              <p className="text-sm text-muted-foreground sm:mr-auto">{faltando}</p>
+            {faltando && (
+              <p className="text-sm text-muted-foreground sm:mr-auto" aria-live="polite">
+                {faltando}
+              </p>
             )}
             <Button type="button" variant="outline" onClick={aoFechar} disabled={isPending}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" disabled={!isValid || isPending}>
               {isPending ? "Salvando…" : "Salvar faixa"}
             </Button>
           </DialogFooter>

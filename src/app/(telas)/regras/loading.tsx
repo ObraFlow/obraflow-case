@@ -3,7 +3,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 /** Mesmo formato da tela: título com seletor de obra, tabela de faixas (3 linhas) e simulador. */
 export default function Loading() {
   return (
-    <div className="flex flex-col gap-5" aria-busy="true" aria-label="Carregando regras de alçada">
+    <div
+      role="status"
+      className="flex flex-col gap-5"
+      aria-busy="true"
+      aria-label="Carregando regras de alçada"
+    >
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-2">
           <h1 className="text-2xl font-bold tracking-[-0.015em]">Regras de alçada</h1>

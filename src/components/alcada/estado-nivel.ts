@@ -5,7 +5,8 @@ import type { EstadoNivel } from "@/lib/cadeia";
 
 export const CLASSE_POR_ESTADO: Record<EstadoNivel, string> = {
   proximo: "border-border bg-card text-muted-foreground",
-  herdado: "border-border bg-muted text-muted-foreground",
+  // Borda tracejada: "vem de uma faixa abaixo". Só o fundo cinza não se distinguia do branco.
+  herdado: "border-dashed border-border bg-muted text-muted-foreground",
   atual: "border-sinalizacao bg-sinalizacao font-bold text-foreground",
   aprovou: "border-foreground bg-foreground text-white",
   rejeitou: "border-rejeitado bg-rejeitado text-white",

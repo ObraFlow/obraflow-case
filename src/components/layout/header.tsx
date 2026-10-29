@@ -7,7 +7,8 @@ import { ListaNavegacao, Navegacao } from "@/components/layout/navegacao";
 
 /**
  * Header escuro de 56px (docs/design.md > Forma). Marca, navegação e "Agindo como".
- * No celular a navegação desce para uma segunda linha; marca e seletor ficam na primeira.
+ * Abaixo de `lg` a navegação desce para uma segunda linha; marca e seletor ficam na primeira.
+ * (Até ~900px não cabe tudo em uma linha: a quebra automática deixava o seletor sozinho.)
  * A ordem no DOM é marca → navegação → seletor (ordem de Tab igual à visual no desktop).
  * Tudo que depende do cookie fica em <Suspense> próprio (Next 16 + cacheComponents)
  * e dentro de um error boundary, para uma falha do banco não derrubar a navegação.
@@ -23,7 +24,7 @@ export function Header() {
           ObraFlow
         </Link>
 
-        <div className="order-last -mx-4 basis-[calc(100%+2rem)] overflow-x-auto border-t border-white/15 sm:order-none sm:mx-0 sm:basis-auto sm:border-t-0">
+        <div className="order-last -mx-4 basis-[calc(100%+2rem)] overflow-x-auto border-t border-white/15 sm:-mx-8 sm:basis-[calc(100%+4rem)] lg:order-none lg:mx-0 lg:basis-auto lg:border-t-0">
           {/* usePathname suspende no prerender de rotas dinâmicas (/aprovacoes/[id]); o fallback é a lista sem item ativo. */}
           <Suspense fallback={<ListaNavegacao pathname={null} contadorAprovacoes={null} />}>
             <Navegacao

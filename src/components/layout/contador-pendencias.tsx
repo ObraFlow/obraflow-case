@@ -1,5 +1,6 @@
 import { connection } from "next/server";
-import { listarPedidos } from "@/server/services/pedidos";
+import { rotuloPendencias } from "@/lib/pendencias";
+import { listarPendentesPara } from "@/server/services/pedidos";
 import { usuarioAtualId } from "@/server/usuario-atual";
 
 /**
@@ -17,13 +18,10 @@ export async function ContadorPendencias() {
   if (usuarioId === null) return null;
 
   await connection();
-  const pendentes = await listarPedidos({ pendentesPara: usuarioId });
+  const pendentes = await listarPendentesPara(usuarioId);
   if (pendentes.length === 0) return null;
 
-  const rotulo =
-    pendentes.length === 1
-      ? "1 pedido aguarda a sua decisão"
-      : `${pendentes.length} pedidos aguardam a sua decisão`;
+  const rotulo = rotuloPendencias(pendentes.length);
 
   return (
     <span

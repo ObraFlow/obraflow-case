@@ -1,19 +1,21 @@
 import { CadeiaAlcada } from "@/components/alcada/cadeia-alcada";
 import { AcoesFaixa } from "@/components/regras/acoes-faixa";
 import { BotaoNovaFaixa } from "@/components/regras/botao-nova-faixa";
+import { LinhaFaixa, ListaFaixas } from "@/components/regras/linha-faixa";
 import { encontrarLacunas, type Lacuna } from "@/domain/alcada/encontrarLacunas";
-import { cadeiaAcumulada } from "@/lib/cadeia";
+import { cadeiaAcumulada, niveisDaFaixa } from "@/lib/cadeia";
 import type { RegraDto, UsuarioDto } from "@/lib/dto";
 import { formatarCentavos, formatarFaixa } from "@/lib/money";
 
-function descreverLacuna(lacuna: Lacuna): string {
+/** "até R$ X" / "de R$ X a R$ Y" / "acima de R$ X": serve à frase e ao nome do botão. */
+function descreverIntervalo(lacuna: Lacuna): string {
   if (lacuna.ateCents === null) {
-    return `Sem regra acima de ${formatarCentavos(lacuna.deCents - 1)}.`;
+    return `acima de ${formatarCentavos(lacuna.deCents - 1)}`;
   }
   if (lacuna.deCents === 0) {
-    return `Sem regra até ${formatarCentavos(lacuna.ateCents)}.`;
+    return `até ${formatarCentavos(lacuna.ateCents)}`;
   }
-  return `Sem regra entre ${formatarCentavos(lacuna.deCents)} e ${formatarCentavos(lacuna.ateCents)}.`;
+  return `de ${formatarCentavos(lacuna.deCents)} a ${formatarCentavos(lacuna.ateCents)}`;
 }
 
 type Linha = { tipo: "faixa"; faixa: RegraDto } | { tipo: "lacuna"; lacuna: Lacuna };
@@ -37,10 +39,13 @@ function montarLinhas(faixas: RegraDto[]): Linha[] {
 
 /** Cadeia efetiva da faixa: herdados das faixas abaixo (cinza) e os próprios. */
 function cadeiaDe(faixas: RegraDto[], faixa: RegraDto) {
-  return cadeiaAcumulada(faixas, faixa).map((nivel) => ({
-    nome: nivel.usuarioNome,
-    estado: nivel.herdado ? ("herdado" as const) : ("proximo" as const),
-  }));
+  return niveisDaFaixa(cadeiaAcumulada(faixas, faixa));
+}
+
+/** O que a `LinhaFaixa` compara para saber se a faixa mudou: valores e aprovadores na ordem. */
+function assinaturaDe(faixa: RegraDto): string {
+  const niveis = [...faixa.niveis].sort((a, b) => a.ordem - b.ordem).map((n) => n.usuarioId);
+  return `${faixa.minCents}-${faixa.maxCents ?? "sem-teto"}-${niveis.join(",")}`;
 }
 
 /**
@@ -80,7 +85,7 @@ export function TabelaFaixas({
   const blocoLacuna = (lacuna: Lacuna) => (
     <div className="flex flex-wrap items-center justify-between gap-2 bg-muted px-3 py-2.5 text-sm">
       <p>
-        {descreverLacuna(lacuna)}{" "}
+        Sem regra {descreverIntervalo(lacuna)}.{" "}
         <span className="text-muted-foreground">Pedidos nesse valor serão bloqueados.</span>
       </p>
       <BotaoNovaFaixa
@@ -88,6 +93,7 @@ export function TabelaFaixas({
         faixas={faixas}
         usuarios={usuarios}
         rotulo="Criar faixa para esse intervalo"
+        rotuloAcessivel={`Criar faixa ${descreverIntervalo(lacuna)}`}
         variante="outline"
         sugestao={{ minCents: lacuna.deCents, maxCents: lacuna.ateCents }}
       />
@@ -95,18 +101,26 @@ export function TabelaFaixas({
   );
 
   return (
-    <>
+    // A lista guarda os ids da primeira renderização (key por obra): faixa nova ou editada
+    // entra destacada, o resto não anima.
+    <ListaFaixas key={obraId} ids={faixas.map((faixa) => faixa.id)}>
       {/* Celular: blocos empilhados. */}
       <div className="flex flex-col divide-y divide-linha rounded-sm border bg-card md:hidden">
         {linhas.map((linha) =>
           linha.tipo === "faixa" ? (
-            <div key={`faixa-${linha.faixa.id}`} className="flex flex-col gap-2 px-3 py-3">
+            <LinhaFaixa
+              key={`faixa-${linha.faixa.id}`}
+              elemento="div"
+              id={linha.faixa.id}
+              assinatura={assinaturaDe(linha.faixa)}
+              className="flex flex-col gap-2 px-3 py-3"
+            >
               <p className="font-medium tabular-nums">
                 {formatarFaixa(linha.faixa.minCents, linha.faixa.maxCents)}
               </p>
               <CadeiaAlcada niveis={cadeiaDe(faixas, linha.faixa)} />
               <AcoesFaixa faixa={linha.faixa} faixas={faixas} usuarios={usuarios} />
-            </div>
+            </LinhaFaixa>
           ) : (
             <div key={`lacuna-${linha.lacuna.deCents}`}>{blocoLacuna(linha.lacuna)}</div>
           ),
@@ -118,16 +132,23 @@ export function TabelaFaixas({
         <table className="w-full border-collapse">
           <thead>
             <tr className="border-b-2 border-foreground text-left text-xs font-semibold text-muted-foreground">
-              <th className="px-3 py-2.5 whitespace-nowrap">Faixa</th>
-              <th className="px-3 py-2.5">Quem aprova, nesta ordem (inclui as faixas abaixo)</th>
-              <th className="px-3 py-2.5" aria-label="Ações" />
+              <th scope="col" className="px-3 py-2.5 whitespace-nowrap">
+                Faixa
+              </th>
+              <th scope="col" className="px-3 py-2.5">
+                Quem aprova, nesta ordem (inclui as faixas abaixo)
+              </th>
+              <th scope="col" className="px-3 py-2.5" aria-label="Ações" />
             </tr>
           </thead>
           <tbody>
             {linhas.map((linha) =>
               linha.tipo === "faixa" ? (
-                <tr
+                <LinhaFaixa
                   key={`faixa-${linha.faixa.id}`}
+                  elemento="tr"
+                  id={linha.faixa.id}
+                  assinatura={assinaturaDe(linha.faixa)}
                   className="border-b border-linha last:border-b-0"
                 >
                   <td className="px-3 py-3 font-medium whitespace-nowrap tabular-nums">
@@ -139,7 +160,7 @@ export function TabelaFaixas({
                   <td className="px-3 py-2 text-right whitespace-nowrap">
                     <AcoesFaixa faixa={linha.faixa} faixas={faixas} usuarios={usuarios} />
                   </td>
-                </tr>
+                </LinhaFaixa>
               ) : (
                 <tr
                   key={`lacuna-${linha.lacuna.deCents}`}
@@ -154,6 +175,6 @@ export function TabelaFaixas({
           </tbody>
         </table>
       </div>
-    </>
+    </ListaFaixas>
   );
 }

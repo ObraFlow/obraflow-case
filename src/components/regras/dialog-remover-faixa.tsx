@@ -15,15 +15,8 @@ import type { RegraDto } from "@/lib/dto";
 import { formatarFaixa } from "@/lib/money";
 import { removerFaixaAction } from "@/server/actions/regras";
 
-export function DialogRemoverFaixa({
-  faixa,
-  aberto,
-  aoFechar,
-}: {
-  faixa: RegraDto;
-  aberto: boolean;
-  aoFechar: () => void;
-}) {
+/** Montado só enquanto aberto (quem chama faz `removendo && <DialogRemoverFaixa/>`). */
+export function DialogRemoverFaixa({ faixa, aoFechar }: { faixa: RegraDto; aoFechar: () => void }) {
   const { execute, isPending } = useAction(removerFaixaAction, {
     onSuccess() {
       toast.success("Faixa removida.");
@@ -36,12 +29,12 @@ export function DialogRemoverFaixa({
 
   return (
     <Dialog
-      open={aberto}
+      open
       onOpenChange={(abrir) => {
-        if (!abrir) aoFechar();
+        if (!abrir && !isPending) aoFechar();
       }}
     >
-      <DialogContent className="rounded-sm">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle className="text-lg font-bold">
             Remover a faixa {formatarFaixa(faixa.minCents, faixa.maxCents)}?

@@ -4,8 +4,7 @@
 
 import { calcularTotalItemCents, MAX_CENTS } from "@/domain/pedido/calcularTotais";
 import { centavosDeTexto } from "@/lib/money";
-
-const REGEX_QUANTIDADE = /^\d{1,9}([.,]\d{1,3})?$/;
+import { REGEX_QUANTIDADE } from "@/lib/schemas/comum";
 
 export type TotaisParaExibicao = {
   /** Um total por item; `null` quando o item ainda não dá para calcular. */

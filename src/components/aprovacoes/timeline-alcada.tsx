@@ -1,5 +1,5 @@
 import { MarcadorNivel } from "@/components/alcada/marcador-nivel";
-import { estadoDoNivel, type EstadoNivel } from "@/lib/cadeia";
+import { ehSuaVez, estadoDoNivel, type EstadoNivel } from "@/lib/cadeia";
 import { formatarDataHora } from "@/lib/datas";
 import type { AprovacaoDto, PedidoDetalhe } from "@/lib/dto";
 import { cn } from "@/lib/utils";
@@ -50,7 +50,7 @@ export function TimelineAlcada({
         {pedido.aprovacoes.map((aprovacao, indice) => {
           const estado = estadoDoNivel(aprovacao, pedido);
           const ultimo = indice === pedido.aprovacoes.length - 1;
-          const suaVez = estado === "atual" && aprovacao.aprovadorId === usuarioAtualId;
+          const suaVez = estado === "atual" && ehSuaVez(pedido, usuarioAtualId);
           return (
             <li key={aprovacao.ordem} className="flex gap-3">
               <div className="flex flex-col items-center">

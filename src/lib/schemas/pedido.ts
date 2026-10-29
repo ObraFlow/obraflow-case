@@ -4,7 +4,7 @@
 import { z } from "zod";
 import { MAX_CENTS } from "@/domain/pedido/calcularTotais";
 import { centavosDeTexto } from "@/lib/money";
-import { centavosSchema, dataSchema, idSchema, quantidadeSchema } from "./comum";
+import { centavosSchema, dataSchema, idSchema, quantidadeSchema, REGEX_QUANTIDADE } from "./comum";
 
 export const itemPedidoSchema = z.object({
   descricao: z
@@ -65,14 +65,10 @@ export type Paginacao = z.infer<typeof paginacaoSchema>;
  * `paraCriarPedidoInput` converte para `CriarPedidoInput` (centavos), o contrato da action
  * e da API, que valida de novo no server.
  */
-const REGEX_QUANTIDADE = /^\d{1,9}([.,]\d{1,3})?$/;
-
 export const itemPedidoFormSchema = z.object({
-  descricao: z
-    .string()
-    .trim()
-    .min(1, "Informe a descrição do item.")
-    .max(200, "Descrição deve ter no máximo 200 caracteres."),
+  // Descrição e unidade são as mesmas regras do contrato da action; só quantidade e preço
+  // diferem, porque no form ainda são texto em reais.
+  descricao: itemPedidoSchema.shape.descricao,
   quantidade: z
     .string()
     .trim()
@@ -80,11 +76,7 @@ export const itemPedidoFormSchema = z.object({
     .refine((texto) => !texto.startsWith("-"), "Quantidade deve ser maior que zero.")
     .regex(REGEX_QUANTIDADE, "Quantidade inválida. Ex.: 2,5.")
     .refine((texto) => Number(texto.replace(",", ".")) > 0, "Quantidade deve ser maior que zero."),
-  unidade: z
-    .string()
-    .trim()
-    .min(1, "Informe a unidade (un, kg, m³...).")
-    .max(20, "Unidade deve ter no máximo 20 caracteres."),
+  unidade: itemPedidoSchema.shape.unidade,
   precoUnitario: z
     .string()
     .trim()

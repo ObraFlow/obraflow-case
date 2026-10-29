@@ -4,10 +4,11 @@ import { FiltrosPedidos } from "@/components/aprovacoes/filtros-pedidos";
 import { Paginacao } from "@/components/aprovacoes/paginacao";
 import { TabelaPedidos } from "@/components/aprovacoes/tabela-pedidos";
 import type { FiltrosDaLista } from "@/components/aprovacoes/url-da-lista";
+import { ehSuaVez } from "@/lib/cadeia";
 import type { PedidoResumo } from "@/lib/dto";
 import { filtroPedidosSchema, paginacaoSchema } from "@/lib/schemas/pedido";
 import { listarObras } from "@/server/services/cadastros";
-import { listarPedidos, paginarPedidos } from "@/server/services/pedidos";
+import { listarPendentesPara, paginarPedidos } from "@/server/services/pedidos";
 import { usuarioAtualId } from "@/server/usuario-atual";
 
 export const metadata = { title: "Aprovações — ObraFlow" };
@@ -61,15 +62,13 @@ export default async function AprovacoesPage({
       { ...filtros, pendentesPara: filtro === "minhas" ? (usuarioId ?? undefined) : undefined },
       paginacao,
     ),
-    usuarioId === null ? Promise.resolve([]) : listarPedidos({ pendentesPara: usuarioId }),
+    usuarioId === null ? Promise.resolve([]) : listarPendentesPara(usuarioId),
   ]);
 
   // Na aba "Todos", o que precisa da decisão do usuário vem primeiro, depois os outros
   // pendentes, depois os encerrados; dentro de cada grupo fica a ordem do banco.
-  const ehMinha = (pedido: PedidoResumo) =>
-    pedido.status === "PENDENTE" && usuarioId !== null && pedido.aprovadorAtualId === usuarioId;
   const grupo = (pedido: PedidoResumo) =>
-    ehMinha(pedido) ? 0 : pedido.status === "PENDENTE" ? 1 : 2;
+    ehSuaVez(pedido, usuarioId) ? 0 : pedido.status === "PENDENTE" ? 1 : 2;
   const itens =
     filtro === "minhas" ? pagina.itens : [...pagina.itens].sort((a, b) => grupo(a) - grupo(b));
 

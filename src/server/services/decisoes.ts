@@ -5,8 +5,8 @@ import { aplicarDecisao } from "@/domain/alcada/aplicarDecisao";
 import type { Decisao, EstadoAprovacao } from "@/domain/alcada/tipos";
 import { ConflitoDeDecisao, NaoEncontrado } from "@/domain/erros";
 import type { PedidoDetalhe } from "@/lib/dto";
+import { includePedidoDetalhe, paraPedidoDetalhe } from "@/server/dto";
 import { prisma } from "@/server/prisma";
-import { obterPedido } from "./pedidos";
 
 /**
  * Fluxo (ARQUITETURA.md §5 e §9):
@@ -22,7 +22,7 @@ export async function registrarDecisao(
   decisao: Decisao,
   usuarioId: number,
 ): Promise<PedidoDetalhe> {
-  await prisma.$transaction(async (tx) => {
+  return prisma.$transaction(async (tx) => {
     const pedido = await tx.pedido.findUnique({
       where: { id: pedidoId },
       include: { aprovacoes: { orderBy: { ordem: "asc" } } },
@@ -57,11 +57,12 @@ export async function registrarDecisao(
       });
     }
 
-    await tx.pedido.update({
+    // Devolve o agregado gravado na própria transação: a leitura vê exatamente o que gravou.
+    const atualizado = await tx.pedido.update({
       where: { id: pedidoId },
       data: { status: proximo.status, stepAtual: proximo.stepAtual },
+      include: includePedidoDetalhe,
     });
+    return paraPedidoDetalhe(atualizado);
   });
-
-  return obterPedido(pedidoId);
 }

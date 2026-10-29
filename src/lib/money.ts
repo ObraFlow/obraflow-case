@@ -13,17 +13,31 @@ export function formatarCentavos(cents: number): string {
 }
 
 /**
- * Converte o que o usuário digitou em um campo de dinheiro para centavos.
- * Aceita "1.234,56", "1234,56", "1234.56", "R$ 1.234,56" e "1234".
- * Devolve null quando o texto não é um número.
+ * Converte o que o usuário digitou em um campo de dinheiro para centavos, lendo como se lê
+ * em pt-BR. Devolve null quando o texto não é um número.
+ *
+ *   "1.234,56" → 123456   "1234,56" → 123456   "R$ 1.234,56" → 123456   "1234" → 123400
+ *   "1.500"    → 150000   (ponto seguido de exatamente 3 dígitos é milhar)
+ *   "1.5"      → 150      "1234.56" → 123456  (ponto com 1 ou 2 dígitos é decimal)
+ *
+ * O campo reescreve o valor ao perder o foco (`textoDeCentavos`), então o que foi entendido
+ * fica visível antes de enviar.
  */
 export function centavosDeTexto(texto: string): number | null {
   const limpo = texto.replace(/\s|R\$/g, "");
   if (limpo === "") return null;
 
-  // Com vírgula, ela é o separador decimal e os pontos são de milhar.
-  // Sem vírgula, um ponto (se houver) é o separador decimal.
-  const normalizado = limpo.includes(",") ? limpo.replace(/\./g, "").replace(",", ".") : limpo;
+  let normalizado: string;
+  if (limpo.includes(",")) {
+    // Com vírgula, ela é o separador decimal e os pontos são de milhar.
+    normalizado = limpo.replace(/\./g, "").replace(",", ".");
+  } else if (/^-?\d{1,3}(\.\d{3})+$/.test(limpo)) {
+    // Só pontos, cada um seguido de 3 dígitos: milhares ("1.500", "1.500.000").
+    normalizado = limpo.replace(/\./g, "");
+  } else {
+    // Sem vírgula e sem agrupamento de milhar: um ponto, se houver, é o decimal.
+    normalizado = limpo;
+  }
 
   const reais = Number(normalizado);
   if (!Number.isFinite(reais)) return null;

@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { BotoesDecisao, type TipoDecisao } from "@/components/aprovacoes/botoes-decisao";
+import { BotoesDecisao } from "@/components/aprovacoes/botoes-decisao";
+import {
+  useRegistrarDecisao,
+  type TipoDecisao,
+} from "@/components/aprovacoes/use-registrar-decisao";
+import { ehSuaVez } from "@/lib/cadeia";
 import { formatarDataDoInstante, formatarHora } from "@/lib/datas";
 import type { PedidoDetalhe } from "@/lib/dto";
 import { cn } from "@/lib/utils";
@@ -31,7 +36,7 @@ function explicacao(pedido: PedidoDetalhe, usuarioAtualId: number | null): strin
   if (usuarioAtualId === null) {
     return `Aguardando ${atual}. Escolha quem está agindo no seletor para decidir.`;
   }
-  if (pedido.aprovadorAtualId === usuarioAtualId) return null;
+  if (ehSuaVez(pedido, usuarioAtualId)) return null;
 
   const minhaPosicao = pedido.aprovacoes.find((a) => a.aprovadorId === usuarioAtualId);
   if (!minhaPosicao) {
@@ -43,8 +48,10 @@ function explicacao(pedido: PedidoDetalhe, usuarioAtualId: number | null): strin
 
 /**
  * Barra no topo do detalhe. Amarela com os botões quando é a vez do usuário atual; neutra,
- * com os botões desabilitados e a frase explicando, em todos os outros casos. Depois de
- * decidir aqui, recolhe para neutra e diz a hora: o resto da página chega revalidado do server.
+ * com os botões desabilitados e a frase explicando, em todos os outros casos.
+ * Enquanto a decisão viaja ao servidor a faixa inteira se apaga (`aria-busy` + opacidade):
+ * o clique tem retorno na hora. Ao concluir, recolhe para neutra e diz a hora; o resto da
+ * página chega revalidado do server e anima a timeline.
  */
 export function FaixaDecisao({
   pedido,
@@ -54,6 +61,10 @@ export function FaixaDecisao({
   usuarioAtualId: number | null;
 }) {
   const [decisao, setDecisao] = useState<{ tipo: TipoDecisao; em: string } | null>(null);
+
+  const { aprovar, rejeitar, enviando } = useRegistrarDecisao({
+    aoConcluir: (tipo) => setDecisao({ tipo, em: new Date().toISOString() }),
+  });
 
   const frase = explicacao(pedido, usuarioAtualId);
   const suaVez = frase === null && decisao === null;
@@ -65,19 +76,26 @@ export function FaixaDecisao({
   return (
     <section
       aria-label="Decisão"
+      aria-busy={enviando || undefined}
       className={cn(
-        "flex flex-wrap items-center justify-between gap-3 rounded-sm px-5 py-3",
+        "flex flex-wrap items-center justify-between gap-3 rounded-sm px-5 py-3 transition-opacity duration-150",
         suaVez ? "bg-sinalizacao text-foreground" : "bg-muted",
+        enviando && "opacity-70",
         decisao && "anima-faixa-recolhe",
       )}
     >
       <p className={cn("text-sm", suaVez ? "font-bold" : "font-medium")} aria-live="polite">
         {texto}
       </p>
+      {/* A key remonta os botões depois da decisão: o dialog de motivo, se estava aberto,
+          fecha junto, sem este componente precisar conhecer o estado dele. */}
       <BotoesDecisao
+        key={decisao ? "decidido" : "aberto"}
         pedidoId={pedido.id}
         desabilitado={!suaVez}
-        aoDecidir={(tipo) => setDecisao({ tipo, em: new Date().toISOString() })}
+        enviando={enviando}
+        aprovar={aprovar}
+        rejeitar={rejeitar}
       />
     </section>
   );

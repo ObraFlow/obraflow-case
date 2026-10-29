@@ -31,7 +31,7 @@ export function ListaNavegacao({
   contadorAprovacoes: React.ReactNode;
 }) {
   return (
-    <nav aria-label="Principal" className="flex h-12 px-4 sm:h-14 sm:px-0">
+    <nav aria-label="Principal" className="flex h-12 px-4 sm:px-8 lg:h-14 lg:px-0">
       {ITENS.map((item) => {
         const ativo =
           pathname !== null && (pathname === item.href || pathname.startsWith(item.href + "/"));

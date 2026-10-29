@@ -30,10 +30,12 @@ export async function obterFaixaAplicavel(
   obraId: number,
   valorCents: number,
 ): Promise<FaixaAplicavelDto> {
-  const obra = await prisma.obra.findUnique({ where: { id: obraId }, select: { nome: true } });
+  const [obra, regras] = await Promise.all([
+    prisma.obra.findUnique({ where: { id: obraId }, select: { nome: true } }),
+    listarRegras(obraId),
+  ]);
   if (!obra) throw new NaoEncontrado("Obra", "f");
 
-  const regras = await listarRegras(obraId);
   const aplicavel = resolverRegra(regras.map(paraFaixaAlcada), valorCents);
   const faixa = aplicavel ? (regras.find((regra) => regra.id === aplicavel.id) ?? null) : null;
 

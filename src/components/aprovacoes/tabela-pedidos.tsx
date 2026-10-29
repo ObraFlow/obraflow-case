@@ -5,7 +5,7 @@ import { DialogDecisao } from "@/components/aprovacoes/dialog-decisao";
 import { temFiltroAtivo, type FiltrosDaLista } from "@/components/aprovacoes/url-da-lista";
 import { LinhaPedido } from "@/components/aprovacoes/linha-pedido";
 import { CadeiaAlcada } from "@/components/alcada/cadeia-alcada";
-import { niveisDoPedido } from "@/lib/cadeia";
+import { ehSuaVez, niveisDoPedido } from "@/lib/cadeia";
 import { formatarData } from "@/lib/datas";
 import type { PedidoResumo } from "@/lib/dto";
 import { formatarCentavos } from "@/lib/money";
@@ -114,17 +114,12 @@ export function TabelaPedidos({
     );
   }
 
-  const ehSuaVez = (pedido: PedidoResumo) =>
-    pedido.status === "PENDENTE" &&
-    usuarioAtualId !== null &&
-    pedido.aprovadorAtualId === usuarioAtualId;
-
   return (
     <>
       {/* Celular: blocos empilhados. */}
       <div className="flex flex-col divide-y divide-linha rounded-sm border bg-card md:hidden">
         {pedidos.map((pedido) => {
-          const suaVez = ehSuaVez(pedido);
+          const suaVez = ehSuaVez(pedido, usuarioAtualId);
           return (
             <LinhaPedido
               key={pedido.id}
@@ -162,21 +157,42 @@ export function TabelaPedidos({
       <div className="relative hidden overflow-x-auto rounded-sm border bg-card md:block">
         <table className="w-full border-collapse">
           <thead>
+            {/* Entre md e xl o espaço é curto: Fornecedor só em xl, Data e Itens só a partir de lg
+                (os blocos do celular mostram tudo). */}
             <tr className="border-b-2 border-foreground text-left text-xs font-semibold text-muted-foreground">
-              <th className="px-3 py-2.5 whitespace-nowrap">Pedido</th>
-              <th className="px-3 py-2.5">Obra</th>
-              <th className="hidden px-3 py-2.5 xl:table-cell">Fornecedor</th>
-              <th className="px-3 py-2.5 whitespace-nowrap">Data</th>
-              <th className="px-3 py-2.5 text-right whitespace-nowrap">Itens</th>
-              <th className="px-3 py-2.5 text-right whitespace-nowrap">Total</th>
-              <th className="px-3 py-2.5 whitespace-nowrap">Situação</th>
-              <th className="px-3 py-2.5 whitespace-nowrap">Alçada</th>
-              <th className="w-0 px-3 py-2.5" aria-label="Ações" />
+              <th scope="col" className="px-3 py-2.5 whitespace-nowrap">
+                Pedido
+              </th>
+              <th scope="col" className="px-3 py-2.5">
+                Obra
+              </th>
+              <th scope="col" className="hidden px-3 py-2.5 xl:table-cell">
+                Fornecedor
+              </th>
+              <th scope="col" className="hidden px-3 py-2.5 whitespace-nowrap lg:table-cell">
+                Data
+              </th>
+              <th
+                scope="col"
+                className="hidden px-3 py-2.5 text-right whitespace-nowrap lg:table-cell"
+              >
+                Itens
+              </th>
+              <th scope="col" className="px-3 py-2.5 text-right whitespace-nowrap">
+                Total
+              </th>
+              <th scope="col" className="px-3 py-2.5 whitespace-nowrap">
+                Situação
+              </th>
+              <th scope="col" className="px-3 py-2.5 whitespace-nowrap">
+                Alçada
+              </th>
+              <th scope="col" className="w-0 px-3 py-2.5" aria-label="Ações" />
             </tr>
           </thead>
           <tbody>
             {pedidos.map((pedido) => {
-              const suaVez = ehSuaVez(pedido);
+              const suaVez = ehSuaVez(pedido, usuarioAtualId);
               return (
                 <LinhaPedido
                   key={pedido.id}
@@ -185,33 +201,37 @@ export function TabelaPedidos({
                   usuarioAtualId={usuarioAtualId}
                   className="relative border-b border-linha last:border-b-0 hover:bg-muted"
                 >
-                  <td className="px-3 py-2 whitespace-nowrap">
+                  {/* py-3: linha de 46px (docs/design.md > Forma), igual ao skeleton. */}
+                  <td className="px-3 py-3 whitespace-nowrap">
                     <span className="flex items-center gap-2">
                       <LinkDoPedido pedido={pedido} />
                       {suaVez && <EtiquetaSuaVez />}
                     </span>
                   </td>
-                  <td className="max-w-48 truncate px-3 py-2" title={pedido.obraNome}>
+                  <td className="max-w-36 truncate px-3 py-3 lg:max-w-48" title={pedido.obraNome}>
                     {pedido.obraNome}
                   </td>
                   <td
-                    className="hidden max-w-44 truncate px-3 py-2 text-muted-foreground xl:table-cell"
+                    className="hidden max-w-40 truncate px-3 py-3 text-muted-foreground xl:table-cell"
                     title={pedido.fornecedorNome}
                   >
                     {pedido.fornecedorNome}
                   </td>
-                  <td className="px-3 py-2 whitespace-nowrap tabular-nums">
+                  <td className="hidden px-3 py-3 whitespace-nowrap tabular-nums lg:table-cell">
                     {formatarData(pedido.dataPedido)}
                   </td>
-                  <td className="px-3 py-2 text-right tabular-nums">{pedido.totalItens}</td>
-                  <td className="px-3 py-2 text-right font-semibold whitespace-nowrap tabular-nums">
+                  <td className="hidden px-3 py-3 text-right tabular-nums lg:table-cell">
+                    {pedido.totalItens}
+                  </td>
+                  <td className="px-3 py-3 text-right font-semibold whitespace-nowrap tabular-nums">
                     {formatarCentavos(pedido.totalCents)}
                   </td>
-                  <td className="px-3 py-2">
+                  <td className="px-3 py-3">
                     <BadgeSituacao status={pedido.status} />
                   </td>
-                  <td className="px-3 py-2 whitespace-nowrap">
-                    <CadeiaAlcada niveis={niveisDoPedido(pedido)} className="flex-nowrap" />
+                  <td className="px-3 py-3">
+                    {/* Entre md e xl a cadeia quebra linha em vez de forçar rolagem. */}
+                    <CadeiaAlcada niveis={niveisDoPedido(pedido)} className="xl:flex-nowrap" />
                   </td>
                   <td className="w-0 px-3 py-1 text-right whitespace-nowrap">
                     {suaVez && (

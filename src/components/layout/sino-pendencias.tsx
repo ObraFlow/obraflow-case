@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { listarPedidos } from "@/lib/api/pedidos";
 import type { PedidoResumo } from "@/lib/dto";
 import { formatarCentavos } from "@/lib/money";
+import { rotuloPendencias } from "@/lib/pendencias";
 import { cn } from "@/lib/utils";
 
 const INTERVALO_MS = 30_000;
@@ -70,7 +71,10 @@ export function SinoPendencias({ usuarioAtualId }: { usuarioAtualId: number }) {
     }
 
     void carregar();
-    const temporizador = setInterval(() => void carregar(), INTERVALO_MS);
+    // Aba em segundo plano não consulta; o `visibilitychange` abaixo atualiza ao voltar.
+    const temporizador = setInterval(() => {
+      if (!document.hidden) void carregar();
+    }, INTERVALO_MS);
     const aoVoltar = () => {
       if (document.visibilityState === "visible") void carregar();
     };
@@ -92,17 +96,19 @@ export function SinoPendencias({ usuarioAtualId }: { usuarioAtualId: number }) {
     ? "Não foi possível consultar as suas pendências"
     : pendentes === null
       ? "Consultando as suas pendências"
-      : total === 0
-        ? "Nenhum pedido aguarda a sua decisão"
-        : total === 1
-          ? "1 pedido aguarda a sua decisão"
-          : `${total} pedidos aguardam a sua decisão`;
+      : rotuloPendencias(total);
 
   return (
     <Popover>
+      {/* Quando a consulta falha, o sino apaga e o `title` diz por quê: a falha precisa
+          ser visível também para quem enxerga, não só no rótulo do leitor de tela. */}
       <PopoverTrigger
         aria-label={rotulo}
-        className="relative flex size-10 items-center justify-center rounded-sm text-white/85 hover:text-white focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:size-8"
+        title={falhou ? rotulo : undefined}
+        className={cn(
+          "relative flex size-10 items-center justify-center rounded-sm transition-colors hover:text-white focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:size-8",
+          falhou ? "text-white/45" : "text-white/85",
+        )}
       >
         <Bell className="size-5" aria-hidden="true" />
         {total > 0 && (
@@ -114,7 +120,7 @@ export function SinoPendencias({ usuarioAtualId }: { usuarioAtualId: number }) {
           </span>
         )}
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 rounded-sm p-0">
+      <PopoverContent align="end" className="w-80 p-0">
         <div className="border-b border-linha px-4 py-3">
           <p className="font-bold">Aguardando a sua decisão</p>
           <p className="text-xs text-muted-foreground">{rotulo}</p>

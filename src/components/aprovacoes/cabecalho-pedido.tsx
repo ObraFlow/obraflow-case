@@ -17,7 +17,8 @@ export function CabecalhoPedido({ pedido }: { pedido: PedidoDetalhe }) {
     <div className="flex flex-col gap-3">
       <Link
         href="/aprovacoes"
-        className="w-fit text-sm font-medium text-muted-foreground underline-offset-4 hover:underline"
+        // 40px de alvo de toque no celular; o -mt compensa para o texto não descer.
+        className="-mt-2 flex min-h-10 w-fit items-center text-sm font-medium text-muted-foreground underline-offset-4 hover:underline sm:mt-0 sm:min-h-0"
       >
         Voltar para aprovações
       </Link>

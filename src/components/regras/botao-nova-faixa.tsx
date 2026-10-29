@@ -10,6 +10,7 @@ export function BotaoNovaFaixa({
   faixas,
   usuarios,
   rotulo = "Nova faixa",
+  rotuloAcessivel,
   variante = "default",
   sugestao,
 }: {
@@ -17,6 +18,8 @@ export function BotaoNovaFaixa({
   faixas: RegraDto[];
   usuarios: UsuarioDto[];
   rotulo?: string;
+  /** Nome para leitor de tela quando o mesmo rótulo se repete na página (uma lacuna por linha). */
+  rotuloAcessivel?: string;
   variante?: "default" | "outline";
   /** Preenche mínimo e máximo (ex.: a lacuna que o usuário quer fechar). */
   sugestao?: { minCents: number; maxCents: number | null };
@@ -30,6 +33,7 @@ export function BotaoNovaFaixa({
         variant={variante}
         size={variante === "outline" ? "sm" : "default"}
         className={variante === "outline" ? "h-10 md:h-7" : undefined}
+        aria-label={rotuloAcessivel}
         onClick={() => setAberto(true)}
       >
         {rotulo}
@@ -40,7 +44,6 @@ export function BotaoNovaFaixa({
           faixas={faixas}
           usuarios={usuarios}
           sugestao={sugestao}
-          aberto={aberto}
           aoFechar={() => setAberto(false)}
         />
       )}
