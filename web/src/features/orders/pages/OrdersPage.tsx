@@ -1,4 +1,4 @@
-import { ClipboardCheck, FileSearch, Plus } from 'lucide-react'
+import { ArrowUpDown, ClipboardCheck, FileSearch, Plus } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Pagination } from '@/components/Pagination'
@@ -17,7 +17,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useSites } from '@/features/catalog/api'
 import type { OrderStatus } from '@/types/api'
-import { useOrders } from '../api'
+import { useOrders, type OrderSort } from '../api'
 import { OrdersList } from '../components/OrdersList'
 
 const PAGE_SIZE = 20
@@ -31,8 +31,17 @@ const statusOptions: { value: OrderStatus; label: string }[] = [
   { value: 'REJECTED', label: 'Rejeitados' },
 ]
 
+const DEFAULT_SORT: OrderSort = 'date_desc'
+
+const sortOptions: { value: OrderSort; label: string }[] = [
+  { value: 'date_desc', label: 'Data: mais recentes' },
+  { value: 'date_asc', label: 'Data: mais antigos' },
+  { value: 'site', label: 'Obra (A–Z)' },
+  { value: 'supplier', label: 'Fornecedor (A–Z)' },
+]
+
 /**
- * Approvals screen. Filters live in the URL (?view=all&status=PENDING&site=...),
+ * Approvals screen. Filters live in the URL (?view=all&status=PENDING&site=...&sort=...),
  * so the back button and shared links keep them.
  */
 export function OrdersPage() {
@@ -42,12 +51,14 @@ export function OrdersPage() {
   const view: View = params.get('view') === 'all' ? 'all' : 'mine'
   const siteId = params.get('site') ?? undefined
   const status = statusOptions.find((option) => option.value === params.get('status'))?.value
+  const sort =
+    sortOptions.find((option) => option.value === params.get('sort'))?.value ?? DEFAULT_SORT
   const page = Number(params.get('page') ?? '1') || 1
 
   const orders = useOrders(
     view === 'mine'
-      ? { awaitingMe: true, siteId, page, pageSize: PAGE_SIZE }
-      : { status, siteId, page, pageSize: PAGE_SIZE },
+      ? { awaitingMe: true, siteId, sort, page, pageSize: PAGE_SIZE }
+      : { status, siteId, sort, page, pageSize: PAGE_SIZE },
   )
   // Count for the tab badge, independent of the current tab and filters.
   const awaiting = useOrders({ awaitingMe: true, pageSize: 1 })
@@ -77,7 +88,7 @@ export function OrdersPage() {
         }
       />
 
-      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="mb-4 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <Tabs
           value={view}
           onValueChange={(value) => update({ view: value === 'all' ? 'all' : undefined })}
@@ -96,7 +107,7 @@ export function OrdersPage() {
           </TabsList>
         </Tabs>
 
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           <Select
             value={siteId ?? ALL}
             onValueChange={(value) => update({ site: value === ALL ? undefined : value })}
@@ -131,6 +142,22 @@ export function OrdersPage() {
               </SelectContent>
             </Select>
           )}
+          <Select
+            value={sort}
+            onValueChange={(value) => update({ sort: value === DEFAULT_SORT ? undefined : value })}
+          >
+            <SelectTrigger className="w-full sm:w-52" aria-label="Ordenar pedidos">
+              <ArrowUpDown className="text-muted-foreground" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {sortOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

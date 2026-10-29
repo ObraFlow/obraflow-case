@@ -10,7 +10,10 @@ import { ApprovalTiersService } from '../approval-tiers/approval-tiers.service.j
 import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto.js';
-import { ListPurchaseOrdersQueryDto } from './dto/list-purchase-orders-query.dto.js';
+import {
+  ListPurchaseOrdersQueryDto,
+  OrderSort,
+} from './dto/list-purchase-orders-query.dto.js';
 import { calculateTotals } from './order-totals.js';
 
 const userSummary = { select: { id: true, name: true, role: true } };
@@ -66,6 +69,20 @@ export function visibleTo(userId: string): Prisma.PurchaseOrderWhereInput {
   };
 }
 
+/**
+ * Every sort ends with the order number, which is unique, so pages never
+ * repeat or skip orders that tie on date or name.
+ */
+const sortOrder: Record<
+  OrderSort,
+  Prisma.PurchaseOrderOrderByWithRelationInput[]
+> = {
+  date_desc: [{ orderDate: 'desc' }, { number: 'desc' }],
+  date_asc: [{ orderDate: 'asc' }, { number: 'asc' }],
+  site: [{ site: { name: 'asc' } }, { number: 'desc' }],
+  supplier: [{ supplier: { name: 'asc' } }, { number: 'desc' }],
+};
+
 const IDEMPOTENCY_KEY_REGEX = /^[\w-]{1,100}$/;
 
 const brl = new Intl.NumberFormat('pt-BR', {
@@ -106,7 +123,7 @@ export class PurchaseOrdersService {
       this.prisma.purchaseOrder.count({ where }),
       this.prisma.purchaseOrder.findMany({
         where,
-        orderBy: { number: 'desc' },
+        orderBy: sortOrder[query.sort],
         skip: (query.page - 1) * query.pageSize,
         take: query.pageSize,
         include: listInclude,

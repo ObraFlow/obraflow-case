@@ -2,11 +2,15 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { api } from '@/lib/api'
 import type { CreateOrderInput, OrderDetail, OrderListItem, OrderStatus, Page } from '@/types/api'
 
+/** date_desc / date_asc: by order date. site / supplier: by name, A to Z. */
+export type OrderSort = 'date_desc' | 'date_asc' | 'site' | 'supplier'
+
 export interface OrderFilters {
   status?: OrderStatus
   siteId?: string
   /** Only orders whose current step is the logged-in user. */
   awaitingMe?: boolean
+  sort?: OrderSort
   page?: number
   pageSize?: number
 }

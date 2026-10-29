@@ -2,6 +2,7 @@ import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
+  IsIn,
   IsInt,
   IsOptional,
   IsUUID,
@@ -9,6 +10,14 @@ import {
   Min,
 } from 'class-validator';
 import { PurchaseOrderStatus } from '../../generated/prisma/client.js';
+
+export const ORDER_SORTS = [
+  'date_desc',
+  'date_asc',
+  'site',
+  'supplier',
+] as const;
+export type OrderSort = (typeof ORDER_SORTS)[number];
 
 export class ListPurchaseOrdersQueryDto {
   @IsOptional()
@@ -26,6 +35,14 @@ export class ListPurchaseOrdersQueryDto {
   )
   @IsBoolean()
   awaitingMe?: boolean;
+
+  /**
+   * date_desc (default) / date_asc: by order date. site / supplier: by name,
+   * A to Z.
+   */
+  @IsOptional()
+  @IsIn(ORDER_SORTS)
+  sort: OrderSort = 'date_desc';
 
   @IsOptional()
   @Type(() => Number)
