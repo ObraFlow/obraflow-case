@@ -1,4 +1,4 @@
-# docker compose up --build  ->  app at http://localhost:8080
+# docker compose up --build  ->  app at http://localhost:8080 (WEB_PORT=3001 to change)
 # Only the database is needed for local development (pnpm dev); `docker compose up db`.
 services:
   db:
@@ -36,8 +36,10 @@ services:
 
   web:
     build: ./web
+    environment:
+      APP_URL: http://localhost:${WEB_PORT:-8080}
     ports:
-      - "8080:80"
+      - "${WEB_PORT:-8080}:80"
     depends_on:
       api:
         condition: service_healthy
