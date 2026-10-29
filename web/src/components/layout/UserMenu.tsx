@@ -27,12 +27,13 @@ export function UserMenu() {
           <ChevronDown className="size-4 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="font-normal">
+      <DropdownMenuContent align="end" className="w-48">
+        {/* The header already shows the name, except on phones. */}
+        <DropdownMenuLabel className="font-normal sm:hidden">
           <span className="block text-xs text-muted-foreground">Usando como</span>
           <span className="block font-medium">{user.name}</span>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="sm:hidden" />
         <DropdownMenuItem onSelect={() => logout.mutate()}>
           <LogOut />
           Trocar de usuário
