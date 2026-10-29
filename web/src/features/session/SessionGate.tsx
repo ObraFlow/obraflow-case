@@ -1,5 +1,5 @@
 import { Building2, Loader2, Users } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { EmptyState } from '@/components/states/EmptyState'
 import { ErrorState } from '@/components/states/ErrorState'
@@ -9,9 +9,23 @@ import { useUsers } from '@/features/catalog/api'
 import { ApiError } from '@/lib/api'
 import { useLogin, useSession } from './api'
 
+interface SessionGateProps {
+  children: ReactNode
+  /** Called when the user leaves (logout or expired cookie), to reset the page. */
+  onSignOut?: () => void
+}
+
 /** Renders the app only after a user is selected; otherwise asks who is using it. */
-export function SessionGate({ children }: { children: ReactNode }) {
+export function SessionGate({ children, onSignOut }: SessionGateProps) {
   const session = useSession()
+  const userId = session.data?.user?.id
+
+  // The next user starts on the orders list, never on the page the previous one left open.
+  const previousUserId = useRef(userId)
+  useEffect(() => {
+    if (previousUserId.current && !userId) onSignOut?.()
+    previousUserId.current = userId
+  }, [userId, onSignOut])
 
   if (session.isPending) {
     return (

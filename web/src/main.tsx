@@ -9,11 +9,15 @@ import { queryClient } from '@/lib/query-client'
 import { router } from '@/router'
 import './index.css'
 
+function resetToHome() {
+  void router.navigate('/pedidos', { replace: true })
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <SessionGate>
+        <SessionGate onSignOut={resetToHome}>
           <RouterProvider router={router} />
         </SessionGate>
         <Toaster richColors position="top-right" />

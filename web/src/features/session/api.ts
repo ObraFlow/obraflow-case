@@ -38,6 +38,10 @@ export function useLogout() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: () => api.delete('/session'),
-    onSuccess: () => queryClient.setQueryData(sessionKey, { user: null }),
+    onSuccess: () => {
+      // Nothing the previous user saw stays in memory for the next one.
+      queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== 'session' })
+      queryClient.setQueryData(sessionKey, { user: null })
+    },
   })
 }
