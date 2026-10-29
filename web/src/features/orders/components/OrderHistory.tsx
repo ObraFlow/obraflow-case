@@ -1,4 +1,6 @@
 import { CheckCircle2, FilePlus2, Flag, XCircle } from 'lucide-react'
+import { FlowArrow } from '@/components/FlowArrow'
+import { RejectionReason } from '@/components/RejectionReason'
 import { formatDateTime } from '@/lib/format'
 import { formatBRL } from '@/lib/money'
 import { cn } from '@/lib/utils'
@@ -30,29 +32,32 @@ function describe(event: OrderEvent): { title: string; detail?: string } {
   }
 }
 
-/** Append-only audit trail recorded by the API. */
+/** Append-only audit trail recorded by the API, oldest first. */
 export function OrderHistory({ events }: { events: OrderEvent[] }) {
   return (
-    <ol className="space-y-4">
-      {events.map((event) => {
+    <ol>
+      {events.map((event, index) => {
         const { icon: Icon, tone } = eventConfig[event.type]
         const { title, detail } = describe(event)
+        const last = index === events.length - 1
         return (
           <li key={event.id} className="flex gap-3">
-            <span
-              className={cn('flex size-8 shrink-0 items-center justify-center rounded-full', tone)}
-            >
-              <Icon className="size-4" aria-hidden />
-            </span>
-            <div className="min-w-0 flex-1 pt-1">
+            <div className="flex flex-col items-center">
+              <span
+                className={cn(
+                  'flex size-8 shrink-0 items-center justify-center rounded-full',
+                  tone,
+                )}
+              >
+                <Icon className="size-4" aria-hidden />
+              </span>
+              {!last && <FlowArrow className="my-1 flex-1" />}
+            </div>
+            <div className={cn('min-w-0 flex-1 pt-1', !last && 'pb-5')}>
               <p className="text-sm font-medium">{title}</p>
               <p className="text-xs text-muted-foreground">{formatDateTime(event.createdAt)}</p>
               {detail && <p className="mt-1 text-sm text-muted-foreground">{detail}</p>}
-              {event.reason && (
-                <blockquote className="mt-2 rounded-md border-l-2 border-red-300 bg-red-50 px-3 py-2 text-sm text-red-950">
-                  {event.reason}
-                </blockquote>
-              )}
+              {event.reason && <RejectionReason reason={event.reason} />}
             </div>
           </li>
         )

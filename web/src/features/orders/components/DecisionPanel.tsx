@@ -68,7 +68,7 @@ function StateMessage({ state }: { state: DecisionState }) {
   switch (state.kind) {
     case 'mine':
       return (
-        <Alert className="border-amber-200 bg-amber-50 text-amber-950">
+        <Alert className="border-amber-200/70 bg-amber-50/50 text-amber-950">
           <Clock />
           <AlertTitle>É a sua vez de decidir</AlertTitle>
           <AlertDescription className="text-amber-900">
@@ -96,7 +96,7 @@ function StateMessage({ state }: { state: DecisionState }) {
       )
     case 'approved':
       return (
-        <Alert className="border-emerald-200 bg-emerald-50 text-emerald-950">
+        <Alert className="border-emerald-100 bg-emerald-50/40 text-emerald-950">
           <CheckCircle2 />
           <AlertTitle>Cadeia de aprovação concluída</AlertTitle>
           <AlertDescription className="text-emerald-900">
@@ -108,7 +108,7 @@ function StateMessage({ state }: { state: DecisionState }) {
       )
     case 'rejected':
       return (
-        <Alert className="border-red-200 bg-red-50 text-red-950">
+        <Alert className="border-red-100 bg-red-50/40 text-red-950">
           <XCircle />
           <AlertTitle>Pedido rejeitado</AlertTitle>
           <AlertDescription className="text-red-900">

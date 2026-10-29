@@ -1,5 +1,7 @@
 import { CheckCircle2, ChevronRight, Circle, Clock, MinusCircle, XCircle } from 'lucide-react'
 import { Fragment } from 'react'
+import { FlowArrow } from '@/components/FlowArrow'
+import { RejectionReason } from '@/components/RejectionReason'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { UserAvatar } from '@/components/UserAvatar'
 import { firstName, formatDateTime } from '@/lib/format'
@@ -16,14 +18,14 @@ const stepConfig = {
     label: 'Aprovado',
     detail: 'Aprovou',
     tone: 'text-emerald-700',
-    tint: 'border-emerald-200 bg-emerald-50',
+    tint: 'border-emerald-100 bg-emerald-50/40',
   },
   CURRENT: {
     icon: Clock,
     label: 'Aguardando',
     detail: 'Aguardando decisão',
     tone: 'text-amber-700',
-    tint: 'border-amber-200 bg-amber-50',
+    tint: 'border-amber-200/70 bg-amber-50/50',
   },
   WAITING: {
     icon: Circle,
@@ -37,7 +39,7 @@ const stepConfig = {
     label: 'Rejeitado',
     detail: 'Rejeitou',
     tone: 'text-red-700',
-    tint: 'border-red-200 bg-red-50',
+    tint: 'border-red-100 bg-red-50/40',
   },
   CANCELLED: {
     icon: MinusCircle,
@@ -111,51 +113,51 @@ interface ChainTimelineProps {
 /** Chain for the details screen, with decision time and rejection reason. */
 export function ApprovalChainTimeline({ steps }: ChainTimelineProps) {
   return (
-    <ol className="space-y-2">
-      {steps.map((step) => {
+    <ol>
+      {steps.map((step, index) => {
         const { icon: Icon, label, tone, tint } = stepConfig[step.status]
         const inactive = isInactive(step.status)
         return (
-          <li key={step.position} className={cn('flex gap-3 rounded-lg border p-3', tint)}>
-            <UserAvatar
-              name={step.approver.name}
-              className={cn('size-9', inactive && 'opacity-50 grayscale')}
-            />
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                <p
-                  className={cn(
-                    'text-sm leading-tight font-medium',
-                    inactive && 'text-muted-foreground',
-                  )}
-                >
-                  <span className="mr-1 font-normal text-muted-foreground">{step.position}.</span>
-                  {step.approver.name}
-                </p>
-                <span
-                  className={cn(
-                    'inline-flex items-center gap-1 text-xs font-medium',
-                    tone,
-                    inactive && 'opacity-70',
-                  )}
-                >
-                  <Icon className="size-3.5" aria-hidden />
-                  {label}
-                </span>
+          <li key={step.position}>
+            {/* Lines up with the avatar column: p-3 (12px) + half of size-9. */}
+            {index > 0 && <FlowArrow className="ml-3 h-6 w-9 pt-1" />}
+            <div className={cn('flex gap-3 rounded-lg border p-3', tint)}>
+              <UserAvatar
+                name={step.approver.name}
+                className={cn('size-9', inactive && 'opacity-50 grayscale')}
+              />
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                  <p
+                    className={cn(
+                      'text-sm leading-tight font-medium',
+                      inactive && 'text-muted-foreground',
+                    )}
+                  >
+                    <span className="mr-1 font-normal text-muted-foreground">{step.position}.</span>
+                    {step.approver.name}
+                  </p>
+                  <span
+                    className={cn(
+                      'inline-flex items-center gap-1 text-xs font-medium',
+                      tone,
+                      inactive && 'opacity-70',
+                    )}
+                  >
+                    <Icon className="size-3.5" aria-hidden />
+                    {label}
+                  </span>
+                </div>
+                {step.approver.role && (
+                  <p className="text-xs text-muted-foreground">{step.approver.role}</p>
+                )}
+                {step.decidedAt && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    em {formatDateTime(step.decidedAt)}
+                  </p>
+                )}
+                {step.reason && <RejectionReason reason={step.reason} className="bg-white/70" />}
               </div>
-              {step.approver.role && (
-                <p className="text-xs text-muted-foreground">{step.approver.role}</p>
-              )}
-              {step.decidedAt && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  em {formatDateTime(step.decidedAt)}
-                </p>
-              )}
-              {step.reason && (
-                <blockquote className="mt-2 rounded-md border-l-2 border-red-300 bg-white/70 px-3 py-2 text-sm text-red-950">
-                  {step.reason}
-                </blockquote>
-              )}
             </div>
           </li>
         )
