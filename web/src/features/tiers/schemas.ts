@@ -1,6 +1,6 @@
 import Decimal from 'decimal.js'
 import { z } from 'zod'
-import { normalizeDecimal } from '@/lib/money'
+import { parseMaskedMoney } from '@/lib/money'
 import type { ApprovalTier } from '@/types/api'
 
 /**
@@ -26,12 +26,12 @@ export function makeTierSchema(others: Pick<ApprovalTier, 'maxAmount'>[]) {
         }
         return
       }
+      // The field is masked (see maskMoneyInput): "10.000,00".
       const text = maxAmount.trim()
       if (text === '') return fail('maxAmount', 'Informe o limite da faixa.')
-      if (text.startsWith('-')) return fail('maxAmount', 'O limite deve ser maior que zero.')
-      const value = normalizeDecimal(text)
+      const value = parseMaskedMoney(text)
       if (value === null) {
-        return fail('maxAmount', 'Use apenas números, com vírgula para centavos (ex.: 10000,00).')
+        return fail('maxAmount', 'Informe um valor, com vírgula para centavos (ex.: 10.000,00).')
       }
       const [integer, decimals = ''] = value.split('.')
       if (decimals.length > 2) return fail('maxAmount', 'Use no máximo 2 casas decimais.')

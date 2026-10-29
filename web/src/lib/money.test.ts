@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { itemTotal, normalizeDecimal, orderTotal } from './money'
+import { itemTotal, maskMoneyInput, normalizeDecimal, orderTotal, parseMaskedMoney } from './money'
 
 describe('normalizeDecimal', () => {
   it('accepts comma or dot as decimal separator', () => {
@@ -13,6 +13,27 @@ describe('normalizeDecimal', () => {
     expect(normalizeDecimal('-1')).toBeNull()
     expect(normalizeDecimal('1.234,56')).toBeNull()
     expect(normalizeDecimal('')).toBeNull()
+  })
+})
+
+describe('maskMoneyInput / parseMaskedMoney', () => {
+  it('groups thousands while typing', () => {
+    expect(maskMoneyInput('1234567')).toBe('1.234.567')
+    expect(maskMoneyInput('1234567,5')).toBe('1.234.567,5')
+    expect(maskMoneyInput('100')).toBe('100')
+  })
+
+  it('drops anything that is not a digit or the first comma', () => {
+    expect(maskMoneyInput('-12a34,567')).toBe('1.234,56')
+    expect(maskMoneyInput('1.2.3.4')).toBe('1.234')
+    expect(maskMoneyInput('0012')).toBe('12')
+    expect(maskMoneyInput(',5')).toBe('0,5')
+  })
+
+  it('turns the masked text back into the API format', () => {
+    expect(parseMaskedMoney('1.234.567,50')).toBe('1234567.50')
+    expect(parseMaskedMoney('10.000')).toBe('10000')
+    expect(parseMaskedMoney('')).toBeNull()
   })
 })
 

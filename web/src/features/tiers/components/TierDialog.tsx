@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ApiError } from '@/lib/api'
 import { firstName } from '@/lib/format'
-import { normalizeDecimal } from '@/lib/money'
+import { maskMoneyInput, parseMaskedMoney } from '@/lib/money'
 import type { ApprovalTierWithRange, ConstructionSite, User } from '@/types/api'
 import { useSaveTier } from '../api'
 import { previousLimit, tierRangeLabel } from '../range'
@@ -57,17 +57,18 @@ function TierFormContent({ site, tier, tiers, users, onOpenChange }: TierDialogP
     resolver: zodResolver(schema),
     defaultValues: {
       noLimit: tier ? tier.maxAmount === null : false,
-      maxAmount: tier?.maxAmount ? tier.maxAmount.replace('.', ',') : '',
+      maxAmount: tier?.maxAmount ? maskMoneyInput(tier.maxAmount.replace('.', ',')) : '',
       approvers: tier?.approvers.map((approver) => ({ userId: approver.userId })) ?? [],
     },
   })
   const { errors } = form.formState
+  const maxAmountField = form.register('maxAmount')
   const noLimit = useWatch({ control: form.control, name: 'noLimit' })
   const maxAmount = useWatch({ control: form.control, name: 'maxAmount' })
   const approvers = useWatch({ control: form.control, name: 'approvers' })
 
   // Live preview of the range this tier will cover, given the other tiers.
-  const limit = noLimit ? null : normalizeDecimal(maxAmount)
+  const limit = noLimit ? null : parseMaskedMoney(maxAmount)
   const rangePreview =
     noLimit || limit
       ? tierRangeLabel(
@@ -89,7 +90,7 @@ function TierFormContent({ site, tier, tiers, users, onOpenChange }: TierDialogP
       {
         tierId: tier?.id,
         input: {
-          maxAmount: values.noLimit ? null : normalizeDecimal(values.maxAmount),
+          maxAmount: values.noLimit ? null : parseMaskedMoney(values.maxAmount),
           approverIds: values.approvers.map((approver) => approver.userId),
         },
       },
@@ -122,12 +123,17 @@ function TierFormContent({ site, tier, tiers, users, onOpenChange }: TierDialogP
           <Input
             id="maxAmount"
             inputMode="decimal"
-            placeholder="10000,00"
+            placeholder="10.000,00"
+            autoComplete="off"
             className="pl-8 tabular-nums"
             disabled={noLimit}
             aria-invalid={!!errors.maxAmount}
             aria-describedby="maxAmount-error"
-            {...form.register('maxAmount')}
+            {...maxAmountField}
+            onChange={(event) => {
+              applyMoneyMask(event.target)
+              void maxAmountField.onChange(event)
+            }}
           />
         </div>
         <FieldError
@@ -187,4 +193,21 @@ function TierFormContent({ site, tier, tiers, users, onOpenChange }: TierDialogP
       </DialogFooter>
     </form>
   )
+}
+
+/**
+ * Masks the input in place and keeps the caret after the same digit, so
+ * editing in the middle of "1.234.567" does not jump to the end.
+ */
+function applyMoneyMask(input: HTMLInputElement) {
+  const caret = input.selectionStart ?? input.value.length
+  const significantBefore = input.value.slice(0, caret).replace(/[^\d,]/g, '').length
+  const masked = maskMoneyInput(input.value)
+  input.value = masked
+
+  let position = 0
+  for (let seen = 0; position < masked.length && seen < significantBefore; position++) {
+    if (/[\d,]/.test(masked[position])) seen++
+  }
+  input.setSelectionRange(position, position)
 }

@@ -31,6 +31,29 @@ export function normalizeDecimal(input: string): string | null {
 }
 
 /**
+ * Live mask for an amount typed in pt-BR: keeps digits and one comma, groups
+ * thousands with dots and allows 2 decimals ("1234567,5" -> "1.234.567,5").
+ * In this field a dot is always a thousand separator, never a decimal one.
+ */
+export function maskMoneyInput(input: string): string {
+  const cleaned = input.replace(/[^\d,]/g, '')
+  const comma = cleaned.indexOf(',')
+  const integerPart = comma === -1 ? cleaned : cleaned.slice(0, comma)
+  const integer = integerPart.replace(/^0+(?=\d)/, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+  if (comma === -1) return integer
+  const decimals = cleaned
+    .slice(comma + 1)
+    .replace(/,/g, '')
+    .slice(0, 2)
+  return `${integer || '0'},${decimals}`
+}
+
+/** Reverse of the mask: "1.234.567,50" -> "1234567.50" (null when incomplete). */
+export function parseMaskedMoney(input: string): string | null {
+  return normalizeDecimal(input.replace(/\./g, ''))
+}
+
+/**
  * quantity x unit price rounded to cents, half up: the same rule the API uses
  * (Decimal, ROUND_HALF_UP), so the total on screen is the total saved.
  * Returns null while the inputs are not valid numbers.
