@@ -1,5 +1,5 @@
-import { Building2 } from 'lucide-react'
 import { Link, NavLink, Outlet } from 'react-router'
+import { Logo } from '@/components/Logo'
 import { cn } from '@/lib/utils'
 import { UserMenu } from './UserMenu'
 
@@ -23,11 +23,8 @@ export function AppLayout() {
     <div className="min-h-svh">
       <header className="sticky top-0 z-30 border-b bg-card/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4">
-          <Link to="/pedidos" className="flex items-center gap-2 font-semibold">
-            <span className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <Building2 className="size-4" aria-hidden />
-            </span>
-            ObraFlow
+          <Link to="/pedidos">
+            <Logo />
           </Link>
           <nav className="hidden items-center gap-1 md:flex" aria-label="Principal">
             {links.map((link) => (

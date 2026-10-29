@@ -1,6 +1,7 @@
-import { Building2, Loader2, Users } from 'lucide-react'
+import { Loader2, Users } from 'lucide-react'
 import { useEffect, useRef, type ReactNode } from 'react'
 import { toast } from 'sonner'
+import { LogoMark } from '@/components/Logo'
 import { EmptyState } from '@/components/states/EmptyState'
 import { ErrorState } from '@/components/states/ErrorState'
 import { ListSkeleton } from '@/components/states/ListSkeleton'
@@ -66,9 +67,7 @@ function UserPicker() {
   return (
     <div className="mx-auto flex min-h-svh max-w-2xl flex-col justify-center px-4 py-10">
       <div className="mb-8 space-y-3 text-center">
-        <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-          <Building2 className="size-6" aria-hidden />
-        </div>
+        <LogoMark className="mx-auto size-12" />
         <h1 className="text-2xl font-semibold tracking-tight">Quem está usando o ObraFlow?</h1>
         <p className="text-sm text-muted-foreground">
           Escolha um usuário para continuar. Não há senha: a escolha só identifica quem cria e
