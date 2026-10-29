@@ -57,7 +57,7 @@ export function OrdersPage() {
   function update(changes: Record<string, string | undefined>) {
     const next = new URLSearchParams(params)
     for (const [key, value] of Object.entries(changes)) {
-      if (value === undefined || value === ALL) next.delete(key)
+      if (value === undefined) next.delete(key)
       else next.set(key, value)
     }
     // Any filter change goes back to the first page.
@@ -100,7 +100,10 @@ export function OrdersPage() {
         </Tabs>
 
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Select value={siteId ?? ALL} onValueChange={(value) => update({ site: value })}>
+          <Select
+            value={siteId ?? ALL}
+            onValueChange={(value) => update({ site: value === ALL ? undefined : value })}
+          >
             <SelectTrigger className="w-full sm:w-64" aria-label="Filtrar por obra">
               <SelectValue />
             </SelectTrigger>
@@ -114,7 +117,10 @@ export function OrdersPage() {
             </SelectContent>
           </Select>
           {view === 'all' && (
-            <Select value={status ?? ALL} onValueChange={(value) => update({ status: value })}>
+            <Select
+              value={status ?? ALL}
+              onValueChange={(value) => update({ status: value === ALL ? undefined : value })}
+            >
               <SelectTrigger className="w-full sm:w-44" aria-label="Filtrar por situação">
                 <SelectValue />
               </SelectTrigger>
