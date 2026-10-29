@@ -1,6 +1,7 @@
 package com.obraflow.orders;
 
 import com.obraflow.orders.dto.OrderDtos.CreateOrderRequest;
+import com.obraflow.orders.dto.OrderDtos.DecisionRequest;
 import com.obraflow.orders.dto.OrderDtos.OrderItemInput;
 import com.obraflow.orders.dto.OrderDtos.OrderItemResponse;
 import com.obraflow.orders.dto.OrderDtos.OrderApproverResponse;
@@ -22,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -51,8 +53,8 @@ class OrderServiceTest {
                         new BigDecimal("15.00"), new BigDecimal("75.00")),
                 new OrderItemResponse(2, 2, "Serviço", new BigDecimal("1.000"), "h",
                         new BigDecimal("40.00"), new BigDecimal("40.00"))), new BigDecimal("115.00"), 11,
-                "PENDING", List.of(new OrderApproverResponse(4, "Ana", "ana@example.com", 1),
-                new OrderApproverResponse(5, "Beto", "beto@example.com", 2)));
+                "PENDING", 1, List.of(new OrderApproverResponse(4, "Ana", "ana@example.com", 1),
+                new OrderApproverResponse(5, "Beto", "beto@example.com", 2)), List.of());
         when(orders.create(request, List.of(new BigDecimal("75.00"), new BigDecimal("40.00")),
                 new BigDecimal("115.00"), selectedBand)).thenReturn(expected);
 
@@ -73,6 +75,44 @@ class OrderServiceTest {
                 new OrderItemInput("Material", new BigDecimal("1.000"), "un", new BigDecimal("1.00"))))));
 
         assertEquals(400, exception.status().value());
+        verifyNoInteractions(orders);
+    }
+
+    @Test
+    void acceptsDecisionOnlyFromCurrentApproverAndRecordsIt() {
+        OrderResponse expected = new OrderResponse(20, 1, "Obra", 2, "Fornecedor",
+                LocalDate.parse("2026-10-29"), null, List.of(), BigDecimal.ONE, 10, "APPROVED",
+                null, List.of(), List.of());
+        when(orders.lockApprovalState(20)).thenReturn(java.util.Optional.of(
+                new OrderRepository.ApprovalState("PENDING", 1, 1, 4L)));
+        when(orders.findById(20)).thenReturn(java.util.Optional.of(expected));
+
+        assertEquals("APPROVED", service.decide(20,
+                new DecisionRequest(4L, OrderApprovalFlow.Outcome.APPROVED, null)).status());
+
+        verify(orders).recordDecision(20, 1, 4, OrderApprovalFlow.Outcome.APPROVED, null,
+                new OrderApprovalFlow.Transition("APPROVED", null));
+    }
+
+    @Test
+    void rejectsARequestFromAnApproverOutsideTheCurrentStep() {
+        when(orders.lockApprovalState(20)).thenReturn(java.util.Optional.of(
+                new OrderRepository.ApprovalState("PENDING", 1, 2, 4L)));
+
+        ApiException exception = assertThrows(ApiException.class, () -> service.decide(20,
+                new DecisionRequest(5L, OrderApprovalFlow.Outcome.APPROVED, null)));
+
+        assertEquals(400, exception.status().value());
+        verify(orders).lockApprovalState(20);
+        verifyNoMoreInteractions(orders);
+    }
+
+    @Test
+    void requiresARejectionReasonBeforePersistence() {
+        ApiException exception = assertThrows(ApiException.class, () -> service.decide(20,
+                new DecisionRequest(4L, OrderApprovalFlow.Outcome.REJECTED, "  ")));
+
+        assertEquals("Informe o motivo da rejeição.", exception.getMessage());
         verifyNoInteractions(orders);
     }
 

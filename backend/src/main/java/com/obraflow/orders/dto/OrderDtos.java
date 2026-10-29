@@ -1,5 +1,6 @@
 package com.obraflow.orders.dto;
 
+import com.obraflow.orders.OrderApprovalFlow;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
@@ -11,6 +12,7 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 /** HTTP contracts for order creation and consultation. */
@@ -45,9 +47,20 @@ public final class OrderDtos {
     /** Frozen approver identity and order as selected at order creation time. */
     public record OrderApproverResponse(long id, String name, String email, int position) { }
 
+    /** A recorded decision, ordered by its persisted timestamp and id. */
+    public record OrderDecisionResponse(long id, long approverId, String approverName, String approverEmail,
+                                        int position, String outcome, OffsetDateTime decidedAt, String reason) { }
+
+    /** Decision actor and result; the backend verifies that the actor owns the current step. */
+    public record DecisionRequest(@NotNull(message = "Informe o aprovador da decisão.") Long approverId,
+                                  @NotNull(message = "Informe se deseja aprovar ou rejeitar.")
+                                  OrderApprovalFlow.Outcome outcome,
+                                  @Size(max = 1000, message = "O motivo deve ter até 1000 caracteres.") String reason) { }
+
     /** Complete order view, including the initial approval chain snapshot. */
     public record OrderResponse(long id, long workId, String workName, long supplierId, String supplierName,
                                 LocalDate orderDate, String internalNotes, List<OrderItemResponse> items,
                                 BigDecimal total, long approvalBandId, String status,
-                                List<OrderApproverResponse> approvers) { }
+                                Integer currentApproverPosition, List<OrderApproverResponse> approvers,
+                                List<OrderDecisionResponse> decisions) { }
 }

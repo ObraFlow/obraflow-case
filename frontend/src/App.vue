@@ -3,8 +3,9 @@ import { ref } from 'vue'
 import RulesView from './RulesView.vue'
 import HealthStatus from './features/health/HealthStatus.vue'
 import OrderView from './features/orders/OrderView.vue'
+import ApprovalView from './features/approval/ApprovalView.vue'
 
-const activeView = ref<'orders' | 'rules'>('orders')
+const activeView = ref<'orders' | 'approval' | 'rules'>('orders')
 </script>
 
 <template>
@@ -17,6 +18,7 @@ const activeView = ref<'orders' | 'rules'>('orders')
       <span class="product-label">DOKIMOS <span>·</span> APROVAÇÕES</span>
       <nav class="main-nav" aria-label="Seções da aplicação">
         <button type="button" :aria-current="activeView === 'orders' ? 'page' : undefined" @click="activeView = 'orders'">Pedidos</button>
+        <button type="button" :aria-current="activeView === 'approval' ? 'page' : undefined" @click="activeView = 'approval'">Aprovações</button>
         <button type="button" :aria-current="activeView === 'rules' ? 'page' : undefined" @click="activeView = 'rules'">Regras da alçada</button>
       </nav>
     </header>
@@ -29,6 +31,7 @@ const activeView = ref<'orders' | 'rules'>('orders')
     </section>
 
     <OrderView v-if="activeView === 'orders'" />
+    <ApprovalView v-else-if="activeView === 'approval'" />
     <RulesView v-else />
 
     <footer>OBRAFLOW <span>·</span> DOKIMOS</footer>

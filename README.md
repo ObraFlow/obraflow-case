@@ -2,7 +2,7 @@
 
 # ObraFlow · Dokimos
 
-Plataforma full-stack para cadastro de pedidos de compra e aprovação por alçada. As Fases 0 e 1 entregam a fundação local, os cadastros de referência e as regras de alçada; a Fase 2 permite cadastrar pedidos com itens e persiste a cadeia inicial de aprovação.
+Plataforma full-stack para cadastro de pedidos de compra e aprovação por alçada. As Fases 0 e 1 entregam a fundação local, os cadastros de referência e as regras de alçada; a Fase 2 permite cadastrar pedidos com itens e persiste a cadeia inicial de aprovação; a Fase 3 permite analisar pedidos, decidir na ordem da cadeia e consultar o histórico.
 
 As instruções originais do processo seletivo estão em [DESAFIO-INSTRUCOES.md](DESAFIO-INSTRUCOES.md).
 
@@ -100,7 +100,7 @@ npm run build
 
 O backend inicia na porta `8080`, o frontend na `5173` e o PostgreSQL na `5432` por padrão. As portas e credenciais de desenvolvimento podem ser configuradas no `.env`, criado a partir de `.env.example`. Os valores incluídos são locais e fictícios; não são necessários serviços pagos ou credenciais externas.
 
-O Vue consulta `GET /api/health` para exibir o estado dos serviços. A API verifica a conexão ao PostgreSQL e responde com o estado da aplicação e do banco. Flyway aplica as migrações versionadas na inicialização. O fluxo de aprovações e o histórico de decisões serão implementados na Fase 3; os dados de demonstração serão adicionados na Fase 4.
+O Vue consulta `GET /api/health` para exibir o estado dos serviços. A API verifica a conexão ao PostgreSQL e responde com o estado da aplicação e do banco. Flyway aplica as migrações versionadas na inicialização. Os dados de demonstração serão adicionados na Fase 4.
 
 ## Informações da entrega
 
@@ -149,6 +149,19 @@ Exemplo de corpo para `POST /api/orders`:
 ```
 
 O retorno inclui os itens com `total` calculado, o `total` do pedido, `approvalBandId`, `status` inicial `PENDING` e `approvers` ordenados por `position`. Erros de validação usam Problem Details e mensagens em português.
+
+### Aprovação e histórico (Fase 3)
+
+A seção **Aprovações** lista os pedidos com estado e etapa atual. Ao abrir um pedido, a tela mostra os itens, a cadeia ordenada e o histórico cronológico. Somente o aprovador da etapa atual recebe ações. Uma aprovação libera a próxima etapa; a última conclui o pedido. Uma rejeição exige motivo e encerra o fluxo imediatamente.
+
+Endpoints principais:
+
+- `GET /api/orders` e `GET /api/orders/{id}` retornam o pedido, `currentApproverPosition` (nulo quando o fluxo termina), a cadeia `approvers` e os eventos em `decisions`;
+- `POST /api/orders/{id}/decisions` registra uma decisão. Para aprovar: `{"approverId": 1, "outcome": "APPROVED"}`. Para rejeitar: `{"approverId": 1, "outcome": "REJECTED", "reason": "Pedido fora do orçamento"}`.
+
+O backend confere o ator com o aprovador atual e, em uma transação, bloqueia o pedido, grava o evento e atualiza a etapa/estado. Decisões fora da ordem, repetidas ou após o encerramento são recusadas sem alterar o histórico. A tabela de decisões guarda usuário, nome/e-mail congelados, etapa, resultado, instante e motivo.
+
+O desafio não inclui autenticação. Para permitir avaliar o fluxo localmente, a tela envia o `approverId` da etapa atual e o backend valida sua correspondência com a cadeia salva. Essa identificação serve ao fluxo demonstrativo e deve ser substituída pela identidade autenticada do usuário em um ambiente de produção.
 
 Erros da API usam o formato Problem Details (`title`, `status` e `detail`). Dados inválidos retornam `400`, recursos inexistentes retornam `404`, e violações de unicidade retornam `409`; erros internos não expõem detalhes técnicos.
 

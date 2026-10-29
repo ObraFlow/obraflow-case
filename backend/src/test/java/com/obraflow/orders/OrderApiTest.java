@@ -2,6 +2,8 @@ package com.obraflow.orders;
 
 import com.obraflow.orders.controller.OrderController;
 import com.obraflow.orders.dto.OrderDtos.CreateOrderRequest;
+import com.obraflow.orders.dto.OrderDtos.DecisionRequest;
+import com.obraflow.orders.OrderApprovalFlow;
 import com.obraflow.orders.service.OrderService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,5 +68,17 @@ class OrderApiTest {
         assertEquals(LocalDate.parse("2026-10-29"), request.getValue().orderDate());
         assertEquals(new BigDecimal("1.500"), request.getValue().items().getFirst().quantity());
         assertEquals(new BigDecimal("10.25"), request.getValue().items().getFirst().unitPrice());
+    }
+
+    @Test
+    void acceptsAnApprovalDecisionRequest() throws Exception {
+        mvc.perform(post("/api/orders/7/decisions").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"approverId\":4,\"outcome\":\"APPROVED\"}"))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<DecisionRequest> request = ArgumentCaptor.forClass(DecisionRequest.class);
+        verify(service).decide(org.mockito.ArgumentMatchers.eq(7L), request.capture());
+        assertEquals(4L, request.getValue().approverId());
+        assertEquals(OrderApprovalFlow.Outcome.APPROVED, request.getValue().outcome());
     }
 }
