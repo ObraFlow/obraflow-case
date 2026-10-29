@@ -16,9 +16,9 @@ class HealthControllerTest {
     void reportsApiAndDatabaseAsUpAfterSuccessfulQuery() {
         JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
         when(jdbcTemplate.queryForObject("SELECT 1", Integer.class)).thenReturn(1);
-        HealthController controller = new HealthController(jdbcTemplate);
+        HealthService service = new HealthService(jdbcTemplate);
 
-        Map<String, String> result = controller.health();
+        Map<String, String> result = service.health();
 
         assertEquals(Map.of("status", "UP", "database", "UP"), result);
         verify(jdbcTemplate).queryForObject("SELECT 1", Integer.class);

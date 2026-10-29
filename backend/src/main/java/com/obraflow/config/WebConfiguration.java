@@ -6,6 +6,7 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
+/** Configures allowed browser origins for the application HTTP endpoints. */
 public class WebConfiguration implements WebMvcConfigurer {
 
     private final String frontendOrigin;

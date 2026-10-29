@@ -10,6 +10,8 @@ describe('application health indicator', () => {
   it('shows the connected state after the API and database respond', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
+      status: 200,
+      headers: new Headers({ 'Content-Type': 'application/json' }),
       json: async () => ({ status: 'UP', database: 'UP' }),
     }))
 

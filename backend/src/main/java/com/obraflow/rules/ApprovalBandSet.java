@@ -4,7 +4,9 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+/** Validates contiguous approval bands and finds the band applicable to an amount. */
 public class ApprovalBandSet {
+    /** Monetary interval with an inclusive minimum and an optional exclusive maximum. */
     public record Range(BigDecimal min, BigDecimal max) { }
 
     public void validate(List<Range> ranges) {
