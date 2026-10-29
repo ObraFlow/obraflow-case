@@ -25,6 +25,11 @@ export function formatarData(iso: string): string {
   return `${dia}/${mes}/${ano}`;
 }
 
+/** ISO 8601 com hora → "23/10/2026", no fuso de Brasília (não usar `formatarData` aqui: ela ignora o fuso). */
+export function formatarDataDoInstante(iso: string): string {
+  return formatadorData.format(new Date(iso));
+}
+
 /** ISO 8601 com hora → "23/10/2026 às 14:10". */
 export function formatarDataHora(iso: string): string {
   const data = new Date(iso);

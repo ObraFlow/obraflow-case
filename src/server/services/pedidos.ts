@@ -136,7 +136,7 @@ export async function paginarPedidos(
   const pagina = Math.min(paginacao.pagina, totalPaginas);
   const pedidos = await prisma.pedido.findMany({
     where,
-    orderBy: ORDEM_PEDIDOS,
+    orderBy: ORDEM_LISTA,
     include: includePedidoResumo,
     skip: (pagina - 1) * porPagina,
     take: porPagina,
@@ -145,10 +145,24 @@ export async function paginarPedidos(
   return { itens: pedidos.map(paraPedidoResumo), total, pagina, porPagina, totalPaginas };
 }
 
+/** API: do mais novo para o mais antigo. */
 const ORDEM_PEDIDOS = [
   { criadoEm: "desc" },
   { id: "desc" },
 ] satisfies Prisma.PedidoOrderByWithRelationInput[];
+
+/**
+ * Tela: pendentes antes dos encerrados (a ordem do enum no Postgres é PENDENTE, APROVADO,
+ * REJEITADO), e dentro de cada grupo do mais novo para o mais antigo. Assim a promessa
+ * "o que precisa de decisão vem primeiro" vale entre páginas, não só dentro de uma.
+ */
+const ORDEM_LISTA = [
+  { status: "asc" },
+  ...ORDEM_PEDIDOS,
+] satisfies Prisma.PedidoOrderByWithRelationInput[];
+
+/** `id` é Int de 32 bits: um número maior não é um pedido, e o Prisma recusaria a consulta. */
+const MAX_ID = 2_147_483_647;
 
 /**
  * `busca` aceita o número do pedido ("12" ou "#12") ou um trecho do nome da obra ou do
@@ -157,10 +171,10 @@ const ORDEM_PEDIDOS = [
  */
 function wherePedidos(filtro: FiltroPedidos): Prisma.PedidoWhereInput {
   const busca = filtro.busca?.replace(/^#/, "").trim();
-  const numero = busca && /^\d+$/.test(busca) ? Number(busca) : null;
+  const numero = busca && /^\d+$/.test(busca) && Number(busca) <= MAX_ID ? Number(busca) : null;
 
   return {
-    status: filtro.pendentesPara ? "PENDENTE" : filtro.status,
+    status: statusDoFiltro(filtro),
     obraId: filtro.obraId,
     aprovacoes: filtro.pendentesPara
       ? { some: { aprovadorId: filtro.pendentesPara, status: "PENDENTE" } }
@@ -173,6 +187,16 @@ function wherePedidos(filtro: FiltroPedidos): Prisma.PedidoWhereInput {
         ]
       : undefined,
   };
+}
+
+/**
+ * `pendentesPara` só faz sentido em pedidos pendentes. Se o chamador também pediu outro
+ * status, a resposta certa é "nenhum" (`in: []`), não ignorar o que ele pediu.
+ */
+function statusDoFiltro(filtro: FiltroPedidos): Prisma.PedidoWhereInput["status"] {
+  if (!filtro.pendentesPara) return filtro.status;
+  if (filtro.status && filtro.status !== "PENDENTE") return { in: [] };
+  return "PENDENTE";
 }
 
 /** O Prisma não compara `aprovacoes.ordem` com `pedido.stepAtual`; o ajuste fino é aqui. */

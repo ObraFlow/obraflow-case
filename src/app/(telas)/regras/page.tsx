@@ -6,6 +6,8 @@ import { TabelaFaixas } from "@/components/regras/tabela-faixas";
 import { listarObras, listarUsuarios } from "@/server/services/cadastros";
 import { listarRegras } from "@/server/services/regras";
 
+export const metadata = { title: "Regras de alçada — ObraFlow" };
+
 /**
  * Regras de alçada por obra. A obra vem da URL (`?obra=1`); sem ela, a primeira.
  * Cadastros vêm do cache; as faixas são lidas na request (`connection()`, ver CLAUDE.md).
@@ -28,8 +30,8 @@ export default async function RegrasPage({
         <div className="rounded-sm border bg-card p-6">
           <p className="font-medium">Nenhuma obra cadastrada.</p>
           <p className="text-muted-foreground">
-            As faixas de alçada são por obra. Cadastre uma obra pela API (POST /api/obras) ou rode o
-            seed para começar.
+            As faixas de alçada são por obra. Obras vêm do cadastro inicial: rode{" "}
+            <code>npm run db:seed</code> para começar.
           </p>
         </div>
       </>

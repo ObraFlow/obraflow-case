@@ -61,7 +61,7 @@ export function FormularioPedido({
 
   const form = useForm<PedidoFormInput>({
     resolver: zodResolver(pedidoFormSchema),
-    mode: "onChange",
+    mode: "all",
     defaultValues: {
       obraId: obras.length === 1 ? String(obras[0].id) : "",
       fornecedorId: fornecedores.length === 1 ? String(fornecedores[0].id) : "",

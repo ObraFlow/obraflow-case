@@ -10,18 +10,21 @@ import { listarUsuarios } from "@/server/services/cadastros";
 
 export const COOKIE_AGINDO_COMO = "agindo-como";
 
-/** Id do usuário escolhido, ou null se o cookie não existe ou está inválido. */
+/**
+ * Id do usuário escolhido, ou null se o cookie não existe, está inválido ou aponta para um
+ * usuário que não existe mais (banco recriado, cookie editado). A lista de usuários vem do
+ * cache de cadastros, então a conferência não custa uma consulta por request.
+ */
 export async function usuarioAtualId(): Promise<number | null> {
-  const store = await cookies();
-  const valor = store.get(COOKIE_AGINDO_COMO)?.value;
-  const id = Number(valor);
-  return Number.isInteger(id) && id > 0 ? id : null;
+  return (await usuarioAtual())?.id ?? null;
 }
 
 /** Usuário escolhido com nome e cargo (para o header), ou null. */
 export async function usuarioAtual(): Promise<UsuarioDto | null> {
-  const id = await usuarioAtualId();
-  if (id === null) return null;
+  const store = await cookies();
+  const valor = store.get(COOKIE_AGINDO_COMO)?.value;
+  const id = Number(valor);
+  if (!Number.isInteger(id) || id <= 0) return null;
   const usuarios = await listarUsuarios();
   return usuarios.find((usuario) => usuario.id === id) ?? null;
 }

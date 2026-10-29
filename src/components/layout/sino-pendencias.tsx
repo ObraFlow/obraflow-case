@@ -42,14 +42,19 @@ export function SinoPendencias({ usuarioAtualId }: { usuarioAtualId: number }) {
   const [pendentes, setPendentes] = useState<PedidoResumo[] | null>(null);
   const [falhou, setFalhou] = useState(false);
   const conhecidos = useRef<Set<number> | null>(null);
+  // Intervalo, foco e decisão podem disparar consultas ao mesmo tempo; só a última vale.
+  // Sem isso uma resposta atrasada reescreveria a lista com dados velhos e o poll seguinte
+  // avisaria de novo o mesmo pedido.
+  const ultimaConsulta = useRef(0);
 
   useEffect(() => {
     let ativo = true;
 
     async function carregar() {
+      const consulta = ++ultimaConsulta.current;
       try {
         const lista = await listarPedidos({ pendentesPara: usuarioAtualId });
-        if (!ativo) return;
+        if (!ativo || consulta !== ultimaConsulta.current) return;
         setPendentes(lista);
         setFalhou(false);
 
@@ -60,7 +65,7 @@ export function SinoPendencias({ usuarioAtualId }: { usuarioAtualId: number }) {
         }
         conhecidos.current = new Set(lista.map((pedido) => pedido.id));
       } catch {
-        if (ativo) setFalhou(true);
+        if (ativo && consulta === ultimaConsulta.current) setFalhou(true);
       }
     }
 
@@ -81,12 +86,17 @@ export function SinoPendencias({ usuarioAtualId }: { usuarioAtualId: number }) {
   }, [usuarioAtualId, router]);
 
   const total = pendentes?.length ?? 0;
-  const rotulo =
-    total === 0
-      ? "Nenhum pedido aguarda a sua decisão"
-      : total === 1
-        ? "1 pedido aguarda a sua decisão"
-        : `${total} pedidos aguardam a sua decisão`;
+  // O rótulo vale para o leitor de tela (botão) e para o subtítulo do popover: quando a
+  // consulta falha, dizer "nenhum pedido" seria mentira; a lista anterior continua visível.
+  const rotulo = falhou
+    ? "Não foi possível consultar as suas pendências"
+    : pendentes === null
+      ? "Consultando as suas pendências"
+      : total === 0
+        ? "Nenhum pedido aguarda a sua decisão"
+        : total === 1
+          ? "1 pedido aguarda a sua decisão"
+          : `${total} pedidos aguardam a sua decisão`;
 
   return (
     <Popover>
@@ -107,9 +117,7 @@ export function SinoPendencias({ usuarioAtualId }: { usuarioAtualId: number }) {
       <PopoverContent align="end" className="w-80 rounded-sm p-0">
         <div className="border-b border-linha px-4 py-3">
           <p className="font-bold">Aguardando a sua decisão</p>
-          <p className="text-xs text-muted-foreground">
-            {falhou ? "Não foi possível atualizar." : rotulo}
-          </p>
+          <p className="text-xs text-muted-foreground">{rotulo}</p>
         </div>
 
         {pendentes === null ? (

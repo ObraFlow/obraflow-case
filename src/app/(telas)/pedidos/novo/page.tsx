@@ -2,6 +2,8 @@ import Link from "next/link";
 import { FormularioPedido } from "@/components/pedidos/formulario-pedido";
 import { listarFornecedores, listarObras } from "@/server/services/cadastros";
 
+export const metadata = { title: "Novo pedido — ObraFlow" };
+
 /**
  * Novo pedido. Obras e fornecedores vêm do cache de cadastros; quem cria é o usuário do
  * cookie, lido pela action no envio. Sem obra ou fornecedor, não há como criar pedido.
@@ -30,9 +32,8 @@ export default async function NovoPedidoPage() {
               : "Nenhum fornecedor cadastrado."}
           </p>
           <p className="text-muted-foreground">
-            Um pedido precisa de obra e fornecedor. Cadastre pela API (
-            <code>POST /api/{faltaCadastro === "obra" ? "obras" : "fornecedores"}</code>) ou rode o
-            seed. As regras de alçada ficam em{" "}
+            Um pedido precisa de obra e fornecedor, que vêm do cadastro inicial: rode{" "}
+            <code>npm run db:seed</code>. As regras de alçada ficam em{" "}
             <Link href="/regras" className="font-medium underline underline-offset-4">
               Regras
             </Link>

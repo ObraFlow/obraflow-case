@@ -100,9 +100,9 @@
   --rejeitado: #a33a2a;
   --rejeitado-fundo: #f7e6e2;
   --rejeitado-texto-escuro: #6e2419;
-  /* Separador de linhas de tabela e texto de nível cancelado. */
+  /* Separador de linhas de tabela e texto de nível cancelado (4,6:1 sobre branco). */
   --linha: #e3e0d9;
-  --cancelado: #9a948a;
+  --cancelado: #7a746a;
 }
 
 /* Modo escuro não está desenhado (docs/design.md). Sem bloco .dark de propósito. */

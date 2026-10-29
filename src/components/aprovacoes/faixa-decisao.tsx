@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { BotoesDecisao, type TipoDecisao } from "@/components/aprovacoes/botoes-decisao";
-import { formatarData, formatarHora } from "@/lib/datas";
+import { formatarDataDoInstante, formatarHora } from "@/lib/datas";
 import type { PedidoDetalhe } from "@/lib/dto";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +14,10 @@ function explicacao(pedido: PedidoDetalhe, usuarioAtualId: number | null): strin
   const ultimaDecidida = [...pedido.aprovacoes]
     .reverse()
     .find((aprovacao) => aprovacao.decididoEm !== null);
-  const quando = ultimaDecidida?.decididoEm ? formatarData(ultimaDecidida.decididoEm) : null;
+  // `decididoEm` tem hora (UTC): a data precisa sair no mesmo fuso da timeline logo abaixo.
+  const quando = ultimaDecidida?.decididoEm
+    ? formatarDataDoInstante(ultimaDecidida.decididoEm)
+    : null;
 
   if (pedido.status === "APROVADO") {
     return quando ? `Cadeia concluída em ${quando}.` : "Cadeia concluída.";
