@@ -102,4 +102,21 @@ O Vue consulta `GET /api/health` para exibir o estado dos serviços. A API verif
 
 ## Informações da entrega
 
+### Cadastros e regras de alçada (Fase 1)
+
+A API oferece `GET/POST /api/works`, `GET/POST /api/users` e `GET/POST /api/suppliers` para os cadastros de referência. As regras são consultadas com `GET /api/works/{id}/approval-bands` e substituídas atomicamente com `PUT` no mesmo recurso. O payload contém faixas ordenadas (`minAmount`, `maxAmount`) e `approverIds` na ordem da aprovação; `maxAmount: null` representa o limite superior aberto.
+
+Os valores monetários não negativos usam faixas `[mínimo, máximo)`: o mínimo está incluído e o máximo é excluído. Toda obra configurada deve começar em R$ 0,00, manter faixas contíguas sem sobreposição e terminar em uma faixa sem limite superior. Assim, cada valor sempre encontra uma única regra. Uma obra sem regras não pode ser usada para criar pedido na Fase 2; a API de pedidos deverá retornar validação clara. Cada faixa precisa de pelo menos um usuário ativo como aprovador. A interface permite cadastrar obras e usuários, ordenar os aprovadores e editar ou remover faixas antes de salvar a configuração.
+
+Exemplo de payload para `PUT /api/works/1/approval-bands`:
+
+```json
+[
+  { "minAmount": 0, "maxAmount": 10000, "approverIds": [1] },
+  { "minAmount": 10000, "maxAmount": null, "approverIds": [1, 2] }
+]
+```
+
+Fornecedores podem ser cadastrados pela API usando `POST /api/suppliers` com `name` e `taxId`.
+
 As capturas das telas, a modelagem e o cálculo das regras de alçada, os fluxos completos da API, os dados de demonstração, as garantias de integridade do domínio e as considerações de produção serão documentados conforme forem implementados nas próximas fases.
