@@ -4,7 +4,7 @@
 // validated by the same DTOs as the HTTP layer. Totals, approval chains and the
 // history are therefore produced by the real business rules: the seed cannot
 // insert data the API would refuse. It clears every table first, so it can run
-// any number of times.
+// any number of times (unless SEED_ONLY_IF_EMPTY=true, see main).
 
 import 'dotenv/config';
 import { ConfigService } from '@nestjs/config';
@@ -383,6 +383,16 @@ const ordersService = new PurchaseOrdersService(prisma, tiersService);
 const decisionsService = new OrderDecisionsService(prisma, ordersService);
 
 async function main() {
+  // Docker runs the seed on every start with SEED_ONLY_IF_EMPTY=true: it loads
+  // the demo once and never wipes data created afterwards.
+  if (
+    process.env['SEED_ONLY_IF_EMPTY'] === 'true' &&
+    (await prisma.user.count()) > 0
+  ) {
+    console.log('Database already has data; skipping the seed.');
+    return;
+  }
+
   // RESTART IDENTITY resets the order number, so the demo starts at PC-0001.
   await prisma.$executeRaw`
     TRUNCATE TABLE
