@@ -6,17 +6,52 @@ import { firstName, formatDateTime } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { ChainStep, StepStatus } from '@/types/api'
 
+/**
+ * label: short status shown next to the name. detail: longer text for the
+ * list tooltip (null when the step number alone says it all).
+ */
 const stepConfig = {
-  APPROVED: { icon: CheckCircle2, label: 'Aprovou', tone: 'text-emerald-700' },
-  CURRENT: { icon: Clock, label: 'Aguardando decisão', tone: 'text-amber-700' },
-  WAITING: { icon: Circle, label: 'Próxima etapa', tone: 'text-muted-foreground' },
-  REJECTED: { icon: XCircle, label: 'Rejeitou', tone: 'text-red-700' },
+  APPROVED: {
+    icon: CheckCircle2,
+    label: 'Aprovado',
+    detail: 'Aprovou',
+    tone: 'text-emerald-700',
+    tint: 'border-emerald-200 bg-emerald-50',
+  },
+  CURRENT: {
+    icon: Clock,
+    label: 'Aguardando',
+    detail: 'Aguardando decisão',
+    tone: 'text-amber-700',
+    tint: 'border-amber-200 bg-amber-50',
+  },
+  WAITING: {
+    icon: Circle,
+    label: 'Na fila',
+    detail: null,
+    tone: 'text-muted-foreground',
+    tint: 'bg-card',
+  },
+  REJECTED: {
+    icon: XCircle,
+    label: 'Rejeitado',
+    detail: 'Rejeitou',
+    tone: 'text-red-700',
+    tint: 'border-red-200 bg-red-50',
+  },
   CANCELLED: {
     icon: MinusCircle,
-    label: 'Cancelada: fluxo interrompido',
+    label: 'Cancelado',
+    detail: 'Cancelada: fluxo interrompido',
     tone: 'text-muted-foreground',
+    tint: 'bg-card',
   },
 } satisfies Record<StepStatus, unknown>
+
+/** Steps that are not happening now: shown greyed out. */
+function isInactive(status: StepStatus) {
+  return status === 'WAITING' || status === 'CANCELLED'
+}
 
 interface ChainProps {
   steps: Pick<ChainStep, 'position' | 'status' | 'approver'>[]
@@ -34,7 +69,8 @@ export function ApprovalChainInline({ steps, className }: ChainProps) {
       aria-label="Cadeia de aprovação"
     >
       {steps.map((step, index) => {
-        const { icon: Icon, label, tone } = stepConfig[step.status]
+        const { icon: Icon, detail, tone } = stepConfig[step.status]
+        const description = [`${step.position}ª etapa`, detail].filter(Boolean).join(' · ')
         return (
           <Fragment key={step.position}>
             {index > 0 && (
@@ -53,11 +89,11 @@ export function ApprovalChainInline({ steps, className }: ChainProps) {
                   >
                     <Icon className="size-3.5 shrink-0" aria-hidden />
                     {firstName(step.approver.name)}
-                    <span className="sr-only">: {label}</span>
+                    <span className="sr-only">: {description}</span>
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {step.approver.name} · {label}
+                  {step.approver.name} · {description}
                 </TooltipContent>
               </Tooltip>
             </li>
@@ -72,46 +108,51 @@ interface ChainTimelineProps {
   steps: ChainStep[]
 }
 
-/** Vertical chain for the details screen, with decision time and rejection reason. */
+/** Chain for the details screen, with decision time and rejection reason. */
 export function ApprovalChainTimeline({ steps }: ChainTimelineProps) {
   return (
-    <ol className="space-y-0">
-      {steps.map((step, index) => {
-        const { icon: Icon, label, tone } = stepConfig[step.status]
-        const last = index === steps.length - 1
+    <ol className="space-y-2">
+      {steps.map((step) => {
+        const { icon: Icon, label, tone, tint } = stepConfig[step.status]
+        const inactive = isInactive(step.status)
         return (
-          <li key={step.position} className="relative flex gap-3 pb-5 last:pb-0">
-            {!last && (
-              <span className="absolute top-9 bottom-1 left-[17px] w-px bg-border" aria-hidden />
-            )}
-            <div className="relative">
-              <UserAvatar
-                name={step.approver.name}
-                className={cn('size-9', step.status === 'CURRENT' && 'ring-2 ring-amber-400')}
-              />
-              <span className="absolute -right-1 -bottom-1 rounded-full bg-card">
-                <Icon className={cn('size-4', tone)} aria-hidden />
-              </span>
-            </div>
-            <div className="min-w-0 flex-1 pt-0.5">
-              <p className="text-sm leading-tight font-medium">
-                <span className="mr-1.5 text-muted-foreground">{step.position}.</span>
-                {step.approver.name}
-              </p>
+          <li key={step.position} className={cn('flex gap-3 rounded-lg border p-3', tint)}>
+            <UserAvatar
+              name={step.approver.name}
+              className={cn('size-9', inactive && 'opacity-50 grayscale')}
+            />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                <p
+                  className={cn(
+                    'text-sm leading-tight font-medium',
+                    inactive && 'text-muted-foreground',
+                  )}
+                >
+                  <span className="mr-1 font-normal text-muted-foreground">{step.position}.</span>
+                  {step.approver.name}
+                </p>
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1 text-xs font-medium',
+                    tone,
+                    inactive && 'opacity-70',
+                  )}
+                >
+                  <Icon className="size-3.5" aria-hidden />
+                  {label}
+                </span>
+              </div>
               {step.approver.role && (
                 <p className="text-xs text-muted-foreground">{step.approver.role}</p>
               )}
-              <p className={cn('mt-1 text-xs font-medium', tone)}>
-                {label}
-                {step.decidedAt && (
-                  <span className="font-normal text-muted-foreground">
-                    {' '}
-                    em {formatDateTime(step.decidedAt)}
-                  </span>
-                )}
-              </p>
+              {step.decidedAt && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  em {formatDateTime(step.decidedAt)}
+                </p>
+              )}
               {step.reason && (
-                <blockquote className="mt-2 rounded-md border-l-2 border-red-300 bg-red-50 px-3 py-2 text-sm text-red-950">
+                <blockquote className="mt-2 rounded-md border-l-2 border-red-300 bg-white/70 px-3 py-2 text-sm text-red-950">
                   {step.reason}
                 </blockquote>
               )}
