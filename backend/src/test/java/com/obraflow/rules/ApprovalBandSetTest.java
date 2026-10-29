@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.util.List;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -40,6 +42,25 @@ class ApprovalBandSetTest {
         assertThrows(IllegalArgumentException.class, () -> bands.validate(List.of()));
         assertThrows(IllegalArgumentException.class, () -> bands.validate(List.of(
                 new ApprovalBandSet.Range(new BigDecimal("-1"), null)
+        )));
+    }
+
+    @Test
+    void selectsExactlyOneBandAtAndAroundEachBoundary() {
+        List<ApprovalBandSet.Range> ranges = List.of(
+                new ApprovalBandSet.Range(BigDecimal.ZERO, new BigDecimal("10000.00")),
+                new ApprovalBandSet.Range(new BigDecimal("10000.00"), null)
+        );
+        assertEquals(ranges.get(0), bands.find(ranges, new BigDecimal("9999.99")).orElseThrow());
+        assertEquals(ranges.get(1), bands.find(ranges, new BigDecimal("10000.00")).orElseThrow());
+        assertEquals(ranges.get(1), bands.find(ranges, new BigDecimal("10000.01")).orElseThrow());
+        assertTrue(bands.find(ranges, new BigDecimal("0.00")).isPresent());
+    }
+
+    @Test
+    void rejectsPrecisionBeyondCents() {
+        assertThrows(IllegalArgumentException.class, () -> bands.validate(List.of(
+                new ApprovalBandSet.Range(new BigDecimal("0.001"), null)
         )));
     }
 }
