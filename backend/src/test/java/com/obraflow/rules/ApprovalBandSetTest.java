@@ -63,4 +63,9 @@ class ApprovalBandSetTest {
                 new ApprovalBandSet.Range(new BigDecimal("0.001"), null)
         )));
     }
+
+    @Test
+    void returnsNoApplicableBandWhenWorkHasNoConfiguredRules() {
+        assertTrue(bands.find(List.of(), new BigDecimal("42.00")).isEmpty());
+    }
 }
