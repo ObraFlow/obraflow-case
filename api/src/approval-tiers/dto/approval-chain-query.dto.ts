@@ -6,6 +6,6 @@ export class ApprovalChainQueryDto {
    * Order total to look up.
    * @example "12500.00"
    */
-  @Matches(MONEY_REGEX, { message: `amount ${MONEY_MESSAGE}` })
+  @Matches(MONEY_REGEX, { message: MONEY_MESSAGE })
   amount: string;
 }

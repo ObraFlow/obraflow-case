@@ -22,6 +22,8 @@ interface OrderSummaryProps {
   chain: ChainPreviewState
   siteLabel?: string
   canSubmit: boolean
+  /** Why the form cannot be sent, when it is something more specific than missing fields. */
+  blockedReason?: string
   submitting: boolean
   submitError?: string
 }
@@ -33,6 +35,7 @@ export function OrderSummary({
   chain,
   siteLabel,
   canSubmit,
+  blockedReason,
   submitting,
   submitError,
 }: OrderSummaryProps) {
@@ -81,7 +84,8 @@ export function OrderSummary({
           </Button>
           {!canSubmit && (
             <p className="text-center text-xs text-muted-foreground">
-              Preencha os dados gerais e todos os itens para habilitar o cadastro.
+              {blockedReason ??
+                'Preencha os dados gerais e todos os itens para habilitar o cadastro.'}
             </p>
           )}
         </div>

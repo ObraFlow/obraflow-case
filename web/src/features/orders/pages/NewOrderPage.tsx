@@ -32,7 +32,10 @@ import { ItemsEditor } from '../components/ItemsEditor'
 import { OrderSummary, type ChainPreviewState } from '../components/OrderSummary'
 import {
   emptyItem,
+  maxOrderDate,
+  MIN_ORDER_DATE,
   orderFormSchema,
+  orderTotalError,
   toCreateOrderInput,
   type OrderFormInput,
   type OrderFormOutput,
@@ -129,9 +132,17 @@ function OrderForm({ sites, suppliers }: { sites: ConstructionSite[]; suppliers:
   const { errors, touchedFields, isSubmitted, isValid } = form.formState
   const show = (field: 'siteId' | 'supplierId' | 'orderDate' | 'notes') =>
     touchedFields[field] || isSubmitted ? errors[field]?.message : undefined
-
   const siteId = useWatch({ control: form.control, name: 'siteId' })
   const items = useWatch({ control: form.control, name: 'items' })
+  // Order-level item errors (total zero or too large) show once the user has
+  // typed a quantity or price; the submit button is disabled, so waiting for a
+  // submit would hide them forever.
+  const itemsTouched = touchedFields.items?.some((item) => item?.quantity || item?.unitPrice)
+  const itemsError =
+    itemsTouched || isSubmitted
+      ? (orderTotalError(items) ?? errors.items?.root?.message)
+      : undefined
+
   const total = orderTotal(items)
   const site = sites.find((s) => s.id === siteId)
 
@@ -243,6 +254,8 @@ function OrderForm({ sites, suppliers }: { sites: ConstructionSite[]; suppliers:
               <Input
                 id="orderDate"
                 type="date"
+                min={MIN_ORDER_DATE}
+                max={maxOrderDate()}
                 aria-invalid={!!show('orderDate')}
                 aria-describedby="orderDate-error"
                 {...form.register('orderDate')}
@@ -277,9 +290,9 @@ function OrderForm({ sites, suppliers }: { sites: ConstructionSite[]; suppliers:
           </CardHeader>
           <CardContent>
             <ItemsEditor control={form.control} register={form.register} />
-            {isSubmitted && errors.items?.root?.message && (
+            {itemsError && (
               <p className="mt-3 text-sm text-destructive" role="alert">
-                {errors.items.root.message}
+                {itemsError}
               </p>
             )}
           </CardContent>
@@ -293,6 +306,7 @@ function OrderForm({ sites, suppliers }: { sites: ConstructionSite[]; suppliers:
           chain={chain}
           siteLabel={site ? `${site.code} · ${site.name}` : undefined}
           canSubmit={isValid}
+          blockedReason={itemsError}
           submitting={createOrder.isPending}
           submitError={submitError}
         />

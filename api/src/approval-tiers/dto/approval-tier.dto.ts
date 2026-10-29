@@ -20,13 +20,15 @@ export class ApprovalTierDto {
    * @example "10000.00"
    */
   @ValidateIf((dto: ApprovalTierDto) => dto.maxAmount !== null)
-  @Matches(MONEY_REGEX, { message: `maxAmount ${MONEY_MESSAGE} or null` })
+  @Matches(MONEY_REGEX, { message: `${MONEY_MESSAGE}, ou null` })
   maxAmount: string | null;
 
   /** User ids in approval order: the first one decides first. */
   @IsArray()
-  @ArrayMinSize(1, { message: 'A tier needs at least one approver' })
-  @ArrayUnique({ message: 'An approver cannot appear twice in the same tier' })
+  @ArrayMinSize(1, { message: 'a faixa precisa de pelo menos um aprovador' })
+  @ArrayUnique({
+    message: 'o mesmo aprovador não pode aparecer duas vezes na faixa',
+  })
   @IsUUID('all', { each: true })
   approverIds: string[];
 }

@@ -1,4 +1,5 @@
 import { ArrowUpDown, ClipboardCheck, FileSearch, Plus } from 'lucide-react'
+import { useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Pagination } from '@/components/Pagination'
@@ -73,6 +74,24 @@ export function OrdersPage() {
     if (!('page' in changes)) next.delete('page')
     setParams(next)
   }
+
+  // A page past the end (old link, or the last order of the last page was just
+  // decided) would show "nothing here" while there are orders: go to the last page.
+  const lastPage = orders.data ? Math.max(1, Math.ceil(orders.data.total / PAGE_SIZE)) : null
+  const pageOutOfRange =
+    !orders.isPlaceholderData && lastPage !== null && page > lastPage && orders.data?.total !== 0
+  useEffect(() => {
+    if (!pageOutOfRange || lastPage === null) return
+    setParams(
+      (current) => {
+        const next = new URLSearchParams(current)
+        if (lastPage === 1) next.delete('page')
+        else next.set('page', String(lastPage))
+        return next
+      },
+      { replace: true },
+    )
+  }, [pageOutOfRange, lastPage, setParams])
 
   return (
     <>
@@ -161,7 +180,7 @@ export function OrdersPage() {
         </div>
       </div>
 
-      {orders.isPending ? (
+      {orders.isPending || pageOutOfRange ? (
         <ListSkeleton />
       ) : orders.isError ? (
         <ErrorState

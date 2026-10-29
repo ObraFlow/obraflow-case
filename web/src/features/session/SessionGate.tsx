@@ -59,8 +59,15 @@ function UserPicker() {
 
   function select(userId: string) {
     login.mutate(userId, {
-      onError: (error) =>
-        toast.error(error instanceof ApiError ? error.message : 'Não foi possível entrar.'),
+      onError: (error) => {
+        if (error instanceof ApiError && error.status === 404) {
+          // The list is outdated (user removed or database recreated): reload it.
+          void users.refetch()
+          toast.error('Este usuário não existe mais. A lista foi atualizada; escolha de novo.')
+          return
+        }
+        toast.error(error instanceof ApiError ? error.message : 'Não foi possível entrar.')
+      },
     })
   }
 

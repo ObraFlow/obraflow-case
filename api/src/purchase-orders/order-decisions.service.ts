@@ -163,7 +163,12 @@ export class OrderDecisionsService {
   }
 }
 
-/** Did this user already make this same decision on the step version v targeted? */
+/**
+ * Did this user already make this same decision on the step version v targeted?
+ * A rejection only counts as the same when the reason is the same too: a retry
+ * with another reason is a conflict, so the client never believes the new
+ * reason was saved when the first one was kept.
+ */
 async function isRepeated(
   tx: Prisma.TransactionClient,
   orderId: string,
@@ -173,8 +178,10 @@ async function isRepeated(
 ) {
   const step = await tx.approvalStep.findUnique({
     where: { orderId_position: { orderId, position: version + 1 } },
-    select: { approverId: true, status: true },
+    select: { approverId: true, status: true, reason: true },
   });
-  const expected = decision.type === 'approve' ? 'APPROVED' : 'REJECTED';
-  return step?.approverId === actorId && step.status === expected;
+  if (step?.approverId !== actorId) return false;
+  return decision.type === 'approve'
+    ? step.status === 'APPROVED'
+    : step.status === 'REJECTED' && step.reason === decision.reason;
 }

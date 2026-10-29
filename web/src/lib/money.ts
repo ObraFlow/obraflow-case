@@ -20,15 +20,30 @@ export function formatQuantity(value: string | number) {
   return quantityFormat.format(Number(value))
 }
 
+// pt-BR: comma for decimals, dot only as a thousand separator in groups of 3.
+const PT_BR_DECIMAL = /^(\d{1,3}(\.\d{3})+|\d+)(,\d+)?$/
+
 /**
- * Reads what the user typed. Accepts a comma or a dot as decimal separator
- * ("12,5" or "12.5") and returns the API format ("12.5"), or null when it is
- * not a plain non-negative number (letters, minus sign, thousand separators).
+ * Reads a number typed in pt-BR and returns the API format, or null when it is
+ * not a plain non-negative number. "1.500" -> "1500", "1.234,56" -> "1234.56",
+ * "12,5" -> "12.5". A dot that is not a thousand separator ("12.5") is refused
+ * instead of guessed: in Brazil "1.500" means fifteen hundred, so reading dots
+ * as decimals silently turned 1.500 bricks into 1,5.
  */
 export function normalizeDecimal(input: string): string | null {
-  const value = input.trim().replace(',', '.')
-  return /^\d+(\.\d+)?$/.test(value) ? value : null
+  const value = input.trim()
+  if (!PT_BR_DECIMAL.test(value)) return null
+  return value.replace(/\./g, '').replace(',', '.')
 }
+
+/** Number of decimal places of a value in API format ("12.50" -> 2). */
+export function decimalPlaces(value: string) {
+  return value.split('.')[1]?.length ?? 0
+}
+
+/** Same limits as the database columns: Decimal(14, 3) and Decimal(14, 2). */
+export const QUANTITY_DECIMALS = 3
+export const PRICE_DECIMALS = 2
 
 /**
  * Live mask for an amount typed in pt-BR: keeps digits and one comma, groups
@@ -50,18 +65,21 @@ export function maskMoneyInput(input: string): string {
 
 /** Reverse of the mask: "1.234.567,50" -> "1234567.50" (null when incomplete). */
 export function parseMaskedMoney(input: string): string | null {
-  return normalizeDecimal(input.replace(/\./g, ''))
+  return normalizeDecimal(input)
 }
 
 /**
  * quantity x unit price rounded to cents, half up: the same rule the API uses
  * (Decimal, ROUND_HALF_UP), so the total on screen is the total saved.
- * Returns null while the inputs are not valid numbers.
+ * Returns null while the inputs are not valid (including too many decimals),
+ * so the screen never shows a total for a field marked as wrong.
  */
 export function itemTotal(quantity: string, unitPrice: string): Decimal | null {
   const q = normalizeDecimal(quantity)
   const p = normalizeDecimal(unitPrice)
   if (q === null || p === null) return null
+  if (decimalPlaces(q) > QUANTITY_DECIMALS || decimalPlaces(p) > PRICE_DECIMALS) return null
+  if (new Decimal(q).isZero()) return null // quantity must be greater than zero
   return new Decimal(q).times(p).toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
 }
 

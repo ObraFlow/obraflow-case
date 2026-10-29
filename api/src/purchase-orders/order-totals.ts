@@ -17,7 +17,8 @@ export interface ItemTotals {
 export type TotalsResult =
   | { ok: true; items: ItemTotals[]; total: Decimal }
   | { ok: false; error: 'NON_POSITIVE_QUANTITY'; index: number }
-  | { ok: false; error: 'TOTAL_TOO_LARGE' };
+  | { ok: false; error: 'TOTAL_TOO_LARGE' }
+  | { ok: false; error: 'ZERO_TOTAL' };
 
 const max = new Prisma.Decimal(MAX_MONEY);
 
@@ -48,6 +49,10 @@ export function calculateTotals(inputs: ItemInput[]): TotalsResult {
   // Checked here so the API answers 422 instead of a database overflow error.
   if (total.greaterThan(max)) {
     return { ok: false, error: 'TOTAL_TOO_LARGE' };
+  }
+  // A single free item is fine, but an order worth nothing has nothing to approve.
+  if (total.isZero()) {
+    return { ok: false, error: 'ZERO_TOTAL' };
   }
   return { ok: true, items, total };
 }

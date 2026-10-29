@@ -88,7 +88,10 @@ function OrdersTable({ orders }: { orders: OrderListItem[] }) {
               <TableCell className="max-w-72 whitespace-normal">
                 <ApprovalChainInline steps={order.steps} />
               </TableCell>
-              <TableCell className="pr-4">
+              {/* The decision dialogs render in a portal, but React still bubbles
+                  their clicks (including a click on the backdrop to close them)
+                  through this cell. Without this, closing a dialog opened the order. */}
+              <TableCell className="pr-4" onClick={(event) => event.stopPropagation()}>
                 <OrderActions order={order} />
               </TableCell>
             </TableRow>

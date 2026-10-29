@@ -13,6 +13,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { trim } from '../../common/transforms.js';
+import { IsOrderDateInRange } from '../../common/validators.js';
 import { PurchaseOrderItemDto } from './purchase-order-item.dto.js';
 
 // The requester is not in the body: it is the logged-in user (session cookie).
@@ -24,11 +25,12 @@ export class CreatePurchaseOrderDto {
   supplierId: string;
 
   /**
-   * Calendar date without time.
+   * Calendar date without time, from 2000-01-01 up to one year after today.
    * @example "2026-10-26"
    */
-  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'orderDate must be YYYY-MM-DD' })
-  @IsISO8601({ strict: true }, { message: 'orderDate must be a valid date' })
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'use o formato AAAA-MM-DD' })
+  @IsISO8601({ strict: true }, { message: 'data inválida' })
+  @IsOrderDateInRange()
   orderDate: string;
 
   @IsOptional()

@@ -2,16 +2,24 @@ import { describe, expect, it } from 'vitest'
 import { itemTotal, maskMoneyInput, normalizeDecimal, orderTotal, parseMaskedMoney } from './money'
 
 describe('normalizeDecimal', () => {
-  it('accepts comma or dot as decimal separator', () => {
+  it('reads pt-BR numbers: comma for decimals, dot for thousands', () => {
     expect(normalizeDecimal('12,5')).toBe('12.5')
-    expect(normalizeDecimal(' 12.5 ')).toBe('12.5')
-    expect(normalizeDecimal('7')).toBe('7')
+    expect(normalizeDecimal(' 7 ')).toBe('7')
+    expect(normalizeDecimal('1.500')).toBe('1500') // fifteen hundred, not 1,5
+    expect(normalizeDecimal('1.234,56')).toBe('1234.56')
+    expect(normalizeDecimal('1.234.567')).toBe('1234567')
   })
 
-  it('rejects text, negatives and thousand separators', () => {
+  it('refuses a dot that is not a thousand separator instead of guessing', () => {
+    expect(normalizeDecimal('12.5')).toBeNull()
+    expect(normalizeDecimal('1.50')).toBeNull()
+    expect(normalizeDecimal('1.2345')).toBeNull()
+    expect(normalizeDecimal('12,5,0')).toBeNull()
+  })
+
+  it('rejects text and negatives', () => {
     expect(normalizeDecimal('abc')).toBeNull()
     expect(normalizeDecimal('-1')).toBeNull()
-    expect(normalizeDecimal('1.234,56')).toBeNull()
     expect(normalizeDecimal('')).toBeNull()
   })
 })
@@ -42,18 +50,25 @@ describe('maskMoneyInput / parseMaskedMoney', () => {
 describe('itemTotal / orderTotal', () => {
   it('rounds each item to cents, half up', () => {
     expect(itemTotal('3,333', '1,50')?.toFixed(2)).toBe('5.00') // 4.9995
-    expect(itemTotal('1.005', '1')?.toFixed(2)).toBe('1.01')
+    expect(itemTotal('1,005', '1')?.toFixed(2)).toBe('1.01')
+    expect(itemTotal('1.500', '2,50')?.toFixed(2)).toBe('3750.00')
+  })
+
+  it('shows no total while a field has more decimals than allowed', () => {
+    expect(itemTotal('1,2345', '10')).toBeNull()
+    expect(itemTotal('1', '2,505')).toBeNull()
+    expect(itemTotal('0', '10')).toBeNull()
   })
 
   it('sums the rounded item totals', () => {
-    const items = Array.from({ length: 3 }, () => ({ quantity: '0.667', unitPrice: '0.50' }))
+    const items = Array.from({ length: 3 }, () => ({ quantity: '0,667', unitPrice: '0,50' }))
     expect(orderTotal(items).toFixed(2)).toBe('0.99') // not 1.00
   })
 
   it('has no floating point error', () => {
     const items = [
-      { quantity: '1', unitPrice: '0.10' },
-      { quantity: '1', unitPrice: '0.20' },
+      { quantity: '1', unitPrice: '0,10' },
+      { quantity: '1', unitPrice: '0,20' },
     ]
     expect(orderTotal(items).toFixed(2)).toBe('0.30')
   })

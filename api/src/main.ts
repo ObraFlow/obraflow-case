@@ -1,9 +1,10 @@
-import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module.js';
+import { MoneyFormatInterceptor } from './common/money-format.interceptor.js';
 import { PrismaExceptionFilter } from './common/prisma-exception.filter.js';
+import { createValidationPipe } from './common/validation.js';
 import { setupSwagger } from './swagger.js';
 
 async function bootstrap() {
@@ -16,13 +17,11 @@ async function bootstrap() {
   const { httpAdapter } = app.get(HttpAdapterHost);
   app.useGlobalFilters(new PrismaExceptionFilter(httpAdapter));
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  ); // validate all payloads
+  // Validate all payloads (unknown fields refused, errors in Portuguese).
+  app.useGlobalPipes(createValidationPipe());
+
+  // Money fields always go out with two decimals ("10000.00").
+  app.useGlobalInterceptors(new MoneyFormatInterceptor());
 
   // Parses cookies and verifies the signature of the session cookie.
   app.use(

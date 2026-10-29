@@ -51,7 +51,23 @@ describe('calculateTotals', () => {
   });
 
   it('accepts a zero unit price (e.g. a free sample)', () => {
-    expect(totalsOf([{ quantity: '1', unitPrice: '0' }]).total).toBe('0.00');
+    expect(
+      totalsOf([
+        { quantity: '1', unitPrice: '10' },
+        { quantity: '1', unitPrice: '0' },
+      ]).items,
+    ).toEqual(['10.00', '0.00']);
+  });
+
+  it('refuses an order whose total is zero', () => {
+    expect(calculateTotals([{ quantity: '1', unitPrice: '0' }])).toEqual({
+      ok: false,
+      error: 'ZERO_TOTAL',
+    });
+    // 0.001 x 0.01 rounds to 0.00
+    expect(calculateTotals([{ quantity: '0.001', unitPrice: '0.01' }]).ok).toBe(
+      false,
+    );
   });
 
   it('refuses a zero quantity and reports which item', () => {

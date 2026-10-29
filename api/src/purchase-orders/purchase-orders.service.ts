@@ -173,11 +173,13 @@ export class PurchaseOrdersService {
     if (!totals.ok) {
       if (totals.error === 'NON_POSITIVE_QUANTITY') {
         throw new BadRequestException([
-          `items.${totals.index}.quantity must be greater than zero`,
+          `items.${totals.index}.quantity: deve ser maior que zero`,
         ]);
       }
       throw new UnprocessableEntityException(
-        'O total do pedido excede o valor máximo permitido.',
+        totals.error === 'ZERO_TOTAL'
+          ? 'O total do pedido deve ser maior que zero.'
+          : 'O total do pedido excede o valor máximo permitido.',
       );
     }
 
@@ -313,7 +315,7 @@ function parseIdempotencyKey(value: string | undefined) {
   if (value === undefined) return null;
   if (!IDEMPOTENCY_KEY_REGEX.test(value)) {
     throw new BadRequestException(
-      'Idempotency-Key must have 1 to 100 letters, digits, "-" or "_"',
+      'Idempotency-Key deve ter de 1 a 100 letras, números, "-" ou "_".',
     );
   }
   return value;

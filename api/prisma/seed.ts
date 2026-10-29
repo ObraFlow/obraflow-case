@@ -73,16 +73,16 @@ const sites = {
 };
 type SiteKey = keyof typeof sites;
 
-// Fictitious companies and tax IDs.
+// Fictitious companies; tax IDs have valid check digits (the API validates them).
 const suppliers = {
   concreto: { name: 'Concreto Forte Ltda', taxId: '11.222.333/0001-81' },
-  aco: { name: 'Aço Norte Distribuidora', taxId: '22.333.444/0001-92' },
+  aco: { name: 'Aço Norte Distribuidora', taxId: '22.333.444/0001-81' },
   eletrica: {
     name: 'Elétrica Recôncavo Materiais',
-    taxId: '33.444.555/0001-03',
+    taxId: '33.444.555/0001-81',
   },
-  locadora: { name: 'Equipa Locação de Máquinas', taxId: '44.555.666/0001-14' },
-  tintas: { name: 'Cores da Bahia Tintas', taxId: '55.666.777/0001-25' },
+  locadora: { name: 'Equipa Locação de Máquinas', taxId: '44.555.666/0001-81' },
+  tintas: { name: 'Cores da Bahia Tintas', taxId: '55.666.777/0001-81' },
 };
 type SupplierKey = keyof typeof suppliers;
 

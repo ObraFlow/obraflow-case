@@ -1,6 +1,14 @@
 import Decimal from 'decimal.js'
 import { z } from 'zod'
-import { MAX_MONEY, normalizeDecimal, orderTotal } from '@/lib/money'
+import { todayIsoDate } from '@/lib/format'
+import {
+  itemTotal,
+  MAX_MONEY,
+  normalizeDecimal,
+  orderTotal,
+  PRICE_DECIMALS,
+  QUANTITY_DECIMALS,
+} from '@/lib/money'
 import type { CreateOrderInput } from '@/types/api'
 
 export const MAX_REASON = 500
@@ -38,7 +46,13 @@ function decimalField(rules: DecimalRules) {
     if (text.startsWith('-')) return fail(rules.negative)
 
     const value = normalizeDecimal(text)
-    if (value === null) return fail('Use apenas números, com vírgula para decimais (ex.: 12,5).')
+    if (value === null) {
+      return fail(
+        /^[\d.,]+$/.test(text)
+          ? 'Use vírgula para decimais e ponto só para milhares (ex.: 1.500 ou 12,5).'
+          : 'Use apenas números, com vírgula para decimais (ex.: 12,5).',
+      )
+    }
 
     const [integer, decimals = ''] = value.split('.')
     if (decimals.length > rules.maxDecimals) {
@@ -61,14 +75,14 @@ export const orderItemSchema = z.object({
     required: 'Informe a quantidade.',
     negative: 'A quantidade deve ser maior que zero.',
     zero: 'A quantidade deve ser maior que zero.',
-    maxDecimals: 3,
+    maxDecimals: QUANTITY_DECIMALS,
     maxIntegerDigits: 11,
   }),
   unit: z.string().trim().min(1, 'Informe a unidade.').max(10, 'Use no máximo 10 caracteres.'),
   unitPrice: decimalField({
     required: 'Informe o preço unitário.',
     negative: 'O preço não pode ser negativo.',
-    maxDecimals: 2,
+    maxDecimals: PRICE_DECIMALS,
     maxIntegerDigits: 12,
   }),
 })
@@ -79,6 +93,14 @@ function isValidDate(value: string) {
   return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value)
 }
 
+/** Same range as the API: from 2000 up to one year ahead (catches typos like 0226 or 2926). */
+export const MIN_ORDER_DATE = '2000-01-01'
+
+export function maxOrderDate(today = todayIsoDate()) {
+  const [year, rest] = [Number(today.slice(0, 4)), today.slice(4)]
+  return `${year + 1}${rest === '-02-29' ? '-02-28' : rest}`
+}
+
 export const orderFormSchema = z
   .object({
     siteId: z.string().min(1, 'Selecione a obra.'),
@@ -87,7 +109,12 @@ export const orderFormSchema = z
       .string()
       // abort: an empty date gets only the "required" message.
       .min(1, { message: 'Informe a data do pedido.', abort: true })
-      .refine(isValidDate, 'Informe uma data válida.'),
+      .refine(isValidDate, { message: 'Informe uma data válida.', abort: true })
+      .refine((value) => value >= MIN_ORDER_DATE, 'A data não pode ser anterior a 2000.')
+      .refine(
+        (value) => value <= maxOrderDate(),
+        'A data não pode ser mais de um ano depois de hoje.',
+      ),
     notes: z.string().trim().max(1000, 'Use no máximo 1000 caracteres.'),
     items: z
       .array(orderItemSchema)
@@ -95,14 +122,28 @@ export const orderFormSchema = z
       .max(100, 'Um pedido pode ter no máximo 100 itens.'),
   })
   .superRefine((form, ctx) => {
-    if (orderTotal(form.items).greaterThan(MAX_MONEY)) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['items'],
-        message: 'O total do pedido excede o valor máximo permitido.',
-      })
-    }
+    const message = orderTotalError(form.items)
+    if (message) ctx.addIssue({ code: 'custom', path: ['items'], message })
   })
+
+/**
+ * Problem with the order total, if any. Exported so the form can show it as
+ * soon as the items change: React Hook Form only refreshes the errors of the
+ * field being edited, so an order-level error would otherwise wait for a submit.
+ */
+export function orderTotalError(items: { quantity: string; unitPrice: string }[]) {
+  const total = orderTotal(items)
+  if (total.greaterThan(MAX_MONEY)) {
+    return 'O total do pedido excede o valor máximo permitido.'
+  }
+  // Only once every quantity and price is valid, so it never shows while the
+  // user is still filling the items.
+  const allPriced = items.every((item) => itemTotal(item.quantity, item.unitPrice) !== null)
+  if (items.length > 0 && allPriced && total.isZero()) {
+    return 'O total do pedido deve ser maior que zero.'
+  }
+  return undefined
+}
 
 /** What the inputs hold (raw text). */
 export type OrderFormInput = z.input<typeof orderFormSchema>

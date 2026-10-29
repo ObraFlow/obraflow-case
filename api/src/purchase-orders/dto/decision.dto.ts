@@ -15,7 +15,7 @@ export class ApproveDto {
 export class RejectDto extends ApproveDto {
   @Transform(trim)
   @IsString()
-  @IsNotEmpty({ message: 'reason is required to reject an order' })
+  @IsNotEmpty({ message: 'informe o motivo da rejeição' })
   @MaxLength(500)
   reason: string;
 }

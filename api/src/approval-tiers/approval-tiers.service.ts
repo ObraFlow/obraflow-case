@@ -25,7 +25,9 @@ function parseMaxAmount(value: string | null): Prisma.Decimal | null {
   if (value === null) return null;
   const amount = new Prisma.Decimal(value);
   if (amount.lessThanOrEqualTo(0)) {
-    throw new BadRequestException('maxAmount must be greater than zero');
+    throw new BadRequestException([
+      'maxAmount: o limite deve ser maior que zero',
+    ]);
   }
   return amount;
 }
@@ -52,6 +54,27 @@ export class ApprovalTiersService {
       ...tier,
       minAmount: index === 0 ? null : tiers[index - 1].maxAmount,
     }));
+  }
+
+  async findOne(id: string) {
+    const tier = await this.prisma.approvalTier.findUnique({
+      where: { id },
+      include: approversInclude,
+    });
+    if (!tier) {
+      throw new NotFoundException('Faixa de alçada não encontrada.');
+    }
+    // Same derived lower bound as the list: the highest limit below this one.
+    const previous = await this.prisma.approvalTier.findFirst({
+      where: {
+        siteId: tier.siteId,
+        maxAmount:
+          tier.maxAmount === null ? { not: null } : { lt: tier.maxAmount },
+      },
+      orderBy: { maxAmount: 'desc' },
+      select: { maxAmount: true },
+    });
+    return { ...tier, minAmount: previous?.maxAmount ?? null };
   }
 
   async create(siteId: string, dto: ApprovalTierDto) {

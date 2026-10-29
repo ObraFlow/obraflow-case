@@ -21,7 +21,7 @@ export class PurchaseOrderItemDto {
    * Up to 3 decimals, greater than zero.
    * @example "12.5"
    */
-  @Matches(QUANTITY_REGEX, { message: `quantity ${QUANTITY_MESSAGE}` })
+  @Matches(QUANTITY_REGEX, { message: QUANTITY_MESSAGE })
   quantity: string;
 
   /**
@@ -38,6 +38,6 @@ export class PurchaseOrderItemDto {
    * Price per unit, up to 2 decimals.
    * @example "145.00"
    */
-  @Matches(MONEY_REGEX, { message: `unitPrice ${MONEY_MESSAGE}` })
+  @Matches(MONEY_REGEX, { message: MONEY_MESSAGE })
   unitPrice: string;
 }

@@ -1,6 +1,6 @@
-# ObraFlow · Pedidos de compra com aprovação por alçada
+# ObraFlow
 
-Sistema de pedidos de compra para obras, com aprovação em sequência definida por **regras de alçada configuráveis por obra**. O valor total do pedido escolhe a faixa de alçada, a faixa define a cadeia de aprovadores, e o pedido só avança para a próxima pessoa depois da aprovação anterior. Uma rejeição exige motivo, encerra o fluxo e fica no histórico.
+Sistema de pedidos de compra para obras, com aprovação sequencial definida por regras de alçada. Uma faixa de alçada é escolhida automaticamente com base no valor total do pedido, e é ela quem define a cadeia de aprovadores: o pedido só passa para o próximo aprovador depois da aprovação do anterior. Se um dos aprovadores rejeitar a compra, informando o motivo, o fluxo é encerrado e a rejeição fica no histórico.
 
 ![Lista de pedidos](docs/screenshots/02-pedidos.png)
 
@@ -84,6 +84,7 @@ Abra **http://localhost:5173**. O Swagger fica em **http://localhost:3000/api/do
 | `pnpm db:seed` | `api/` | Apaga tudo e recria os dados de demonstração |
 | `pnpm db:reset` | `api/` | Reaplica as migrations do zero e roda o seed |
 | `pnpm test` | `api/` e `web/` | Testes unitários (Vitest) |
+| `pnpm test:e2e` | `api/` | Testes ponta a ponta da API contra um banco `obraflow_test` (precisa do `db` no ar) |
 | `pnpm lint` | `api/` e `web/` | Lint (oxlint) |
 
 ---
@@ -111,7 +112,7 @@ Nos detalhes: itens, cadeia de aprovação com data de cada decisão e motivo da
 
 ### 2. Cadastro de pedido
 
-Começa com um item em branco; itens podem ser adicionados, editados e removidos. O total de cada item e o total do pedido são calculados na hora, com o mesmo arredondamento do servidor. O resumo mostra **qual cadeia de aprovação vai valer** para o total digitado, e o botão "Cadastrar pedido" só habilita quando tudo está válido.
+Começa com um item em branco; itens podem ser adicionados, editados e removidos. O total de cada item e o total do pedido são calculados na hora, com o mesmo arredondamento do servidor. Números seguem o padrão brasileiro: vírgula para decimais e ponto para milhares (`1.500` é mil e quinhentos, `12,5` é doze e meio); um ponto fora desse padrão, como `12.5`, é recusado com uma mensagem em vez de ser adivinhado. O resumo mostra **qual cadeia de aprovação vai valer** para o total digitado, e o botão "Cadastrar pedido" só habilita quando tudo está válido.
 
 ![Cadastro de pedido](docs/screenshots/06-novo-pedido.png)
 
@@ -260,24 +261,77 @@ Se nenhuma faixa da obra cobre o total (obra sem faixas, ou valor acima do maior
 - **REST + JSON** sob `/api`, documentado com **Swagger** em `/api/docs` (gerado dos DTOs e comentários).
 - Em desenvolvimento, o **proxy do Vite** encaminha `/api` para a porta 3000. Para o navegador, tudo é **mesma origem**: o cookie de sessão funciona sem configurar CORS.
 - **Sessão:** `POST /api/session` com o id do usuário grava um cookie **assinado** (`cookie-parser` + `COOKIE_SECRET`), `httpOnly` e `SameSite=Lax`. Dura 400 dias (o máximo que os navegadores aceitam) e é renovado a cada visita. Um cookie alterado à mão é ignorado.
-- **Toda rota de pedidos exige sessão** e responde só com os pedidos do usuário logado (regra abaixo). O front não envia "quem sou eu" em parâmetros: o servidor lê do cookie.
-- **Dinheiro e quantidades trafegam como texto decimal** (`"10000.50"`), para não perder precisão em JSON.
-- **Erros** seguem um formato único (`statusCode`, `message`); o cliente HTTP do front transforma falhas em `ApiError` com uma mensagem pronta para a tela.
+- **Toda rota de pedidos exige sessão** e responde só com os pedidos do usuário logado (regra abaixo). O front não envia "quem sou eu" em parâmetros: o servidor lê do cookie. **Toda escrita exige sessão** também (faixas, obras, usuários, fornecedores); só as leituras de cadastros e regras são abertas, porque a tela de escolha de usuário precisa delas.
+- **Dinheiro e quantidades trafegam como texto decimal**, para não perder precisão em JSON. Valores em dinheiro saem sempre com duas casas (`"10000.00"`, `"12.50"`); quantidades saem na forma natural (`"12.5"`).
+- **Erros** seguem um formato único (`statusCode`, `message`), com mensagens em português. Em erros de validação (400), `message` é uma lista com o campo e o problema (`"items.0.quantity: use um número decimal..."`). O cliente HTTP do front transforma falhas em `ApiError` com uma mensagem pronta para a tela.
 - **TanStack Query** cuida de cache, loading e erro. Só repete automaticamente erros de rede e 5xx (um 404 não muda com retry). Depois de uma decisão, invalida a lista e o detalhe; um 401 em qualquer chamada volta para a escolha de usuário.
 
 | Método | Rota | Uso |
 |---|---|---|
 | `POST` / `GET` / `DELETE` | `/session` | Escolher usuário, ver quem está logado, sair |
 | `GET` | `/construction-sites`, `/users`, `/suppliers` | Cadastros base |
+| `POST` | `/construction-sites`, `/users`, `/suppliers` | Cadastrar (exige sessão; o CNPJ do fornecedor tem os dígitos verificadores conferidos) |
 | `GET` / `POST` | `/construction-sites/:id/approval-tiers` | Listar (com limite inferior derivado) e criar faixas |
-| `PUT` / `DELETE` | `/approval-tiers/:id` | Editar (substitui aprovadores na ordem enviada) e remover |
+| `GET` / `PUT` / `DELETE` | `/approval-tiers/:id` | Consultar uma faixa, editar (substitui aprovadores na ordem enviada) e remover |
 | `GET` | `/construction-sites/:id/approval-chain?amount=` | Prévia da cadeia para um valor |
 | `GET` | `/purchase-orders?status&siteId&awaitingMe&sort&page` | Lista paginada dos pedidos do usuário, com a cadeia de cada um (`awaitingMe=true`: só os que estão na vez dele; `sort`: `date_desc` (padrão), `date_asc`, `site` ou `supplier`) |
 | `POST` | `/purchase-orders` | Criar pedido (`Idempotency-Key` opcional) |
 | `GET` | `/purchase-orders/:id` | Detalhes: itens, etapas e histórico |
 | `POST` | `/purchase-orders/:id/approve` e `/reject` | Decidir, enviando a `version` vista na tela |
 
-**Códigos de resposta:** 400 payload inválido · 401 sem sessão · 403 não é a vez do usuário · 404 não existe (ou o usuário não participa do pedido) · 409 conflito de estado (pedido já finalizado ou alterado) · 422 payload válido que viola regra de negócio (sem faixa, total acima do máximo) · 503 banco indisponível (`/api/health`).
+**Códigos de resposta:** 400 payload inválido · 401 sem sessão · 403 não é a vez do usuário · 404 não existe (ou o usuário não participa do pedido) · 409 conflito de estado (pedido já finalizado ou alterado, limite de faixa repetido) · 422 payload válido que viola regra de negócio (sem faixa, total zero ou acima do máximo) · 503 banco indisponível (`/api/health`).
+
+#### Principais payloads
+
+Exemplos completos (com todos os campos e respostas) estão no Swagger, em `/api/docs`.
+
+```http
+POST /api/session
+{ "userId": "c0a8...-uuid" }
+```
+
+```http
+POST /api/purchase-orders
+Idempotency-Key: 4f6c1b9e-2d1a-4c7e-9a51-0b3f7e2c9d10
+
+{
+  "siteId": "uuid-da-obra",
+  "supplierId": "uuid-do-fornecedor",
+  "orderDate": "2026-10-26",
+  "notes": "Reposição para a laje do 3º pavimento.",
+  "items": [
+    { "description": "Cimento CP-II 50 kg", "quantity": "160", "unit": "un", "unitPrice": "38.90" },
+    { "description": "Areia média lavada", "quantity": "12.5", "unit": "m³", "unitPrice": "145.00" }
+  ]
+}
+```
+
+Resposta `201`, resumida (o detalhe traz também obra, fornecedor, solicitante e histórico):
+
+```json
+{
+  "id": "uuid", "number": 9, "status": "PENDING", "currentStep": 1, "version": 0,
+  "total": "8036.50",
+  "items": [{ "position": 1, "description": "Cimento CP-II 50 kg", "quantity": "160", "unit": "un", "unitPrice": "38.90", "total": "6224.00" }],
+  "steps": [{ "position": 1, "status": "CURRENT", "approver": { "id": "uuid", "name": "João Silva" } }],
+  "events": [{ "type": "CREATED", "metadata": { "tierMaxAmount": "10000", "total": "8036.5" } }]
+}
+```
+
+```http
+POST /api/purchase-orders/:id/approve
+{ "version": 0 }
+
+POST /api/purchase-orders/:id/reject
+{ "version": 1, "reason": "Preço acima do contrato vigente." }
+```
+
+```http
+POST /api/construction-sites/:id/approval-tiers     (PUT /api/approval-tiers/:id usa o mesmo corpo)
+{ "maxAmount": "10000.00", "approverIds": ["uuid-do-joao", "uuid-da-amanda"] }
+```
+
+`maxAmount: null` cria a faixa "sem limite superior". Valores vão como texto, com ponto decimal: `"10000.00"`, não `10000` nem `"10.000,00"`.
 
 #### Acesso aos pedidos
 
@@ -299,7 +353,7 @@ Um pedido é visível para **quem o criou e para os aprovadores da sua cadeia**.
 | Duas decisões ao mesmo tempo | **Lock otimista**: a decisão é um `UPDATE ... WHERE id = ? AND version = ? AND status = 'PENDING'` que incrementa `version`. O `UPDATE` trava a linha; a segunda decisão espera, reavalia o `WHERE`, atualiza 0 linhas e recebe 409. Testado com aprovar e rejeitar enviados ao mesmo tempo: um 200, um 409. |
 | Decisão tomada em tela desatualizada | O cliente envia a `version` que viu; se o pedido mudou, 409 e a tela recarrega. |
 | Clique duplo / retry de rede na criação | **`Idempotency-Key`** por formulário: único por solicitante (`UNIQUE (requesterId, idempotencyKey)`). A repetição devolve o pedido já criado (`Idempotent-Replayed: true`); a mesma chave com outro conteúdo (comparado por hash) recebe 422. |
-| Clique duplo / retry na decisão | Repetir uma decisão que já foi aplicada devolve 200 com o pedido atual, em vez de erro (4 aprovações simultâneas do mesmo usuário: todas 200, decisão registrada uma vez). Como cada decisão incrementa `version` em 1 e decide uma etapa em ordem, uma requisição com `version = v` sempre mirou a etapa `v + 1`. |
+| Clique duplo / retry na decisão | Repetir uma decisão que já foi aplicada devolve 200 com o pedido atual, em vez de erro (aprovações simultâneas do mesmo usuário: todas 200, decisão registrada uma vez). Como cada decisão incrementa `version` em 1 e decide uma etapa em ordem, uma requisição com `version = v` sempre mirou a etapa `v + 1`. Uma rejeição só conta como repetição se o motivo for o mesmo; com outro motivo é 409, para o cliente não achar que o novo texto foi salvo. |
 | Erros de arredondamento | `Decimal` na API e `decimal.js` no front, com o mesmo arredondamento; colunas `NUMERIC(14,2)` e `NUMERIC(14,3)`; total acima do que a coluna comporta vira 422, não erro do banco. |
 | Dados impossíveis no banco | `CHECK`s (quantidade > 0, preço ≥ 0, limite > 0, posição ≥ 1, rejeição exige motivo), chaves estrangeiras com `RESTRICT` (não dá para apagar um usuário com pedidos ou etapas), índices únicos. |
 | Usuário ver ou decidir pedido de outra pessoa | Filtro de acesso no `WHERE` de toda leitura e da decisão; fora dele, 404. |
@@ -309,7 +363,9 @@ Um pedido é visível para **quem o criou e para os aprovadores da sua cadeia**.
 ### Decisões de produto
 
 - **Quem solicita pode aprovar o próprio pedido** se estiver na cadeia. Bloquear isso exigiria impedir também a configuração de faixas em que o solicitante aparece; fica como mudança de produção (segregação de funções).
-- **Qualquer usuário pode editar as regras.** Não há papéis no desafio; em produção, só um perfil administrativo.
+- **Qualquer usuário com sessão pode editar as regras.** Não há papéis no desafio; em produção, só um perfil administrativo. Sem sessão, a API recusa (401).
+- **Pedido de valor zero é recusado.** Um item pode ter preço zero (amostra grátis), mas um pedido que soma R$ 0,00 não tem o que aprovar (422 na API, aviso no formulário).
+- **Data do pedido entre 2000 e um ano depois de hoje.** Datas fora disso quase sempre são erro de digitação (`0226`, `2926`).
 - **Pedidos não são editáveis depois de criados.** A cadeia foi definida para aquele total; para corrigir, rejeita-se e cria-se outro.
 - **Alterações de regra valem só para novos pedidos** (a tela avisa isso).
 - **Aprovar pede confirmação**; rejeitar abre um diálogo com motivo obrigatório.
@@ -317,11 +373,13 @@ Um pedido é visível para **quem o criou e para os aprovadores da sua cadeia**.
 
 ### Testes
 
-- **API:** testes unitários do cálculo de totais (arredondamento, soma, limites). O fluxo completo (criação, alçada nos limites de faixa, 403/409/422, idempotência, concorrência com requisições simultâneas, cópia da cadeia) foi verificado contra a API rodando.
+- **API, unitários:** cálculo de totais (arredondamento, soma, limites, total zero), CNPJ, formato do dinheiro e tradução das mensagens de validação.
+- **API, ponta a ponta** (`pnpm test:e2e`): compila a API, sobe `dist/main.js` contra um banco próprio (`obraflow_test`, com migrations e dados de demonstração) e faz requisições HTTP reais, como o front. Cobre validações, alçada nos limites de faixa, aprovação na ordem, 403/404/409/422, rejeição, idempotência na criação e na decisão, decisões simultâneas, cópia da cadeia e CRUD de faixas. O nome do banco precisa terminar em `_test` (o seed limpa as tabelas); dá para trocar com `TEST_DATABASE_URL`.
 - **Front-end:** totais com **os mesmos casos da API** (tela e servidor concordam em cada centavo), mensagens de validação por campo e por item, cálculo de "de quem é a vez", rótulos de faixa, e um teste de componente que prova que rejeitar sem motivo não envia requisição.
 
 ```bash
 pnpm --dir api test
+pnpm --dir api test:e2e   # precisa do PostgreSQL (docker compose up -d db)
 pnpm --dir web test
 ```
 
@@ -333,7 +391,7 @@ pnpm --dir web test
 - **Histórico das regras:** versionar faixas (quem mudou o quê e quando), além do histórico dos pedidos.
 - **Notificações** ao próximo aprovador (e-mail, push), com padrão *outbox* para não perder eventos.
 - **Delegação e prazos:** substituto em férias, escalonamento quando uma etapa fica parada.
-- **Testes automatizados de integração e e2e** (API com banco real e Playwright no front) rodando em CI, junto com lint, build e migrations.
+- **Testes e2e do front** (Playwright) e tudo rodando em CI: lint, build, migrations, testes unitários e os testes ponta a ponta da API.
 - **Observabilidade:** logs estruturados, métricas e tracing; alertas no health.
 - **Infraestrutura:** imagem da API em dois estágios (sem dependências de desenvolvimento, migrations como passo separado do deploy em vez de no início do container), HTTPS com `NODE_ENV=production` (cookie `Secure`), segredos fora do compose, backups do banco, rate limiting.
 - **Idempotência com expiração** das chaves e respostas tipadas no OpenAPI, para gerar o cliente do front automaticamente.

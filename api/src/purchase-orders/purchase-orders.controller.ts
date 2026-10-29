@@ -4,7 +4,6 @@ import {
   Get,
   Headers,
   Param,
-  ParseUUIDPipe,
   Post,
   Query,
   Res,
@@ -25,6 +24,7 @@ import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto.js';
 import { ListPurchaseOrdersQueryDto } from './dto/list-purchase-orders-query.dto.js';
 import { PurchaseOrdersService } from './purchase-orders.service.js';
 import { sendOrderResult } from './send-order-result.js';
+import { ParseUuid } from '../common/parse-uuid.pipe.js';
 
 @ApiTags('purchase-orders')
 @Controller('purchase-orders')
@@ -53,7 +53,7 @@ export class PurchaseOrdersController {
     description:
       'Order not found, or the user is neither its requester nor one of its approvers.',
   })
-  findOne(@ActorId() actorId: string, @Param('id', ParseUUIDPipe) id: string) {
+  findOne(@ActorId() actorId: string, @Param('id', ParseUuid) id: string) {
     return this.service.findOne(id, actorId);
   }
 

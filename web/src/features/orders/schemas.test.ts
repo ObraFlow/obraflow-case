@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { orderFormSchema, rejectSchema, toCreateOrderInput, type OrderFormInput } from './schemas'
+import {
+  maxOrderDate,
+  orderFormSchema,
+  rejectSchema,
+  toCreateOrderInput,
+  type OrderFormInput,
+} from './schemas'
 
 const validItem = { description: 'Areia média', quantity: '12,5', unit: 'm³', unitPrice: '145,00' }
 
@@ -53,11 +59,13 @@ describe('orderFormSchema', () => {
     })
   })
 
-  it('refuses zero quantity but accepts a zero price', () => {
+  it('refuses zero quantity but accepts a zero price on one item', () => {
     expect(errorsOf({ ...validForm, items: [{ ...validItem, quantity: '0' }] })).toEqual({
       'items.0.quantity': 'A quantidade deve ser maior que zero.',
     })
-    expect(errorsOf({ ...validForm, items: [{ ...validItem, unitPrice: '0' }] })).toEqual({})
+    expect(
+      errorsOf({ ...validForm, items: [validItem, { ...validItem, unitPrice: '0' }] }),
+    ).toEqual({})
   })
 
   it('limits decimal places like the database columns', () => {
@@ -79,6 +87,36 @@ describe('orderFormSchema', () => {
     expect(errorsOf({ ...validForm, orderDate: '2026-02-30' })).toEqual({
       orderDate: 'Informe uma data válida.',
     })
+  })
+
+  it('rejects dates far in the past or future (typos)', () => {
+    expect(errorsOf({ ...validForm, orderDate: '1999-12-31' })).toEqual({
+      orderDate: 'A data não pode ser anterior a 2000.',
+    })
+    expect(errorsOf({ ...validForm, orderDate: '2999-01-01' })).toEqual({
+      orderDate: 'A data não pode ser mais de um ano depois de hoje.',
+    })
+  })
+
+  it('reads a dot as a thousand separator and explains a misplaced one', () => {
+    expect(errorsOf({ ...validForm, items: [{ ...validItem, quantity: '1.500' }] })).toEqual({})
+    expect(errorsOf({ ...validForm, items: [{ ...validItem, unitPrice: '12.5' }] })).toEqual({
+      'items.0.unitPrice':
+        'Use vírgula para decimais e ponto só para milhares (ex.: 1.500 ou 12,5).',
+    })
+  })
+
+  it('refuses an order whose total is zero', () => {
+    expect(errorsOf({ ...validForm, items: [{ ...validItem, unitPrice: '0' }] })).toEqual({
+      items: 'O total do pedido deve ser maior que zero.',
+    })
+  })
+})
+
+describe('maxOrderDate', () => {
+  it('is one year after today', () => {
+    expect(maxOrderDate('2026-10-29')).toBe('2027-10-29')
+    expect(maxOrderDate('2028-02-29')).toBe('2029-02-28')
   })
 })
 

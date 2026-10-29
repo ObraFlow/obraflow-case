@@ -1,6 +1,7 @@
 import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsString, Length, MaxLength } from 'class-validator';
 import { digitsOnly, trim } from '../../common/transforms.js';
+import { IsCnpj } from '../../common/validators.js';
 
 export class CreateSupplierDto {
   @Transform(trim)
@@ -16,6 +17,7 @@ export class CreateSupplierDto {
    */
   @Transform(digitsOnly)
   @IsString()
-  @Length(14, 14, { message: 'taxId must have 14 digits (CNPJ)' })
+  @Length(14, 14, { message: 'o CNPJ deve ter 14 dígitos' })
+  @IsCnpj()
   taxId: string;
 }
