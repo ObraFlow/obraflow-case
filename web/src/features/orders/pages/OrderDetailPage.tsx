@@ -12,6 +12,7 @@ import { ApiError } from '@/lib/api'
 import { formatCnpj, formatDate, formatDateTime, formatOrderNumber } from '@/lib/format'
 import { formatBRL } from '@/lib/money'
 import { useOrder } from '../api'
+import { useBackToListPath } from '../navigation'
 import { DecisionPanel } from '../components/DecisionPanel'
 import { ItemsTable } from '../components/ItemsTable'
 import { OrderHistory } from '../components/OrderHistory'
@@ -19,10 +20,11 @@ import { OrderHistory } from '../components/OrderHistory'
 export function OrderDetailPage() {
   const { id = '' } = useParams()
   const order = useOrder(id)
+  const backTo = useBackToListPath()
 
   const back = (
     <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2">
-      <Link to="/pedidos">
+      <Link to={backTo}>
         <ArrowLeft />
         Pedidos
       </Link>

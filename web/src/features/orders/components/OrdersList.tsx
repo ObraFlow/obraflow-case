@@ -13,6 +13,7 @@ import {
 import { formatDate, formatOrderNumber } from '@/lib/format'
 import { formatBRL } from '@/lib/money'
 import type { OrderListItem } from '@/types/api'
+import { useFromListState } from '../navigation'
 import { OrderActions } from './OrderActions'
 
 function itemsLabel(count: number) {
@@ -37,6 +38,7 @@ export function OrdersList({ orders }: { orders: OrderListItem[] }) {
 
 function OrdersTable({ orders }: { orders: OrderListItem[] }) {
   const navigate = useNavigate()
+  const state = useFromListState()
 
   return (
     <div className="hidden overflow-hidden rounded-xl border bg-card md:block">
@@ -56,11 +58,12 @@ function OrdersTable({ orders }: { orders: OrderListItem[] }) {
             <TableRow
               key={order.id}
               className="cursor-pointer"
-              onClick={() => navigate(`/pedidos/${order.id}`)}
+              onClick={() => navigate(`/pedidos/${order.id}`, { state })}
             >
               <TableCell className="pl-4">
                 <Link
                   to={`/pedidos/${order.id}`}
+                  state={state}
                   className="font-medium hover:underline"
                   onClick={(event) => event.stopPropagation()}
                 >
@@ -97,9 +100,10 @@ function OrdersTable({ orders }: { orders: OrderListItem[] }) {
 }
 
 function OrderCard({ order }: { order: OrderListItem }) {
+  const state = useFromListState()
   return (
     <div className="rounded-xl border bg-card p-4">
-      <Link to={`/pedidos/${order.id}`} className="block space-y-3">
+      <Link to={`/pedidos/${order.id}`} state={state} className="block space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-1 font-medium">
