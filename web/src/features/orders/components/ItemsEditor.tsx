@@ -17,6 +17,9 @@ import { emptyItem, type OrderFormInput, type OrderFormOutput } from '../schemas
 
 const UNITS = ['un', 'kg', 'g', 't', 'm', 'm²', 'm³', 'L', 'h', 'dia', 'sc', 'cx', 'pç', 'vb']
 
+/** Field labels are lighter than the item header, so each item reads as one block. */
+const fieldLabel = 'text-xs font-medium text-muted-foreground'
+
 interface ItemsEditorProps {
   control: Control<OrderFormInput, unknown, OrderFormOutput>
   register: UseFormRegister<OrderFormInput>
@@ -68,18 +71,31 @@ export function ItemsEditor({ control, register }: ItemsEditorProps) {
           const unitError = errorFor(index, 'unit')
           const priceError = errorFor(index, 'unitPrice')
           const hasError = descriptionError || quantityError || unitError || priceError
+          const title = items[index]?.description.trim()
 
           return (
             <li
               key={field.id}
               aria-label={`Item ${index + 1}`}
               className={cn(
-                'space-y-3 rounded-lg border p-3',
+                'space-y-3 rounded-lg border p-3 sm:p-4',
                 hasError ? 'border-destructive/40 bg-destructive/[0.02]' : 'bg-muted/20',
               )}
             >
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Item {index + 1}</span>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                    {index + 1}
+                  </span>
+                  <span
+                    className={cn(
+                      'truncate text-sm font-semibold',
+                      !title && 'font-normal text-muted-foreground italic',
+                    )}
+                  >
+                    {title || 'Novo item'}
+                  </span>
+                </div>
                 <Button
                   type="button"
                   variant="ghost"
@@ -94,7 +110,9 @@ export function ItemsEditor({ control, register }: ItemsEditorProps) {
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor={`${id}-description`}>Descrição</Label>
+                <Label htmlFor={`${id}-description`} className={fieldLabel}>
+                  Descrição
+                </Label>
                 <Input
                   id={`${id}-description`}
                   placeholder="Ex.: Cimento CP-II 50 kg"
@@ -107,7 +125,9 @@ export function ItemsEditor({ control, register }: ItemsEditorProps) {
 
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-[1fr_0.8fr_1.2fr_1.2fr]">
                 <div className="space-y-1">
-                  <Label htmlFor={`${id}-quantity`}>Quantidade</Label>
+                  <Label htmlFor={`${id}-quantity`} className={fieldLabel}>
+                    Quantidade
+                  </Label>
                   <Input
                     id={`${id}-quantity`}
                     inputMode="decimal"
@@ -121,7 +141,9 @@ export function ItemsEditor({ control, register }: ItemsEditorProps) {
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor={`${id}-unit`}>Unidade</Label>
+                  <Label htmlFor={`${id}-unit`} className={fieldLabel}>
+                    Unidade
+                  </Label>
                   <Input
                     id={`${id}-unit`}
                     list="units"
@@ -135,7 +157,9 @@ export function ItemsEditor({ control, register }: ItemsEditorProps) {
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor={`${id}-price`}>Preço unitário</Label>
+                  <Label htmlFor={`${id}-price`} className={fieldLabel}>
+                    Preço unitário
+                  </Label>
                   <div className="relative">
                     <span className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-xs text-muted-foreground">
                       R$
@@ -155,7 +179,7 @@ export function ItemsEditor({ control, register }: ItemsEditorProps) {
 
                 {/* Calculated, never editable. */}
                 <div className="space-y-1">
-                  <span className="text-sm leading-none font-medium">Total do item</span>
+                  <span className={cn('block leading-none', fieldLabel)}>Total do item</span>
                   <output
                     htmlFor={`${id}-quantity ${id}-price`}
                     aria-live="polite"
