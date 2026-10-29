@@ -1,6 +1,10 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import RulesView from './RulesView.vue'
 import HealthStatus from './features/health/HealthStatus.vue'
+import OrderView from './features/orders/OrderView.vue'
+
+const activeView = ref<'orders' | 'rules'>('orders')
 </script>
 
 <template>
@@ -11,6 +15,10 @@ import HealthStatus from './features/health/HealthStatus.vue'
         <span>obra<span class="brand-accent">flow</span></span>
       </a>
       <span class="product-label">DOKIMOS <span>·</span> APROVAÇÕES</span>
+      <nav class="main-nav" aria-label="Seções da aplicação">
+        <button type="button" :aria-current="activeView === 'orders' ? 'page' : undefined" @click="activeView = 'orders'">Pedidos</button>
+        <button type="button" :aria-current="activeView === 'rules' ? 'page' : undefined" @click="activeView = 'rules'">Regras da alçada</button>
+      </nav>
     </header>
 
     <section class="welcome" aria-labelledby="welcome-title">
@@ -20,7 +28,8 @@ import HealthStatus from './features/health/HealthStatus.vue'
       <HealthStatus />
     </section>
 
-    <RulesView />
+    <OrderView v-if="activeView === 'orders'" />
+    <RulesView v-else />
 
     <footer>OBRAFLOW <span>·</span> DOKIMOS</footer>
   </main>

@@ -2,7 +2,7 @@
 
 # ObraFlow · Dokimos
 
-Plataforma full-stack para cadastro de pedidos de compra e aprovação por alçada. As Fases 0 e 1 entregam a fundação local, a verificação de saúde dos serviços, os cadastros de referência e as regras de alçada. Cadastro de pedidos, aprovações e dados de demonstração serão implementados nas próximas fases.
+Plataforma full-stack para cadastro de pedidos de compra e aprovação por alçada. As Fases 0 e 1 entregam a fundação local, os cadastros de referência e as regras de alçada; a Fase 2 permite cadastrar pedidos com itens e persiste a cadeia inicial de aprovação.
 
 As instruções originais do processo seletivo estão em [DESAFIO-INSTRUCOES.md](DESAFIO-INSTRUCOES.md).
 
@@ -32,7 +32,7 @@ A primeira execução constrói as imagens do backend e do frontend, inicia o Po
 - Saúde da API e do banco: <http://localhost:8080/api/health>
 - Saúde operacional: <http://localhost:8080/actuator/health>
 
-A página inicial exibe o estado de conexão da API e do banco e permite configurar cadastros de referência e regras de alçada.
+A aplicação exibe o estado de conexão da API e do banco e oferece o cadastro de pedidos e a configuração das regras de alçada.
 
 Para encerrar os serviços, use `Ctrl+C` ou, em outro terminal:
 
@@ -80,6 +80,8 @@ Backend:
 ./mvnw -f backend/pom.xml test
 ```
 
+O teste de persistência do backend usa Testcontainers para iniciar um PostgreSQL descartável e confirmar o rollback de pedidos; mantenha o Docker Engine em execução ao rodar a suíte completa.
+
 Frontend:
 
 ```bash
@@ -98,7 +100,7 @@ npm run build
 
 O backend inicia na porta `8080`, o frontend na `5173` e o PostgreSQL na `5432` por padrão. As portas e credenciais de desenvolvimento podem ser configuradas no `.env`, criado a partir de `.env.example`. Os valores incluídos são locais e fictícios; não são necessários serviços pagos ou credenciais externas.
 
-O Vue consulta `GET /api/health` para exibir o estado dos serviços. A API verifica a conexão ao PostgreSQL e responde com o estado da aplicação e do banco. Flyway aplica as migrações versionadas na inicialização; a migração `V1` cria a tabela de metadados da aplicação. O modelo de pedidos, regras de alçada, histórico e dados de demonstração ainda será desenvolvido.
+O Vue consulta `GET /api/health` para exibir o estado dos serviços. A API verifica a conexão ao PostgreSQL e responde com o estado da aplicação e do banco. Flyway aplica as migrações versionadas na inicialização. O fluxo de aprovações e o histórico de decisões serão implementados na Fase 3; os dados de demonstração serão adicionados na Fase 4.
 
 ## Informações da entrega
 
@@ -118,6 +120,35 @@ Exemplo de payload para `PUT /api/works/1/approval-bands`:
 ```
 
 Fornecedores podem ser cadastrados pela API usando `POST /api/suppliers` com `name` e `taxId`.
+
+### Cadastro de pedidos (Fase 2)
+
+A tela **Pedidos** carrega obras e fornecedores ativos e permite informar a data, observações e um ou mais itens. Quantidades aceitam até três casas decimais; preços unitários aceitam até duas. O total de cada item é calculado e arredondado para centavos usando arredondamento comercial (*half up*); o total do pedido é a soma dos itens já arredondados. A interface usa aritmética decimal inteira para exibir os valores sem erro de ponto flutuante.
+
+A API recalcula os totais e não recebe valores totais do cliente. Em uma única transação, persiste o pedido, seus itens e uma fotografia ordenada dos aprovadores da faixa aplicável ao total consolidado. A fotografia inclui os identificadores e nomes/e-mails dos aprovadores e não é alterada quando as regras da obra forem substituídas. Um pedido não pode ser criado se a obra não existir, o fornecedor estiver inativo ou não houver uma faixa aplicável; nesse caso, a API retorna `400` com uma mensagem orientando configurar as regras.
+
+Endpoints principais:
+
+- `GET /api/orders`: lista os pedidos com itens, total e cadeia inicial;
+- `GET /api/orders/{id}`: consulta um pedido;
+- `POST /api/orders`: cria um pedido e responde `201 Created`.
+
+Exemplo de corpo para `POST /api/orders`:
+
+```json
+{
+  "workId": 1,
+  "supplierId": 1,
+  "orderDate": "2026-10-29",
+  "internalNotes": "Entrega antes da concretagem",
+  "items": [
+    { "description": "Cimento CP-II", "quantity": 20.5, "unit": "sc", "unitPrice": 38.9 },
+    { "description": "Areia média", "quantity": 2, "unit": "m³", "unitPrice": 140 }
+  ]
+}
+```
+
+O retorno inclui os itens com `total` calculado, o `total` do pedido, `approvalBandId`, `status` inicial `PENDING` e `approvers` ordenados por `position`. Erros de validação usam Problem Details e mensagens em português.
 
 Erros da API usam o formato Problem Details (`title`, `status` e `detail`). Dados inválidos retornam `400`, recursos inexistentes retornam `404`, e violações de unicidade retornam `409`; erros internos não expõem detalhes técnicos.
 

@@ -57,6 +57,11 @@ public class ReferenceRepository {
         return count != null && count > 0;
     }
 
+    public boolean activeSupplierExists(long id) {
+        Integer count = jdbc.queryForObject("SELECT count(*) FROM suppliers WHERE id=? AND active=true", Integer.class, id);
+        return count != null && count > 0;
+    }
+
     public Set<Long> findActiveUserIds(Collection<Long> ids) {
         if (ids.isEmpty()) return Set.of();
         return Set.copyOf(namedJdbc.queryForList("SELECT id FROM app_users WHERE active=true AND id IN (:ids)",
