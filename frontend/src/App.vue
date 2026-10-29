@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import RulesView from './RulesView.vue'
 
 type HealthResponse = {
   status: string
@@ -60,6 +61,8 @@ onMounted(loadHealth)
         <button v-if="error" class="retry-button" type="button" @click="loadHealth">Tentar novamente</button>
       </div>
     </section>
+
+    <RulesView />
 
     <footer>OBRAFLOW <span>·</span> DOKIMOS</footer>
   </main>
