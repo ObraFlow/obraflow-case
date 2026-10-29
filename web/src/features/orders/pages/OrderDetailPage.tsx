@@ -1,4 +1,4 @@
-import { ArrowLeft, FileQuestion } from 'lucide-react'
+import { ArrowLeft, CalendarDays, FileQuestion } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router'
 import { ApprovalChainTimeline } from '@/components/ApprovalChain'
@@ -74,8 +74,14 @@ export function OrderDetailPage() {
             </h1>
             <StatusBadge status={data.status} />
           </div>
-          <p className="text-sm text-muted-foreground">
-            Criado por {data.requester.name} em {formatDateTime(data.createdAt)}
+          {/* Order date (business date chosen by the requester) comes first; the
+              record date is when it was saved in the system. */}
+          <p className="flex items-center gap-1.5 text-sm font-medium">
+            <CalendarDays className="size-4 text-muted-foreground" aria-hidden />
+            Pedido de {formatDate(data.orderDate)}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Registrado no sistema por {data.requester.name} em {formatDateTime(data.createdAt)}
           </p>
         </div>
         <div className="sm:text-right">
@@ -130,7 +136,6 @@ export function OrderDetailPage() {
                     CNPJ {formatCnpj(data.supplier.taxId)}
                   </span>
                 </Info>
-                <Info label="Data do pedido">{formatDate(data.orderDate)}</Info>
                 <Info label="Solicitante">{data.requester.name}</Info>
                 <Info label="Observações internas">
                   {data.notes ? (
