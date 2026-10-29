@@ -2,7 +2,7 @@
 
 # ObraFlow · Dokimos
 
-Plataforma full-stack para cadastro de pedidos de compra e aprovação por alçada. O projeto está em desenvolvimento; esta etapa entrega a fundação local, a verificação de saúde dos serviços e a estrutura de persistência. As telas de pedidos, aprovações e regras serão construídas nas próximas fases.
+Plataforma full-stack para cadastro de pedidos de compra e aprovação por alçada. As Fases 0 e 1 entregam a fundação local, a verificação de saúde dos serviços, os cadastros de referência e as regras de alçada. Cadastro de pedidos, aprovações e dados de demonstração serão implementados nas próximas fases.
 
 As instruções originais do processo seletivo estão em [DESAFIO-INSTRUCOES.md](DESAFIO-INSTRUCOES.md).
 
@@ -32,7 +32,7 @@ A primeira execução constrói as imagens do backend e do frontend, inicia o Po
 - Saúde da API e do banco: <http://localhost:8080/api/health>
 - Saúde operacional: <http://localhost:8080/actuator/health>
 
-A página inicial exibe o estado de conexão da API e do banco. Nesta fase, a API contém somente os endpoints de saúde; os recursos do desafio serão adicionados nas próximas etapas.
+A página inicial exibe o estado de conexão da API e do banco e permite configurar cadastros de referência e regras de alçada.
 
 Para encerrar os serviços, use `Ctrl+C` ou, em outro terminal:
 
@@ -91,9 +91,9 @@ npm run build
 
 ## Tecnologias e estrutura
 
-- **Backend:** Java 21, Spring Boot 4, Maven e API REST com JSON.
+- **Backend:** Java 21, Spring Boot 4, Maven e API REST com JSON, organizada em controllers, services, repositories JDBC e DTOs validados.
 - **Frontend:** Vue 3, TypeScript, Vite e npm.
-- **Persistência:** PostgreSQL 17, acesso JDBC e migrações Flyway.
+- **Persistência:** PostgreSQL 17, acesso JDBC e migrações Flyway. A substituição das faixas é transacional e as consultas carregam faixas e aprovadores em conjunto.
 - **Execução local:** Docker Compose; Maven Wrapper e `package-lock.json` mantêm os comandos e dependências reproduzíveis.
 
 O backend inicia na porta `8080`, o frontend na `5173` e o PostgreSQL na `5432` por padrão. As portas e credenciais de desenvolvimento podem ser configuradas no `.env`, criado a partir de `.env.example`. Os valores incluídos são locais e fictícios; não são necessários serviços pagos ou credenciais externas.
@@ -118,5 +118,7 @@ Exemplo de payload para `PUT /api/works/1/approval-bands`:
 ```
 
 Fornecedores podem ser cadastrados pela API usando `POST /api/suppliers` com `name` e `taxId`.
+
+Erros da API usam o formato Problem Details (`title`, `status` e `detail`). Dados inválidos retornam `400`, recursos inexistentes retornam `404`, e violações de unicidade retornam `409`; erros internos não expõem detalhes técnicos.
 
 As capturas das telas, a modelagem e o cálculo das regras de alçada, os fluxos completos da API, os dados de demonstração, as garantias de integridade do domínio e as considerações de produção serão documentados conforme forem implementados nas próximas fases.
