@@ -12,7 +12,7 @@ export default defineConfig({
   server: {
     // The browser only talks to the Vite server, so the API session cookie is
     // same-origin: no CORS setup and no third-party cookie issues.
-    proxy: { '/api': 'http://localhost:3000' },
+    proxy: { '/api': process.env.API_URL ?? 'http://localhost:3000' },
   },
   test: {
     environment: 'jsdom',
