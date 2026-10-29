@@ -96,7 +96,7 @@ Não há autenticação no desafio, então o usuário escolhe quem é. O servido
 
 ### 1. Aprovação: lista e detalhes
 
-Cada usuário vê **só os pedidos de que participa**: os que criou e os que tem na sua cadeia de aprovação (veja [acesso aos pedidos](#acesso-aos-pedidos)). A lista abre na aba **"Aguardando minha aprovação"**, com contador; a aba "Todos os pedidos" tem filtros de obra e situação (guardados na URL). Cada pedido mostra a alçada atual: aprovadores concluídos (✓), o atual (destacado) e os próximos. Aprovar e Rejeitar só aparecem para quem está na vez.
+Cada usuário vê **só os pedidos de que participa**: os que criou e os que tem na sua cadeia de aprovação (veja [acesso aos pedidos](#acesso-aos-pedidos)). A lista abre na aba **"Aguardando minha aprovação"**, com contador; a aba "Todos os pedidos" tem filtros de obra e situação, e as duas podem ser ordenadas por data do pedido, obra ou fornecedor (tudo guardado na URL). Cada pedido mostra a alçada atual: aprovadores concluídos (✓), o atual (destacado) e os próximos. Aprovar e Rejeitar só aparecem para quem está na vez.
 
 Nos detalhes: itens, cadeia de aprovação com data de cada decisão e motivo da rejeição, e o histórico completo.
 
@@ -270,7 +270,7 @@ Se nenhuma faixa da obra cobre o total (obra sem faixas, ou valor acima do maior
 | `GET` / `POST` | `/construction-sites/:id/approval-tiers` | Listar (com limite inferior derivado) e criar faixas |
 | `PUT` / `DELETE` | `/approval-tiers/:id` | Editar (substitui aprovadores na ordem enviada) e remover |
 | `GET` | `/construction-sites/:id/approval-chain?amount=` | Prévia da cadeia para um valor |
-| `GET` | `/purchase-orders?status&siteId&awaitingMe&page` | Lista paginada dos pedidos do usuário, com a cadeia de cada um (`awaitingMe=true`: só os que estão na vez dele) |
+| `GET` | `/purchase-orders?status&siteId&awaitingMe&sort&page` | Lista paginada dos pedidos do usuário, com a cadeia de cada um (`awaitingMe=true`: só os que estão na vez dele; `sort`: `date_desc` (padrão), `date_asc`, `site` ou `supplier`) |
 | `POST` | `/purchase-orders` | Criar pedido (`Idempotency-Key` opcional) |
 | `GET` | `/purchase-orders/:id` | Detalhes: itens, etapas e histórico |
 | `POST` | `/purchase-orders/:id/approve` e `/reject` | Decidir, enviando a `version` vista na tela |
