@@ -68,13 +68,13 @@ Abra **http://localhost:5173** e escolha um usuário. A documentação interativ
 
 ### Escolha do usuário
 
-Não há autenticação no desafio, então o usuário escolhe quem é. O servidor grava a escolha em um cookie de sessão, e ela pode ser trocada a qualquer momento pelo menu do cabeçalho.
+Não há autenticação no desafio, então o usuário escolhe quem é. O servidor grava a escolha em um cookie de sessão, e ela pode ser trocada a qualquer momento pelo menu do cabeçalho. Ao trocar, o app volta para a lista de pedidos e descarta o que estava em cache: o próximo usuário não cai na página que o anterior deixou aberta.
 
 ![Escolha do usuário](docs/screenshots/01-selecao-usuario.png)
 
 ### 1. Aprovação: lista e detalhes
 
-A lista abre na aba **"Aguardando minha aprovação"**, com contador; a aba "Todos os pedidos" tem filtros de obra e situação (guardados na URL). Cada pedido mostra a alçada atual: aprovadores concluídos (✓), o atual (destacado) e os próximos. Aprovar e Rejeitar só aparecem para quem está na vez.
+Cada usuário vê **só os pedidos de que participa**: os que criou e os que tem na sua cadeia de aprovação (veja [acesso aos pedidos](#acesso-aos-pedidos)). A lista abre na aba **"Aguardando minha aprovação"**, com contador; a aba "Todos os pedidos" tem filtros de obra e situação (guardados na URL). Cada pedido mostra a alçada atual: aprovadores concluídos (✓), o atual (destacado) e os próximos. Aprovar e Rejeitar só aparecem para quem está na vez.
 
 Nos detalhes: itens, cadeia de aprovação com data de cada decisão e motivo da rejeição, e o histórico completo.
 
@@ -149,7 +149,7 @@ São 6 usuários e 8 pedidos: 4 pendentes (alguns no meio da cadeia), 2 aprovado
 | Front-end | **React** + **Vite** + TypeScript | Stack conhecida, build rápido; o proxy do Vite deixa API e front na mesma origem. |
 | Dados no front | **TanStack Query** | Loading, erro, retry e cache por query sem código manual; invalidação depois de cada decisão. É o que garante os estados exigidos em todas as listas. |
 | Formulários | **React Hook Form** + **Zod** | `useFieldArray` para N itens; erros por campo e por item; `isValid` controla o botão de envio. |
-| UI | **Tailwind** + **shadcn/ui** (Radix) | Componentes acessíveis e consistentes, com o código no repositório (pode ser lido e alterado). |
+| UI | **Tailwind** + **shadcn/ui** (Radix) | Componentes acessíveis e consistentes, com o código no repositório (pode ser lido e alterado). Logo e paleta seguem o site do ObraFlow. |
 | Dinheiro no front | **decimal.js** | A mesma biblioteca e o mesmo arredondamento do Prisma: o total na tela é o total salvo. |
 | Testes | **Vitest** + Testing Library | Mesma ferramenta nos dois projetos. |
 
@@ -236,6 +236,7 @@ Se nenhuma faixa da obra cobre o total (obra sem faixas, ou valor acima do maior
 - **REST + JSON** sob `/api`, documentado com **Swagger** em `/api/docs` (gerado dos DTOs e comentários).
 - Em desenvolvimento, o **proxy do Vite** encaminha `/api` para a porta 3000. Para o navegador, tudo é **mesma origem**: o cookie de sessão funciona sem configurar CORS.
 - **Sessão:** `POST /api/session` com o id do usuário grava um cookie **assinado** (`cookie-parser` + `COOKIE_SECRET`), `httpOnly` e `SameSite=Lax`. Dura 400 dias (o máximo que os navegadores aceitam) e é renovado a cada visita. Um cookie alterado à mão é ignorado.
+- **Toda rota de pedidos exige sessão** e responde só com os pedidos do usuário logado (regra abaixo). O front não envia "quem sou eu" em parâmetros: o servidor lê do cookie.
 - **Dinheiro e quantidades trafegam como texto decimal** (`"10000.50"`), para não perder precisão em JSON.
 - **Erros** seguem um formato único (`statusCode`, `message`); o cliente HTTP do front transforma falhas em `ApiError` com uma mensagem pronta para a tela.
 - **TanStack Query** cuida de cache, loading e erro. Só repete automaticamente erros de rede e 5xx (um 404 não muda com retry). Depois de uma decisão, invalida a lista e o detalhe; um 401 em qualquer chamada volta para a escolha de usuário.
@@ -247,12 +248,22 @@ Se nenhuma faixa da obra cobre o total (obra sem faixas, ou valor acima do maior
 | `GET` / `POST` | `/construction-sites/:id/approval-tiers` | Listar (com limite inferior derivado) e criar faixas |
 | `PUT` / `DELETE` | `/approval-tiers/:id` | Editar (substitui aprovadores na ordem enviada) e remover |
 | `GET` | `/construction-sites/:id/approval-chain?amount=` | Prévia da cadeia para um valor |
-| `GET` | `/purchase-orders?status&siteId&awaitingApprover&page` | Lista paginada com a cadeia de cada pedido |
+| `GET` | `/purchase-orders?status&siteId&awaitingMe&page` | Lista paginada dos pedidos do usuário, com a cadeia de cada um (`awaitingMe=true`: só os que estão na vez dele) |
 | `POST` | `/purchase-orders` | Criar pedido (`Idempotency-Key` opcional) |
 | `GET` | `/purchase-orders/:id` | Detalhes: itens, etapas e histórico |
 | `POST` | `/purchase-orders/:id/approve` e `/reject` | Decidir, enviando a `version` vista na tela |
 
-**Códigos de resposta:** 400 payload inválido · 401 sem sessão · 403 não é a vez do usuário · 404 não existe · 409 conflito de estado (pedido já finalizado ou alterado) · 422 payload válido que viola regra de negócio (sem faixa, total acima do máximo) · 503 banco indisponível (`/api/health`).
+**Códigos de resposta:** 400 payload inválido · 401 sem sessão · 403 não é a vez do usuário · 404 não existe (ou o usuário não participa do pedido) · 409 conflito de estado (pedido já finalizado ou alterado) · 422 payload válido que viola regra de negócio (sem faixa, total acima do máximo) · 503 banco indisponível (`/api/health`).
+
+#### Acesso aos pedidos
+
+Um pedido é visível para **quem o criou e para os aprovadores da sua cadeia**. A regra fica em uma função só (`visibleTo(userId)` em `purchase-orders.service.ts`), aplicada no `WHERE` de **toda** leitura: lista, detalhes e a busca do pedido dentro da transação de aprovar/rejeitar.
+
+- Quem não participa recebe **404**, igual a um pedido inexistente: a API não confirma que o pedido existe.
+- Como o filtro está na própria consulta, não há caminho que carregue o pedido e "esqueça" de checar a permissão depois.
+- Quem participa mas não está na vez continua recebendo 403 ao tentar decidir.
+
+**Por que não Row Level Security (RLS) do PostgreSQL agora:** com Prisma, RLS exige abrir uma transação por requisição para definir o usuário (`set_config`), um papel de banco sem privilégio de superusuário (o superusuário ignora RLS) e cuidado extra com o seed e com as transações que já existem. Para um único ponto de acesso (esta API), o filtro centralizado dá a mesma garantia com bem menos peças. RLS entra como segunda camada em produção (veja abaixo).
 
 ### Consistência e integridade dos dados
 
@@ -267,6 +278,7 @@ Se nenhuma faixa da obra cobre o total (obra sem faixas, ou valor acima do maior
 | Clique duplo / retry na decisão | Repetir uma decisão que já foi aplicada devolve 200 com o pedido atual, em vez de erro (4 aprovações simultâneas do mesmo usuário: todas 200, decisão registrada uma vez). Como cada decisão incrementa `version` em 1 e decide uma etapa em ordem, uma requisição com `version = v` sempre mirou a etapa `v + 1`. |
 | Erros de arredondamento | `Decimal` na API e `decimal.js` no front, com o mesmo arredondamento; colunas `NUMERIC(14,2)` e `NUMERIC(14,3)`; total acima do que a coluna comporta vira 422, não erro do banco. |
 | Dados impossíveis no banco | `CHECK`s (quantidade > 0, preço ≥ 0, limite > 0, posição ≥ 1, rejeição exige motivo), chaves estrangeiras com `RESTRICT` (não dá para apagar um usuário com pedidos ou etapas), índices únicos. |
+| Usuário ver ou decidir pedido de outra pessoa | Filtro de acesso no `WHERE` de toda leitura e da decisão; fora dele, 404. |
 | Regra mudar e "reescrever" o passado | A cadeia é copiada para o pedido na criação; o histórico é só de inserção. |
 | API subir sem banco | O `PrismaService` executa `SELECT 1` na inicialização (com o adapter `pg`, `$connect()` não conecta de verdade); o health responde 503 quando o banco cai. |
 
@@ -292,7 +304,8 @@ pnpm --dir web test
 ### O que mudaria em produção
 
 - **Autenticação real** (SSO/OIDC) no lugar da escolha de usuário, mantendo a mesma ideia de sessão no servidor; cookie `Secure` atrás de HTTPS e proteção CSRF explícita.
-- **Papéis e permissões:** quem pode criar pedidos, aprovar e editar regras; segregação de funções (solicitante fora da própria cadeia).
+- **Papéis e permissões:** quem pode criar pedidos, aprovar e editar regras; segregação de funções (solicitante fora da própria cadeia); visão ampla para perfis como financeiro e auditoria.
+- **Row Level Security no PostgreSQL** como segunda camada do acesso aos pedidos: políticas por usuário nas tabelas de pedido, itens, etapas e histórico, com a API conectando por um papel sem privilégios de superusuário.
 - **Histórico das regras:** versionar faixas (quem mudou o quê e quando), além do histórico dos pedidos.
 - **Notificações** ao próximo aprovador (e-mail, push), com padrão *outbox* para não perder eventos.
 - **Delegação e prazos:** substituto em férias, escalonamento quando uma etapa fica parada.
