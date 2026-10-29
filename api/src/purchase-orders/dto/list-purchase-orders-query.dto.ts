@@ -1,5 +1,13 @@
-import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsUUID,
+  Max,
+  Min,
+} from 'class-validator';
 import { PurchaseOrderStatus } from '../../generated/prisma/client.js';
 
 export class ListPurchaseOrdersQueryDto {
@@ -11,10 +19,13 @@ export class ListPurchaseOrdersQueryDto {
   @IsUUID()
   siteId?: string;
 
-  /** Only orders whose current step is waiting for this user. */
+  /** Only orders whose current step is waiting for the logged-in user. */
   @IsOptional()
-  @IsUUID()
-  awaitingApprover?: string;
+  @Transform(({ value }: { value: unknown }) =>
+    value === 'true' ? true : value === 'false' ? false : value,
+  )
+  @IsBoolean()
+  awaitingMe?: boolean;
 
   @IsOptional()
   @Type(() => Number)

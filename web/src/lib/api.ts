@@ -23,7 +23,7 @@ export class ApiError extends Error {
   }
 }
 
-type Query = Record<string, string | number | undefined | null>
+type Query = Record<string, string | number | boolean | undefined | null>
 
 interface RequestOptions {
   body?: unknown

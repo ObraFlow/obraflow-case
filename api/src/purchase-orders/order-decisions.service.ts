@@ -9,6 +9,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import {
   OrderResult,
   PurchaseOrdersService,
+  visibleTo,
 } from './purchase-orders.service.js';
 
 type Decision = { type: 'approve' } | { type: 'reject'; reason: string };
@@ -45,8 +46,9 @@ export class OrderDecisionsService {
     decision: Decision,
   ): Promise<OrderResult> {
     const replayed = await this.prisma.$transaction(async (tx) => {
-      const order = await tx.purchaseOrder.findUnique({
-        where: { id: orderId },
+      // Someone outside the order gets the same 404 as for a missing order.
+      const order = await tx.purchaseOrder.findFirst({
+        where: { id: orderId, ...visibleTo(actorId) },
         select: {
           status: true,
           version: true,
@@ -157,7 +159,7 @@ export class OrderDecisionsService {
       return false;
     });
 
-    return { order: await this.orders.findOne(orderId), replayed };
+    return { order: await this.orders.findOne(orderId, actorId), replayed };
   }
 }
 

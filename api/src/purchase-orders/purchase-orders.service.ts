@@ -55,6 +55,17 @@ const hiddenFields = {
   requestHash: true,
 } satisfies Prisma.PurchaseOrderOmit;
 
+/**
+ * Who can see an order: the requester and the approvers in its chain. Applied
+ * in the WHERE of every read, so an order outside this set behaves exactly
+ * like one that does not exist (404), without revealing that it exists.
+ */
+export function visibleTo(userId: string): Prisma.PurchaseOrderWhereInput {
+  return {
+    OR: [{ requesterId: userId }, { steps: { some: { approverId: userId } } }],
+  };
+}
+
 const IDEMPOTENCY_KEY_REGEX = /^[\w-]{1,100}$/;
 
 const brl = new Intl.NumberFormat('pt-BR', {
@@ -76,15 +87,18 @@ export class PurchaseOrdersService {
     private readonly approvalTiers: ApprovalTiersService,
   ) {}
 
-  async findMany(query: ListPurchaseOrdersQueryDto) {
+  async findMany(actorId: string, query: ListPurchaseOrdersQueryDto) {
     const where: Prisma.PurchaseOrderWhereInput = {
-      status: query.status,
-      siteId: query.siteId,
-      ...(query.awaitingApprover && {
-        steps: {
-          some: { approverId: query.awaitingApprover, status: 'CURRENT' },
+      AND: [
+        visibleTo(actorId),
+        {
+          status: query.status,
+          siteId: query.siteId,
+          ...(query.awaitingMe && {
+            steps: { some: { approverId: actorId, status: 'CURRENT' } },
+          }),
         },
-      }),
+      ],
     };
 
     // Count and page in one transaction so both see the same data.
@@ -109,9 +123,9 @@ export class PurchaseOrdersService {
     return { data, total, page: query.page, pageSize: query.pageSize };
   }
 
-  async findOne(id: string): Promise<PurchaseOrderDetail> {
-    const order = await this.prisma.purchaseOrder.findUnique({
-      where: { id },
+  async findOne(id: string, actorId: string): Promise<PurchaseOrderDetail> {
+    const order = await this.prisma.purchaseOrder.findFirst({
+      where: { id, ...visibleTo(actorId) },
       include: detailInclude,
       omit: hiddenFields,
     });
@@ -212,7 +226,7 @@ export class PurchaseOrdersService {
           select: { id: true },
         });
       });
-      return { order: await this.findOne(id), replayed: false };
+      return { order: await this.findOne(id, requesterId), replayed: false };
     } catch (error) {
       // Two requests with the same key at the same time: the unique index lets
       // only one insert succeed; the other returns the winner's order.
@@ -239,7 +253,10 @@ export class PurchaseOrdersService {
         'Esta Idempotency-Key já foi usada em um pedido com outro conteúdo.',
       );
     }
-    return { order: await this.findOne(existing.id), replayed: true };
+    return {
+      order: await this.findOne(existing.id, requesterId),
+      replayed: true,
+    };
   }
 
   /** Clear messages instead of a generic foreign key error. */

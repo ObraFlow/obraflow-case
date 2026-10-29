@@ -47,7 +47,7 @@ export function OrderDetailPage() {
           <EmptyState
             icon={FileQuestion}
             title="Pedido não encontrado"
-            description="O pedido não existe ou o endereço está incorreto."
+            description="O pedido não existe ou você não participa dele (como solicitante ou aprovador)."
           />
         ) : (
           <ErrorState

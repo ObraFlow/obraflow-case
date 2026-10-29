@@ -31,17 +31,30 @@ import { sendOrderResult } from './send-order-result.js';
 export class PurchaseOrdersController {
   constructor(private readonly service: PurchaseOrdersService) {}
 
-  /** Paginated list, newest first. Filter by status, site or current approver. */
+  /**
+   * Paginated list, newest first, of the orders the logged-in user created or
+   * approves. Filter by status, site or "waiting for me".
+   */
   @Get()
-  findMany(@Query() query: ListPurchaseOrdersQueryDto) {
-    return this.service.findMany(query);
+  @ApiCookieAuth()
+  @ApiUnauthorizedResponse({ description: 'No user selected.' })
+  findMany(
+    @ActorId() actorId: string,
+    @Query() query: ListPurchaseOrdersQueryDto,
+  ) {
+    return this.service.findMany(actorId, query);
   }
 
   /** Order with items, approval steps and full history. */
   @Get(':id')
-  @ApiNotFoundResponse({ description: 'Order not found.' })
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.findOne(id);
+  @ApiCookieAuth()
+  @ApiUnauthorizedResponse({ description: 'No user selected.' })
+  @ApiNotFoundResponse({
+    description:
+      'Order not found, or the user is neither its requester nor one of its approvers.',
+  })
+  findOne(@ActorId() actorId: string, @Param('id', ParseUUIDPipe) id: string) {
+    return this.service.findOne(id, actorId);
   }
 
   /**

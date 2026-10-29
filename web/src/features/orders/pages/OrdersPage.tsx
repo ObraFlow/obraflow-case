@@ -16,7 +16,6 @@ import {
 } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useSites } from '@/features/catalog/api'
-import { useCurrentUser } from '@/features/session/api'
 import type { OrderStatus } from '@/types/api'
 import { useOrders } from '../api'
 import { OrdersList } from '../components/OrdersList'
@@ -37,7 +36,6 @@ const statusOptions: { value: OrderStatus; label: string }[] = [
  * so the back button and shared links keep them.
  */
 export function OrdersPage() {
-  const user = useCurrentUser()
   const sites = useSites()
   const [params, setParams] = useSearchParams()
 
@@ -48,11 +46,11 @@ export function OrdersPage() {
 
   const orders = useOrders(
     view === 'mine'
-      ? { awaitingApprover: user.id, status: 'PENDING', siteId, page, pageSize: PAGE_SIZE }
+      ? { awaitingMe: true, siteId, page, pageSize: PAGE_SIZE }
       : { status, siteId, page, pageSize: PAGE_SIZE },
   )
   // Count for the tab badge, independent of the current tab and filters.
-  const awaiting = useOrders({ awaitingApprover: user.id, status: 'PENDING', pageSize: 1 })
+  const awaiting = useOrders({ awaitingMe: true, pageSize: 1 })
 
   function update(changes: Record<string, string | undefined>) {
     const next = new URLSearchParams(params)

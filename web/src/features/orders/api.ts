@@ -5,7 +5,8 @@ import type { CreateOrderInput, OrderDetail, OrderListItem, OrderStatus, Page } 
 export interface OrderFilters {
   status?: OrderStatus
   siteId?: string
-  awaitingApprover?: string
+  /** Only orders whose current step is the logged-in user. */
+  awaitingMe?: boolean
   page?: number
   pageSize?: number
 }
