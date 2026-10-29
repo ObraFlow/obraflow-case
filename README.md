@@ -34,7 +34,9 @@ Tudo roda localmente, sem serviços pagos.
 docker compose up --build
 ```
 
-Abra **http://localhost:8080** e escolha um usuário. O Swagger fica em **http://localhost:8080/api/docs**.
+Quando tudo estiver no ar, o log mostra **"ObraFlow pronto!"** com os links. Abra **http://localhost:8080** e escolha um usuário. O Swagger fica em **http://localhost:8080/api/docs**.
+
+Outra porta: `WEB_PORT=3001 docker compose up --build` (os links do aviso acompanham).
 
 Sobem três containers:
 
