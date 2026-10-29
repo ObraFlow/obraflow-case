@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Obra (exibida como "Obra" na UI).
+model Project {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  approvalRanges ApprovalRange[]
+  purchaseOrders PurchaseOrder[]
+}
+
+/// Usuário que pode atuar como aprovador.
+model User {
+  id   String @id @default(uuid())
+  name String
+
+  email              String
+  role               String?
+  createdAt          DateTime            @default(now())
+  orderApprovalSteps OrderApprovalStep[]
+  approvalRangeSteps ApprovalRangeStep[]
+
+  @@unique([email])
+}
+
+model Supplier {
+  id   String @id @default(uuid())
+  name String
+
+  document  String?
+  createdAt DateTime @default(now())
+
+  purchaseOrders PurchaseOrder[]
+}
+
+model ApprovalRange {
+  id        String   @id @default(uuid())
+  projectId String
+  minValue  Decimal  @db.Decimal(14, 2)
+  maxValue  Decimal? @db.Decimal(14, 2)
+  createdAt DateTime @default(now())
+
+  project            Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  approvalRangeSteps ApprovalRangeStep[]
+
+  @@index([projectId])
+}
+
+model ApprovalRangeStep {
+  id       String @id @default(uuid())
+  rangeId  String
+  userId   String
+  position Int
+
+  createdAt DateTime @default(now())
+
+  range ApprovalRange @relation(fields: [rangeId], references: [id], onDelete: Cascade)
+  user  User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([rangeId, position])
+  @@index([rangeId])
+}
+
+enum OrderStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum StepDecision {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model PurchaseOrder {
+  id          String      @id @default(uuid())
+  projectId   String
+  supplierId  String
+  orderDate   DateTime    @db.Date
+  notes       String?
+  totalValue  Decimal     @db.Decimal(14, 2)
+  status      OrderStatus @default(PENDING)
+  /// Índice do aprovador atual na cadeia. Igual ao tamanho da cadeia quando concluída.
+  currentStep Int         @default(0)
+
+  createdAt DateTime            @default(now())
+  /// Optimistic locking
+  version   Int                 @default(0)
+  project   Project             @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  supplier  Supplier            @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  items     PurchaseOrderItem[]
+  steps     OrderApprovalStep[]
+
+  @@index([projectId])
+  @@index([status])
+}
+
+model PurchaseOrderItem {
+  id          String  @id @default(uuid())
+  orderId     String
+  description String
+  quantity    Decimal @db.Decimal(14, 3)
+  unit        String
+  unitPrice   Decimal @db.Decimal(14, 2)
+  lineTotal   Decimal @db.Decimal(14, 2)
+
+  order PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+/// Snapshot da cadeia de aprovação do pedido + trilha de auditoria das decisões.
+model OrderApprovalStep {
+  id        String       @id @default(uuid())
+  orderId   String
+  position  Int
+  userId    String
+  decision  StepDecision @default(PENDING)
+  reason    String?
+  decidedAt DateTime?
+
+  order PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user  User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([orderId, position])
+  @@index([orderId])
+}
