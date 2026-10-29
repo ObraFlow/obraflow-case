@@ -90,7 +90,7 @@ function StateMessage({ state }: { state: DecisionState }) {
               ? 'Você não faz parte da cadeia de aprovação deste pedido.'
               : state.myStep.done
                 ? `Você já aprovou na etapa ${state.myStep.position}.`
-                : `Você decide na etapa ${state.myStep.position}, depois das etapas anteriores.`}
+                : `Você decide na etapa ${state.myStep.position}.`}
           </AlertDescription>
         </Alert>
       )

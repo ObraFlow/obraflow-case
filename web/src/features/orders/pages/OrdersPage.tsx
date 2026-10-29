@@ -67,7 +67,6 @@ export function OrdersPage() {
     <>
       <PageHeader
         title="Pedidos de compra"
-        description="Acompanhe a alçada de cada pedido e decida os que estão com você."
         actions={
           <Button asChild>
             <Link to="/pedidos/novo">

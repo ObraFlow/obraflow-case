@@ -89,10 +89,7 @@ export function OrderDetailPage() {
           <Card>
             <CardHeader>
               <CardTitle>Itens</CardTitle>
-              <CardDescription>
-                {itemCount === 1 ? '1 item' : `${itemCount} itens`}. Totais calculados pelo
-                servidor.
-              </CardDescription>
+              <CardDescription>{itemCount === 1 ? '1 item' : `${itemCount} itens`}</CardDescription>
             </CardHeader>
             <CardContent>
               <ItemsTable items={data.items} total={data.total} />
@@ -100,8 +97,7 @@ export function OrderDetailPage() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Histórico</CardTitle>
-              <CardDescription>Registro de todas as ações sobre o pedido.</CardDescription>
+              <CardTitle>Histórico deste pedido</CardTitle>
             </CardHeader>
             <CardContent>
               <OrderHistory events={data.events} />
@@ -114,7 +110,6 @@ export function OrderDetailPage() {
           <Card>
             <CardHeader>
               <CardTitle>Cadeia de aprovação</CardTitle>
-              <CardDescription>Definida pela regra da obra na criação do pedido.</CardDescription>
             </CardHeader>
             <CardContent>
               <ApprovalChainTimeline steps={data.steps} />

@@ -136,7 +136,7 @@ function ChainPreview({
         )
       }
       return (
-        <div className="space-y-1.5 rounded-lg bg-muted/60 p-3">
+        <div className="rounded-lg bg-muted/60 p-3">
           <ApprovalChainInline
             steps={tier.approvers.map((approver) => ({
               position: approver.position,
@@ -144,12 +144,6 @@ function ChainPreview({
               approver: approver.user,
             }))}
           />
-          <p className="text-xs text-muted-foreground">
-            {tier.maxAmount
-              ? `Faixa até ${formatBRL(tier.maxAmount)}`
-              : 'Faixa sem limite superior'}{' '}
-            · aprovação em sequência
-          </p>
         </div>
       )
     }
