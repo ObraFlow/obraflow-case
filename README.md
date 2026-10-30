@@ -80,7 +80,7 @@ Backend:
 ./mvnw -f backend/pom.xml test
 ```
 
-O teste de persistência do backend usa Testcontainers para iniciar um PostgreSQL descartável e confirmar o rollback de pedidos; mantenha o Docker Engine em execução ao rodar a suíte completa.
+Os testes de integração do backend usam Testcontainers para iniciar PostgreSQL descartável. Eles verificam cadastro e consulta dos dados de referência, persistência e substituição das regras por obra, além das garantias transacionais de pedidos. Mantenha o Docker Engine em execução ao rodar a suíte completa.
 
 Frontend:
 
