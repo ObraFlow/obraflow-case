@@ -1,6 +1,6 @@
 # ObraFlow
 
-Sistema de pedidos de compra para obras, com aprovação sequencial definida por regras de alçada. Uma faixa de alçada é escolhida automaticamente com base no valor total do pedido, e é ela quem define a cadeia de aprovadores: o pedido só passa para o próximo aprovador depois da aprovação do anterior. Se um dos aprovadores rejeitar a compra, informando o motivo, o fluxo é encerrado e a rejeição fica no histórico.
+Sistema de aprovação de pedidos de compra para obras, com aprovação definida por regras de alçada. É possível aprovar ou rejeitar pedidos, criar pedidos e faixas de alçada, e acompanhar pedidos em andamento ou finalizados. 
 
 ![Lista de pedidos](docs/screenshots/02-pedidos.png)
 
@@ -24,8 +24,6 @@ Sistema de pedidos de compra para obras, com aprovação sequencial definida por
 
 ## Como rodar
 
-Tudo roda localmente, sem serviços pagos.
-
 ### Opção 1: tudo no Docker (recomendado)
 
 **Pré-requisito:** Docker.
@@ -34,19 +32,19 @@ Tudo roda localmente, sem serviços pagos.
 docker compose up --build
 ```
 
-Quando tudo estiver no ar, o log mostra **"ObraFlow pronto!"** com os links. Abra **http://localhost:8080** e escolha um usuário. O Swagger fica em **http://localhost:8080/api/docs**.
-
-Outra porta: `WEB_PORT=3001 docker compose up --build` (os links do aviso acompanham).
+Quando tudo estiver no ar, o log mostra **"ObraFlow pronto!"** com os links. Abra **http://localhost:8080** e escolha um usuário. O Swagger por padrão fica em **http://localhost:8080/api/docs**.
 
 Sobem três containers:
 
 | Container | O que faz |
 |---|---|
-| `db` | PostgreSQL 18 (também exposto na porta **5433** do host, para não conflitar com um Postgres local na 5432) |
-| `api` | Aplica as migrations, carrega os dados de demonstração **só se o banco estiver vazio** e inicia a API. Reiniciar não apaga o que foi criado. |
-| `web` | Front-end compilado, servido pelo nginx, que também encaminha `/api` para a API. Assim, como no proxy do Vite, o cookie de sessão é da mesma origem. |
+| `db` | PostgreSQL 18 (também acessível em **127.0.0.1:5433**, para não conflitar com um possível Postgres local na 5432) |
+| `api` | Aplica as migrations, carrega os dados de demonstração (se o banco estiver vazio) e inicia a API. |
+| `web` | Front-end compilado, servido pelo nginx, que também encaminha `/api` para a API. |
 
-Para voltar aos dados de demonstração: `docker compose down -v` (apaga o volume do banco) e `docker compose up` de novo.
+As portas do banco e do app ficam abertas só para este computador (`127.0.0.1`). Como o app não tem login e o usuário do banco é superusuário com senha conhecida, nenhum dos dois deve ficar acessível pela rede local ou por VPN.
+
+É possível restaurar os dados originais da demo com: `docker compose down -v` (apaga o volume do banco) e `docker compose up --build` de novo.
 
 ### Opção 2: desenvolvimento (com hot reload)
 
@@ -62,12 +60,13 @@ docker compose up -d db
 
 ```bash
 cd api
-cp .env.example .env
 pnpm install
 pnpm db:migrate
 pnpm db:seed
 pnpm start:dev
 ```
+
+> O api/.env está versionado de propósito por questões de demonstração. Numa aplicação real, deveria estar no `.gitignore`.
 
 **3. Front-end** (React + Vite, porta 5173), em outro terminal:
 
@@ -93,15 +92,14 @@ Abra **http://localhost:5173**. O Swagger fica em **http://localhost:3000/api/do
 
 ### Escolha do usuário
 
-Não há autenticação no desafio, então o usuário escolhe quem é. O servidor grava a escolha em um cookie de sessão, e ela pode ser trocada a qualquer momento pelo menu do cabeçalho. Ao trocar, o app volta para a lista de pedidos e descarta o que estava em cache: o próximo usuário não cai na página que o anterior deixou aberta.
-
+Como não há autenticação no desafio, basta escolher o usuário desejado. O servidor grava a escolha em um cookie de sessão, e o usuário pode ser trocado a qualquer momento pelo menu do cabeçalho.
 ![Escolha do usuário](docs/screenshots/01-selecao-usuario.png)
 
 ### 1. Aprovação: lista e detalhes
 
-Cada usuário vê **só os pedidos de que participa**: os que criou e os que tem na sua cadeia de aprovação (veja [acesso aos pedidos](#acesso-aos-pedidos)). A lista abre na aba **"Aguardando minha aprovação"**, com contador; a aba "Todos os pedidos" tem filtros de obra e situação, e as duas podem ser ordenadas por data do pedido, obra ou fornecedor (tudo guardado na URL). Cada pedido mostra a alçada atual: aprovadores concluídos (✓), o atual (destacado) e os próximos. Aprovar e Rejeitar só aparecem para quem está na vez.
+Cada usuário vê **só os pedidos de que participa**: os que criou e os que tem na sua cadeia de aprovação (veja [acesso aos pedidos](#acesso-aos-pedidos)). As listas podem ser ordenadas por data do pedido, obra ou fornecedor. Cada pedido mostra a alçada atual e os aprovadores. Botões Aprovar e Rejeitar aparecem se for a vez do usuário.
 
-Nos detalhes: itens, cadeia de aprovação com data de cada decisão e motivo da rejeição, e o histórico completo.
+Nos detalhes há os itens, a cadeia de aprovação e o histórico completo.
 
 ![Detalhes do pedido](docs/screenshots/03-detalhe-pedido.png)
 
@@ -112,11 +110,11 @@ Nos detalhes: itens, cadeia de aprovação com data de cada decisão e motivo da
 
 ### 2. Cadastro de pedido
 
-Começa com um item em branco; itens podem ser adicionados, editados e removidos. O total de cada item e o total do pedido são calculados na hora, com o mesmo arredondamento do servidor. Números seguem o padrão brasileiro: vírgula para decimais e ponto para milhares (`1.500` é mil e quinhentos, `12,5` é doze e meio); um ponto fora desse padrão, como `12.5`, é recusado com uma mensagem em vez de ser adivinhado. O resumo mostra **qual cadeia de aprovação vai valer** para o total digitado, e o botão "Cadastrar pedido" só habilita quando tudo está válido.
+Começa com um item em branco; itens podem ser adicionados, editados e removidos. O total de cada item e o total do pedido são calculados na hora, com o mesmo arredondamento do servidor. Números seguem o padrão brasileiro: vírgula para decimais e ponto para milhares. Um ponto fora desse padrão, como `12.5`, é recusado em vez de ser adivinhado. O resumo mostra qual cadeia de aprovação vai valer para o total digitado, e o botão "Cadastrar pedido" habilita quando tudo está válido.
 
 ![Cadastro de pedido](docs/screenshots/06-novo-pedido.png)
 
-Os erros aparecem no campo e no item correspondentes. Quando nenhuma faixa da obra cobre o valor, o envio é bloqueado com uma mensagem clara (veja [valores sem regra](#valores-sem-regra-aplicável)).
+Os erros aparecem no campo e no item correspondentes. Quando nenhuma faixa da obra cobre o valor, o envio é bloqueado (veja [valores sem regra](#valores-sem-regra-aplicável)).
 
 ![Validações e valor sem regra](docs/screenshots/07-validacoes.png)
 
@@ -142,7 +140,7 @@ Toda lista tem loading (skeleton), empty state amigável e estado de erro com "T
 
 ## Dados de demonstração
 
-O seed (`api/prisma/seed.ts`) cria tudo **pelos mesmos services da API**, com os payloads validados pelos mesmos DTOs da camada HTTP. Totais, cadeias e histórico são produzidos pelas regras reais: o seed não consegue inserir um dado que a API recusaria. Os pedidos chegam ao estado final por aprovações e rejeições de verdade, na ordem da cadeia.
+O seed (`api/prisma/seed.ts`) cria tudo pelos mesmos services da API, com os payloads validados pelos mesmos DTOs da camada HTTP.
 
 | Obra | Faixas de alçada |
 |---|---|
@@ -169,13 +167,12 @@ São 6 usuários e 8 pedidos: 4 pendentes (alguns no meio da cadeia), 2 aprovado
 | Camada | Escolha | Por quê |
 |---|---|---|
 | API | **NestJS** (TypeScript) | Módulos, injeção de dependência e pipes de validação dão uma estrutura clara para regras de negócio; mesma linguagem do front. |
-| Persistência | **PostgreSQL** + **Prisma** | O domínio é relacional e precisa de transações, `Decimal` exato, constraints e índices únicos. Prisma dá tipos gerados e migrations versionadas; SQL manual onde o Prisma não alcança (CHECKs, `NULLS NOT DISTINCT`). |
+| Persistência | **PostgreSQL** + **Prisma** | O domínio é relacional e precisa de transações, `Decimal` exato, constraints e índices únicos. Prisma dá tipos gerados e migrations versionadas. |
 | Validação (API) | class-validator + `ValidationPipe` global | Todo payload é validado e campos desconhecidos são recusados (`forbidNonWhitelisted`). |
-| Front-end | **React** + **Vite** + TypeScript | Stack conhecida, build rápido; o proxy do Vite deixa API e front na mesma origem. |
+| Front-end | **React** + **Vite** + TypeScript | Stack conhecida, build rápido; o proxy do Vite (dev) deixa API e front na mesma origem. |
 | Dados no front | **TanStack Query** | Loading, erro, retry e cache por query sem código manual; invalidação depois de cada decisão. É o que garante os estados exigidos em todas as listas. |
 | Formulários | **React Hook Form** + **Zod** | `useFieldArray` para N itens; erros por campo e por item; `isValid` controla o botão de envio. |
-| UI | **Tailwind** + **shadcn/ui** (Radix) | Componentes acessíveis e consistentes, com o código no repositório (pode ser lido e alterado). Logo e paleta seguem o site do ObraFlow. |
-| Dinheiro no front | **decimal.js** | A mesma biblioteca e o mesmo arredondamento do Prisma: o total na tela é o total salvo. |
+| UI | **Tailwind** + **shadcn/ui** (Radix) | Componentes acessíveis e consistentes. Logo e paleta seguem o site do ObraFlow. |
 | Testes | **Vitest** + Testing Library | Mesma ferramenta nos dois projetos. |
 
 **Estrutura:** dois projetos independentes, sem monorepo, para manter a configuração simples.
@@ -213,13 +210,13 @@ erDiagram
   PurchaseOrder ||--|{ PurchaseOrderEvent : "histórico"
 ```
 
-- **Uma faixa guarda só o limite superior** (`maxAmount`, inclusivo). `null` significa "sem limite superior". O limite inferior é **derivado**: é o limite da faixa anterior. Assim, **lacunas e sobreposições são impossíveis por construção**; não há dois campos que possam ficar inconsistentes.
+- **Uma faixa guarda só o limite superior** (`maxAmount`, inclusivo). `null` significa "sem limite superior". O limite inferior é derivado a partir do limite da faixa anterior. Assim, lacunas e sobreposições são impossíveis por construção.
 - No banco: `UNIQUE (siteId, maxAmount) NULLS NOT DISTINCT` (no máximo uma faixa por limite, e no máximo uma "sem limite" por obra) e `CHECK (maxAmount > 0)`.
-- **Aprovadores** ficam em `ApprovalTierApprover` com `position` (1, 2, 3...). `PRIMARY KEY (tierId, position)` e `UNIQUE (tierId, userId)`: a mesma pessoa não aparece duas vezes na faixa. Reordenar é enviar a lista final: o `PUT` substitui os aprovadores dentro de uma transação.
+- **Aprovadores** ficam em `ApprovalTierApprover` com `position` (1, 2, 3...). `PRIMARY KEY (tierId, position)` e `UNIQUE (tierId, userId)`: a mesma pessoa não aparece duas vezes na faixa.
 
 #### Cálculo
 
-1. O total é sempre calculado pela API: cada item é `quantidade × preço unitário` arredondado para centavos (*half up*), e o total do pedido é a soma dos itens já arredondados. Tudo com `Decimal`, nunca ponto flutuante. O cliente não pode enviar totais (o campo é recusado).
+1. O total é sempre calculado pela API: cada item é `quantidade × preço unitário` arredondado para centavos (half up), e o total do pedido é a soma dos itens já arredondados. Tudo com `Decimal`.
 2. A faixa aplicável é a de **menor limite que cobre o total**, ou a faixa sem limite. Uma única consulta:
 
    ```ts
@@ -233,7 +230,7 @@ erDiagram
 
 #### Persistência
 
-Na criação, **na mesma transação** que salva o pedido, a cadeia da faixa é **copiada** para `ApprovalStep` (etapa 1 `CURRENT`, demais `WAITING`). O pedido guarda `currentStep` e um evento `CREATED` com a faixa aplicada. Consequência: **editar ou apagar uma faixa não altera pedidos existentes**; cada pedido guarda a regra do momento em que foi criado.
+Na mesma transação que salva um novo pedido, a cadeia da faixa é copiada para `ApprovalStep`. O pedido guarda `currentStep` e um evento `CREATED` com a faixa aplicada. Assim, editar ou apagar uma faixa não altera pedidos existentes.
 
 ```mermaid
 stateDiagram-v2
@@ -244,13 +241,13 @@ stateDiagram-v2
   PENDING --> REJECTED: rejeição com motivo (etapas restantes = CANCELLED)
 ```
 
-- **Aprovação em sequência:** só o aprovador da etapa `CURRENT` pode decidir (os outros recebem 403). Aprovar marca a etapa como `APPROVED` e passa a vez para a seguinte; a última aprovação conclui o pedido.
-- **Rejeição:** exige motivo (validado no front, no DTO e por um `CHECK` no banco), marca a etapa como `REJECTED`, cancela as restantes e encerra o fluxo.
-- **Histórico preservado:** `PurchaseOrderEvent` é *append-only* (a API nunca altera nem apaga eventos), com quem, quando, motivo e metadados. A ordem usa uma coluna `sequence` (eventos da mesma transação podem ter o mesmo `createdAt`).
+- Só o aprovador da etapa `CURRENT` pode decidir (os outros recebem 403). Aprovar marca a etapa como `APPROVED` e passa a vez para a seguinte; a última aprovação conclui o pedido.
+- Rejeição exige motivo (validado no front, no DTO e por um `CHECK` no banco), marca a etapa como `REJECTED`, cancela as restantes e encerra o fluxo.
+- `PurchaseOrderEvent` é *append-only* (a API nunca altera nem apaga eventos), com quem, quando, motivo e metadados. A ordem usa uma coluna `sequence` (já que eventos da mesma transação podem ter o mesmo `createdAt`).
 
 #### Valores sem regra aplicável
 
-Se nenhuma faixa da obra cobre o total (obra sem faixas, ou valor acima do maior limite sem uma faixa "sem limite"):
+Se nenhuma faixa da obra cobre o total (obra sem faixas, ou valor acima do maior limite):
 
 - **no front**, o resumo mostra "Nenhuma regra cobre este valor" com link para as regras, e o botão de envio fica bloqueado;
 - **na API**, a criação responde **422** com a mesma explicação, e nada é salvo;
@@ -259,12 +256,12 @@ Se nenhuma faixa da obra cobre o total (obra sem faixas, ou valor acima do maior
 ### Como o front-end se comunica com o back-end
 
 - **REST + JSON** sob `/api`, documentado com **Swagger** em `/api/docs` (gerado dos DTOs e comentários).
-- Em desenvolvimento, o **proxy do Vite** encaminha `/api` para a porta 3000. Para o navegador, tudo é **mesma origem**: o cookie de sessão funciona sem configurar CORS.
-- **Sessão:** `POST /api/session` com o id do usuário grava um cookie **assinado** (`cookie-parser` + `COOKIE_SECRET`), `httpOnly` e `SameSite=Lax`. Dura 400 dias (o máximo que os navegadores aceitam) e é renovado a cada visita. Um cookie alterado à mão é ignorado.
+- Em desenvolvimento, o **proxy do Vite** encaminha `/api` para a porta 3000. Assim, o cookie de sessão funciona sem configurar CORS.
+- **Sessão:** `POST /api/session` com o id do usuário grava um cookie **assinado** (`cookie-parser` + `COOKIE_SECRET`), `httpOnly` e `SameSite=Lax`.
 - **Toda rota de pedidos exige sessão** e responde só com os pedidos do usuário logado (regra abaixo). O front não envia "quem sou eu" em parâmetros: o servidor lê do cookie. **Toda escrita exige sessão** também (faixas, obras, usuários, fornecedores); só as leituras de cadastros e regras são abertas, porque a tela de escolha de usuário precisa delas.
 - **Dinheiro e quantidades trafegam como texto decimal**, para não perder precisão em JSON. Valores em dinheiro saem sempre com duas casas (`"10000.00"`, `"12.50"`); quantidades saem na forma natural (`"12.5"`).
 - **Erros** seguem um formato único (`statusCode`, `message`), com mensagens em português. Em erros de validação (400), `message` é uma lista com o campo e o problema (`"items.0.quantity: use um número decimal..."`). O cliente HTTP do front transforma falhas em `ApiError` com uma mensagem pronta para a tela.
-- **TanStack Query** cuida de cache, loading e erro. Só repete automaticamente erros de rede e 5xx (um 404 não muda com retry). Depois de uma decisão, invalida a lista e o detalhe; um 401 em qualquer chamada volta para a escolha de usuário.
+- **TanStack Query** cuida de cache, loading e erro. Só repete automaticamente erros de rede e 5xx (um 404 não muda com retry). Depois de uma decisão, invalida a lista e o detalhe.
 
 | Método | Rota | Uso |
 |---|---|---|
@@ -335,13 +332,13 @@ POST /api/construction-sites/:id/approval-tiers     (PUT /api/approval-tiers/:id
 
 #### Acesso aos pedidos
 
-Um pedido é visível para **quem o criou e para os aprovadores da sua cadeia**. A regra fica em uma função só (`visibleTo(userId)` em `purchase-orders.service.ts`), aplicada no `WHERE` de **toda** leitura: lista, detalhes e a busca do pedido dentro da transação de aprovar/rejeitar.
+Um pedido é visível para **quem o criou e para os aprovadores da sua cadeia**. A regra fica em uma função só (`visibleTo(userId)` em `purchase-orders.service.ts`), aplicada no `WHERE` de toda leitura: lista, detalhes e a busca do pedido dentro da transação de aprovar/rejeitar.
 
 - Quem não participa recebe **404**, igual a um pedido inexistente: a API não confirma que o pedido existe.
 - Como o filtro está na própria consulta, não há caminho que carregue o pedido e "esqueça" de checar a permissão depois.
 - Quem participa mas não está na vez continua recebendo 403 ao tentar decidir.
 
-**Por que não Row Level Security (RLS) do PostgreSQL agora:** com Prisma, RLS exige abrir uma transação por requisição para definir o usuário (`set_config`), um papel de banco sem privilégio de superusuário (o superusuário ignora RLS) e cuidado extra com o seed e com as transações que já existem. Para um único ponto de acesso (esta API), o filtro centralizado dá a mesma garantia com bem menos peças. RLS entra como segunda camada em produção (veja abaixo).
+**Por que não Row Level Security (RLS) do PostgreSQL agora:** com Prisma, RLS exige abrir uma transação por requisição para definir o usuário (`set_config`), um papel de banco sem privilégio de superusuário e cuidado extra com o seed e com as transações que já existem. Para um único ponto de acesso (esta API), o filtro centralizado dá a mesma garantia com bem menos peças. RLS entra como segunda camada em produção (veja abaixo).
 
 ### Consistência e integridade dos dados
 
@@ -349,7 +346,7 @@ Um pedido é visível para **quem o criou e para os aprovadores da sua cadeia**.
 
 | Risco | Proteção |
 |---|---|
-| Pedido salvo pela metade | Cabeçalho, itens, cadeia e evento são gravados em **uma transação**. Faixa resolvida dentro da mesma transação. |
+| Pedido salvo pela metade | Cabeçalho, itens, cadeia e evento são gravados em uma transação. Faixa resolvida dentro da mesma transação. |
 | Duas decisões ao mesmo tempo | **Lock otimista**: a decisão é um `UPDATE ... WHERE id = ? AND version = ? AND status = 'PENDING'` que incrementa `version`. O `UPDATE` trava a linha; a segunda decisão espera, reavalia o `WHERE`, atualiza 0 linhas e recebe 409. Testado com aprovar e rejeitar enviados ao mesmo tempo: um 200, um 409. |
 | Decisão tomada em tela desatualizada | O cliente envia a `version` que viu; se o pedido mudou, 409 e a tela recarrega. |
 | Clique duplo / retry de rede na criação | **`Idempotency-Key`** por formulário: único por solicitante (`UNIQUE (requesterId, idempotencyKey)`). A repetição devolve o pedido já criado (`Idempotent-Replayed: true`); a mesma chave com outro conteúdo (comparado por hash) recebe 422. |
@@ -362,14 +359,14 @@ Um pedido é visível para **quem o criou e para os aprovadores da sua cadeia**.
 
 ### Decisões de produto
 
-- **Quem solicita pode aprovar o próprio pedido** se estiver na cadeia. Bloquear isso exigiria impedir também a configuração de faixas em que o solicitante aparece; fica como mudança de produção (segregação de funções).
+- **Quem solicita pode aprovar o próprio pedido** se estiver na cadeia. Bloquear isso exigiria impedir também a configuração de faixas em que o solicitante aparece; fica como possível mudança de produção (segregação de funções).
 - **Qualquer usuário com sessão pode editar as regras.** Não há papéis no desafio; em produção, só um perfil administrativo. Sem sessão, a API recusa (401).
 - **Pedido de valor zero é recusado.** Um item pode ter preço zero (amostra grátis), mas um pedido que soma R$ 0,00 não tem o que aprovar (422 na API, aviso no formulário).
 - **Data do pedido entre 2000 e um ano depois de hoje.** Datas fora disso quase sempre são erro de digitação (`0226`, `2926`).
 - **Pedidos não são editáveis depois de criados.** A cadeia foi definida para aquele total; para corrigir, rejeita-se e cria-se outro.
 - **Alterações de regra valem só para novos pedidos** (a tela avisa isso).
 - **Aprovar pede confirmação**; rejeitar abre um diálogo com motivo obrigatório.
-- **Obras, fornecedores e usuários não têm telas de cadastro** (o enunciado não exige). Existem endpoints `POST` na API e os dados vêm do seed.
+- **Obras, fornecedores e usuários não têm telas de cadastro**. Existem endpoints `POST` na API e os dados vêm do seed.
 
 ### Testes
 
@@ -393,5 +390,5 @@ pnpm --dir web test
 - **Delegação e prazos:** substituto em férias, escalonamento quando uma etapa fica parada.
 - **Testes e2e do front** (Playwright) e tudo rodando em CI: lint, build, migrations, testes unitários e os testes ponta a ponta da API.
 - **Observabilidade:** logs estruturados, métricas e tracing; alertas no health.
-- **Infraestrutura:** imagem da API em dois estágios (sem dependências de desenvolvimento, migrations como passo separado do deploy em vez de no início do container), HTTPS com `NODE_ENV=production` (cookie `Secure`), segredos fora do compose, backups do banco, rate limiting.
+- **Infraestrutura:** imagem da API em dois estágios (sem dependências de desenvolvimento, migrations como passo separado do deploy em vez de no início do container), HTTPS com `NODE_ENV=production` (cookie `Secure`), segredos fora do compose e fora do repositório (o `api/.env` sai do versionamento e entra no `.gitignore`), backups do banco, rate limiting.
 - **Idempotência com expiração** das chaves e respostas tipadas no OpenAPI, para gerar o cliente do front automaticamente.
