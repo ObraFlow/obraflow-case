@@ -4,6 +4,7 @@ import { FiltrosPedidos } from "@/components/aprovacoes/filtros-pedidos";
 import { Paginacao } from "@/components/aprovacoes/paginacao";
 import { TabelaPedidos } from "@/components/aprovacoes/tabela-pedidos";
 import type { FiltrosDaLista } from "@/components/aprovacoes/url-da-lista";
+import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
 import { ehSuaVez } from "@/lib/cadeia";
 import type { PedidoResumo } from "@/lib/dto";
 import { filtroPedidosSchema, paginacaoSchema } from "@/lib/schemas/pedido";
@@ -75,12 +76,23 @@ export default async function AprovacoesPage({
   // Sem usuário, a aba "minhas" não tem como existir: a tabela mostra o aviso.
   const semUsuarioNaAbaMinhas = filtro === "minhas" && usuarioId === null;
 
+  // O número da tela: quantos aguardam a decisão de quem está agindo; sem usuário, o total.
+  const destaque =
+    usuarioId === null
+      ? { valor: String(pagina.total), rotulo: pagina.total === 1 ? "pedido" : "pedidos" }
+      : {
+          valor: String(minhas.length),
+          rotulo: minhas.length === 1 ? "aguarda você" : "aguardam você",
+          suaVez: minhas.length > 0,
+        };
+
   return (
     <>
-      <div>
-        <h1 className="text-2xl font-bold tracking-[-0.015em]">Aprovações</h1>
-        <p className="text-muted-foreground">Abra um pedido para ver itens e histórico.</p>
-      </div>
+      <CabecalhoPagina
+        titulo="Aprovações"
+        descricao="Abra um pedido para ver itens e histórico."
+        destaque={destaque}
+      />
 
       <AbasFiltro filtro={filtro} pendentes={minhas.length} />
 

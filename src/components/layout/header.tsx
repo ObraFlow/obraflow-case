@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { AgindoComo, AgindoComoSkeleton, AvisoSemUsuario } from "@/components/layout/agindo-como";
 import { ContadorPendencias } from "@/components/layout/contador-pendencias";
 import { LimiteDeErro } from "@/components/layout/limite-de-erro";
+import { Marca } from "@/components/layout/marca";
 import { ListaNavegacao, Navegacao } from "@/components/layout/navegacao";
 
 /**
@@ -19,9 +20,10 @@ export function Header() {
       <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-x-4 px-4 sm:gap-x-7 sm:px-8">
         <Link
           href="/aprovacoes"
-          className="flex h-14 items-center text-base font-bold tracking-[-0.015em] text-white focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
+          aria-label="ObraFlow, ir para as aprovações"
+          className="flex h-14 items-center text-white focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
         >
-          ObraFlow
+          <Marca />
         </Link>
 
         <div className="order-last -mx-4 basis-[calc(100%+2rem)] overflow-x-auto border-t border-white/15 sm:-mx-8 sm:basis-[calc(100%+4rem)] lg:order-none lg:mx-0 lg:basis-auto lg:border-t-0">

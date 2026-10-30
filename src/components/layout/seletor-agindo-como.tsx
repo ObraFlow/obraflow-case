@@ -32,16 +32,13 @@ export function SeletorAgindoComo({
 
   return (
     <div className="flex items-center gap-2">
-      {/* No celular o rótulo encurta para "Como", para o seletor caber ao lado da marca;
-          o nome completo continua para o leitor de tela. */}
+      {/* No celular o rótulo fica só para o leitor de tela: marca, seletor e sino dividem
+          os 343px, e o seletor já diz o que é pelo nome escolhido. */}
       <label
         htmlFor="agindo-como"
-        className="text-sm whitespace-nowrap text-white/75 max-sm:text-xs"
+        className="text-sm whitespace-nowrap text-white/75 max-sm:sr-only"
       >
-        <span className="sm:hidden" aria-hidden="true">
-          Como
-        </span>
-        <span className="max-sm:sr-only">Agindo como</span>
+        Agindo como
       </label>
       <select
         key={`${usuarioAtualId ?? "nenhum"}-${tentativasComErro}`}
@@ -50,7 +47,7 @@ export function SeletorAgindoComo({
         disabled={isPending}
         aria-busy={isPending}
         onChange={(evento) => execute({ usuarioId: Number(evento.target.value) })}
-        className="h-10 max-w-40 rounded-sm border border-white/30 bg-card pr-7 pl-2 text-sm text-foreground transition-opacity focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-60 sm:h-8 sm:max-w-48"
+        className="h-10 max-w-36 rounded-sm border border-white/30 bg-card pr-7 pl-2 text-sm text-foreground transition-opacity focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-60 sm:h-8 sm:max-w-48"
       >
         <option value="" disabled>
           Selecione quem você é

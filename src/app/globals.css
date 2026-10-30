@@ -119,6 +119,11 @@
   html {
     @apply font-sans;
   }
+  /* Seleção de texto no fundo claro da sinalização: é o usuário agindo. */
+  ::selection {
+    background-color: var(--sinalizacao-fundo);
+    color: var(--foreground);
+  }
 }
 
 /* Movimento: só em resposta a uma ação, para mostrar o que mudou (docs/design.md > Movimento). */

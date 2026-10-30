@@ -10,7 +10,7 @@ export default function Loading() {
       aria-label="Carregando novo pedido"
     >
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold tracking-[-0.015em]">Novo pedido</h1>
+        <h1 className="text-2xl font-bold tracking-[-0.015em] font-stretch-[112%]">Novo pedido</h1>
         <Skeleton className="h-4 w-[520px] max-w-full rounded-sm" />
       </div>
       <div className="flex flex-col gap-6 rounded-sm border bg-card px-6 py-5">

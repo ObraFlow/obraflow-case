@@ -9,10 +9,16 @@ export default function Loading() {
       aria-busy="true"
       aria-label="Carregando regras de alçada"
     >
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold tracking-[-0.015em]">Regras de alçada</h1>
+          <h1 className="text-2xl font-bold tracking-[-0.015em] font-stretch-[112%]">
+            Regras de alçada
+          </h1>
           <Skeleton className="h-4 w-80 rounded-sm" />
+        </div>
+        <div className="flex flex-col gap-1 sm:items-end">
+          <Skeleton className="h-6 w-8 rounded-sm" />
+          <Skeleton className="h-3 w-32 rounded-sm" />
         </div>
         <div className="flex gap-3">
           <Skeleton className="h-[38px] w-64 rounded-sm" />

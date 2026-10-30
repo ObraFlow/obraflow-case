@@ -9,9 +9,15 @@ export default function Loading() {
       aria-busy="true"
       aria-label="Carregando aprovações"
     >
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold tracking-[-0.015em]">Aprovações</h1>
-        <Skeleton className="h-4 w-64 rounded-sm" />
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-bold tracking-[-0.015em] font-stretch-[112%]">Aprovações</h1>
+          <Skeleton className="h-4 w-64 rounded-sm" />
+        </div>
+        <div className="flex flex-col gap-1 sm:items-end">
+          <Skeleton className="h-6 w-10 rounded-sm" />
+          <Skeleton className="h-3 w-24 rounded-sm" />
+        </div>
       </div>
       <div className="flex gap-1 border-b border-border">
         <Skeleton className="mb-2 h-6 w-32 rounded-sm" />

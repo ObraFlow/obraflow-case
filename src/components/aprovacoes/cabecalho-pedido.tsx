@@ -25,7 +25,7 @@ export function CabecalhoPedido({ pedido }: { pedido: PedidoDetalhe }) {
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-[-0.015em] tabular-nums">
+            <h1 className="text-2xl font-bold tracking-[-0.015em] font-stretch-[112%] tabular-nums">
               Pedido #{pedido.id}
             </h1>
             <BadgeSituacao status={pedido.status} />

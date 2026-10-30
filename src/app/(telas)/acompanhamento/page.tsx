@@ -3,6 +3,8 @@ import { connection } from "next/server";
 import { FilaAprovadores } from "@/components/acompanhamento/fila-aprovadores";
 import { ResumoPorObra } from "@/components/acompanhamento/resumo-por-obra";
 import { TemposDecisao } from "@/components/acompanhamento/tempos-decisao";
+import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
+import { formatarCentavos } from "@/lib/money";
 import { obterAcompanhamento } from "@/server/services/acompanhamento";
 import { usuarioAtualId } from "@/server/usuario-atual";
 
@@ -23,12 +25,28 @@ export default async function AcompanhamentoPage() {
       obra.pendentes.quantidade + obra.aprovados.quantidade + obra.rejeitados.quantidade === 0,
   );
 
+  const paradoCents = dados.fila.reduce((soma, fila) => soma + fila.totalCents, 0);
+  const paradoPedidos = dados.fila.reduce((soma, fila) => soma + fila.quantidade, 0);
+
   return (
     <>
-      <div>
-        <h1 className="text-2xl font-bold tracking-[-0.015em]">Acompanhamento</h1>
-        <p className="text-muted-foreground">Onde o dinheiro está parado e com quem.</p>
-      </div>
+      <CabecalhoPagina
+        titulo="Acompanhamento"
+        descricao="Onde o dinheiro está parado e com quem."
+        destaque={
+          semPedidos
+            ? undefined
+            : {
+                valor: formatarCentavos(paradoCents),
+                rotulo:
+                  paradoPedidos === 0
+                    ? "nada parado"
+                    : paradoPedidos === 1
+                      ? "parado em 1 pedido"
+                      : `parados em ${paradoPedidos} pedidos`,
+              }
+        }
+      />
 
       {semPedidos ? (
         <div className="flex flex-col items-start gap-2 rounded-sm border bg-card p-6">

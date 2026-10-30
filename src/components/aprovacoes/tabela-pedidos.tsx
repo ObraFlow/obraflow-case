@@ -9,6 +9,7 @@ import { aguardandoDesde, ehSuaVez, niveisDoPedido } from "@/lib/cadeia";
 import { descreverIdade, formatarData } from "@/lib/datas";
 import type { PedidoResumo } from "@/lib/dto";
 import { formatarCentavos } from "@/lib/money";
+import { cn } from "@/lib/utils";
 
 /** Etiqueta ao lado do número do pedido (docs/design.md > Etiqueta "Sua vez"). */
 function EtiquetaSuaVez() {
@@ -212,7 +213,11 @@ export function TabelaPedidos({
                   elemento="tr"
                   suaVez={suaVez}
                   usuarioAtualId={usuarioAtualId}
-                  className="relative border-b border-linha last:border-b-0 hover:bg-muted"
+                  // Hover só nas linhas neutras: na linha "sua vez" ele apagaria o amarelo.
+                  className={cn(
+                    "relative border-b border-linha last:border-b-0",
+                    !suaVez && "hover:bg-muted",
+                  )}
                 >
                   {/* py-3: linha de 46px (docs/design.md > Forma), igual ao skeleton. */}
                   <td className="px-3 py-3 whitespace-nowrap">

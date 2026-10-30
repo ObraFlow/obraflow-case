@@ -17,7 +17,7 @@ export default async function NovoPedidoPage() {
   return (
     <>
       <div>
-        <h1 className="text-2xl font-bold tracking-[-0.015em]">Novo pedido</h1>
+        <h1 className="text-2xl font-bold tracking-[-0.015em] font-stretch-[112%]">Novo pedido</h1>
         <p className="text-muted-foreground">
           O total dos itens define a faixa de alçada e quem vai aprovar. Você verá a cadeia antes de
           cadastrar.
