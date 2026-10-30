@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Pedidos — ObraFlow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#f4f4f5;--surface:#fff;--surface2:#f9fafb;
+  --border:#e4e4e7;--border2:#f4f4f5;
+  --text:#18181b;--text2:#3f3f46;--muted:#71717a;
+  --sb:#18181b;--sb-border:#27272a;--sb-txt:#a1a1aa;--sb-active:#27272a;--sb-atxt:#fafafa;
+  --accent:#d97706;--accent-h:#b45309;--accent-lt:#fef3c7;--accent-bd:#fde68a;--accent-dk:#92400e;
+  --green:#16a34a;--green-lt:#dcfce7;--green-bd:#86efac;--green-dk:#166534;
+  --err:#dc2626;--err-lt:#fee2e2;--err-bd:#fca5a5;--err-dk:#991b1b;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#09090b;--surface:#18181b;--surface2:#27272a;
+    --border:#27272a;--border2:#3f3f46;
+    --text:#fafafa;--text2:#d4d4d8;--muted:#a1a1aa;
+    --sb:#09090b;--sb-border:#18181b;--sb-txt:#71717a;--sb-active:#18181b;--sb-atxt:#fafafa;
+    --accent-lt:#2d1a00;--accent-bd:#78350f;--accent-dk:#fbbf24;
+    --green-lt:#052e16;--green-bd:#166534;--green-dk:#4ade80;
+    --err-lt:#3b0d0d;--err-bd:#991b1b;--err-dk:#f87171;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.app{display:flex;min-height:100vh}
+.sb{width:240px;flex-shrink:0;background:var(--sb);display:flex;flex-direction:column}
+.sb-logo{padding:18px 16px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--sb-border)}
+.logo-mark{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;flex-shrink:0}
+.logo-txt{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.2px}
+.sb-nav{padding:10px 8px;flex:1}
+.nav-a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--sb-txt);font-size:13.5px;font-weight:500;cursor:pointer;text-decoration:none;margin-bottom:2px}
+.nav-a:hover:not(.active){background:#232326;color:#d4d4d8}
+.nav-a.active{background:var(--sb-active);color:var(--sb-atxt)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+.pg-title{font-size:15px;font-weight:600;color:var(--text)}
+.viewing{display:flex;align-items:center;gap:8px}
+.viewing-lbl{font-size:12.5px;color:var(--muted)}
+.user-sel{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:13px;font-weight:500;color:var(--text);cursor:pointer}
+.av{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+/* Tabs */
+.tabs-bar{display:flex;align-items:center;gap:2px;padding:0 24px;background:var(--surface);border-bottom:1px solid var(--border);height:44px;flex-shrink:0}
+.tab{display:flex;align-items:center;gap:6px;padding:0 14px;height:44px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;text-decoration:none}
+.tab:hover:not(.active){color:var(--text2)}
+.tab.active{color:var(--text);border-bottom-color:var(--accent)}
+.tab-cnt{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;font-size:11px;font-weight:600;background:var(--accent-lt);color:var(--accent-dk)}
+.tab.active .tab-cnt{background:var(--accent);color:#fff}
+/* Filters */
+.filters{display:flex;align-items:center;gap:10px;padding:14px 24px;flex-shrink:0}
+.filter-search{flex:1;max-width:320px;position:relative}
+.filter-search input{width:100%;height:36px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-family:inherit;font-size:13.5px;padding:0 10px 0 34px;outline:none}
+.filter-search input:focus{border-color:var(--accent)}
+.filter-search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.filter-sel{height:36px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-family:inherit;font-size:13.5px;padding:0 10px;outline:none;cursor:pointer}
+/* Table */
+.tbl-wrap{flex:1;overflow:auto;padding:0 24px 24px}
+table{width:100%;border-collapse:collapse;margin-top:0}
+thead th{padding:10px 12px;text-align:left;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;background:var(--surface);border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:1}
+th.num{text-align:right}
+tbody tr{background:var(--surface);border-bottom:1px solid var(--border2);cursor:pointer;transition:background .1s}
+tbody tr:hover{background:var(--surface2)}
+tbody td{padding:12px 12px;font-size:13.5px;vertical-align:middle}
+td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+.ped-id{font-weight:600;color:var(--text);font-size:13px}
+.ped-date{font-size:12px;color:var(--muted);margin-top:1px}
+.obra-nm{font-weight:500;font-size:13px}
+.forn-nm{font-size:13px;color:var(--text2)}
+/* Status badges */
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:5px;font-size:12px;font-weight:600;white-space:nowrap}
+.badge-pend{background:var(--accent-lt);color:var(--accent-dk)}
+.badge-aprv{background:var(--green-lt);color:var(--green-dk)}
+.badge-rej{background:var(--err-lt);color:var(--err-dk)}
+/* Stepper */
+.stepper{display:flex;align-items:center;gap:0}
+.st-av{width:24px;height:24px;border-radius:50%;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:default}
+.st-av.done{background:var(--green-lt);border:1.5px solid var(--green-bd);color:var(--green-dk)}
+.st-av.curr{background:var(--accent-lt);border:1.5px solid var(--accent-bd);color:var(--accent-dk)}
+.st-av.pend{background:var(--surface2);border:1.5px solid var(--border);color:var(--muted)}
+.st-av.rej{background:var(--err-lt);border:1.5px solid var(--err-bd);color:var(--err-dk)}
+.st-line{height:1.5px;width:14px;flex-shrink:0}
+.st-line.done{background:var(--green-bd)}
+.st-line.pend{background:var(--border)}
+/* Action buttons */
+.act-col{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-aprv{height:30px;padding:0 12px;border-radius:6px;border:1.5px solid var(--green);color:var(--green-dk);background:transparent;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;transition:background .12s}
+.btn-aprv:hover{background:var(--green-lt)}
+.btn-rej{height:30px;padding:0 12px;border-radius:6px;border:1.5px solid var(--err);color:var(--err-dk);background:transparent;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;transition:background .12s}
+.btn-rej:hover{background:var(--err-lt)}
+.btn-view{height:30px;padding:0 12px;border-radius:6px;border:1px solid var(--border);color:var(--text2);background:transparent;font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer}
+.flow-done{font-size:12.5px;color:var(--muted);font-style:italic}
+</style>
+</helmet>
+
+<div class="app">
+  <aside class="sb" aria-label="Navegação">
+    <div class="sb-logo">
+      <div class="logo-mark" aria-hidden="true">O</div>
+      <span class="logo-txt">ObraFlow</span>
+    </div>
+    <nav class="sb-nav">
+      <a class="nav-a active" href="#" aria-current="page">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg>
+        Pedidos
+      </a>
+      <a class="nav-a" href="#">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        Novo pedido
+      </a>
+      <a class="nav-a" href="#">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Alçadas
+      </a>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <span class="pg-title">Pedidos</span>
+      <div class="viewing">
+        <span class="viewing-lbl">Visualizando como</span>
+        <div class="user-sel" role="combobox" aria-label="Selecionar usuário">
+          <div class="av" aria-hidden="true">AC</div>
+          Amanda Costa
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </div>
+    </header>
+
+    <!-- Tabs -->
+    <div class="tabs-bar" role="tablist">
+      <a class="tab" href="#" role="tab">Aguardando minha decisão <span class="tab-cnt">2</span></a>
+      <a class="tab" href="#" role="tab">Pendentes <span class="tab-cnt">4</span></a>
+      <a class="tab" href="#" role="tab">Aprovados <span class="tab-cnt">7</span></a>
+      <a class="tab" href="#" role="tab">Rejeitados <span class="tab-cnt">2</span></a>
+      <a class="tab active" href="#" role="tab" aria-selected="true">Todos</a>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+      <div class="filter-search" role="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="search" placeholder="Buscar fornecedor ou número…" aria-label="Buscar pedido">
+      </div>
+      <select class="filter-sel" aria-label="Filtrar por obra">
+        <option value="">Todas as obras</option>
+        <option>Edifício Maré</option>
+        <option>Residencial Sol Nascente</option>
+      </select>
+    </div>
+
+    <!-- Table -->
+    <div class="tbl-wrap">
+      <table aria-label="Lista de pedidos">
+        <thead>
+          <tr>
+            <th># / Data</th>
+            <th>Obra</th>
+            <th>Fornecedor</th>
+            <th style="text-align:center">Itens</th>
+            <th class="num">Valor total</th>
+            <th>Situação</th>
+            <th>Alçada</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- PED-001: Pendente, Amanda é a aprovadora atual -->
+          <tr>
+            <td>
+              <div class="ped-id">PED-001</div>
+              <div class="ped-date">18/10/2026</div>
+            </td>
+            <td><span class="obra-nm">Edifício Maré</span></td>
+            <td><span class="forn-nm">Votorantim Cimentos</span></td>
+            <td style="text-align:center;color:var(--text2)">3</td>
+            <td class="num">R$&nbsp;12.500,00</td>
+            <td><span class="badge badge-pend">Pendente</span></td>
+            <td>
+              <div class="stepper" aria-label="João Ribeiro aprovado, aguardando Amanda Costa, Carlos Mendes pendente">
+                <div class="st-av done" title="João Ribeiro — Aprovado">JR</div>
+                <div class="st-line done"></div>
+                <div class="st-av curr" title="Amanda Costa — Aguardando decisão">AC</div>
+                <div class="st-line pend"></div>
+                <div class="st-av pend" title="Carlos Mendes — Pendente">CM</div>
+              </div>
+            </td>
+            <td>
+              <div class="act-col">
+                <button class="btn-aprv">Aprovar</button>
+                <button class="btn-rej">Rejeitar</button>
+              </div>
+            </td>
+          </tr>
+          <!-- PED-002: Aprovado, fluxo concluído -->
+          <tr>
+            <td>
+              <div class="ped-id">PED-002</div>
+              <div class="ped-date">17/10/2026</div>
+            </td>
+            <td><span class="obra-nm">Res. Sol Nascente</span></td>
+            <td><span class="forn-nm">Brafer Aço</span></td>
+            <td style="text-align:center;color:var(--text2)">2</td>
+            <td class="num">R$&nbsp;4.200,00</td>
+            <td><span class="badge badge-aprv">Aprovado</span></td>
+            <td>
+              <div class="stepper" aria-label="João Ribeiro aprovado">
+                <div class="st-av done" title="João Ribeiro — Aprovado">JR</div>
+              </div>
+            </td>
+            <td>
+              <span class="flow-done">Fluxo concluído</span>
+            </td>
+          </tr>
+          <!-- PED-003: Pendente, Amanda é a aprovadora atual -->
+          <tr>
+            <td>
+              <div class="ped-id">PED-003</div>
+              <div class="ped-date">20/10/2026</div>
+            </td>
+            <td><span class="obra-nm">Edifício Maré</span></td>
+            <td><span class="forn-nm">Holcim Brasil</span></td>
+            <td style="text-align:center;color:var(--text2)">5</td>
+            <td class="num">R$&nbsp;38.700,00</td>
+            <td><span class="badge badge-pend">Pendente</span></td>
+            <td>
+              <div class="stepper" aria-label="João Ribeiro aprovado, aguardando Amanda Costa">
+                <div class="st-av done" title="João Ribeiro — Aprovado">JR</div>
+                <div class="st-line done"></div>
+                <div class="st-av curr" title="Amanda Costa — Aguardando decisão">AC</div>
+              </div>
+            </td>
+            <td>
+              <div class="act-col">
+                <button class="btn-aprv">Aprovar</button>
+                <button class="btn-rej">Rejeitar</button>
+              </div>
+            </td>
+          </tr>
+          <!-- PED-004: Rejeitado -->
+          <tr>
+            <td>
+              <div class="ped-id">PED-004</div>
+              <div class="ped-date">15/10/2026</div>
+            </td>
+            <td><span class="obra-nm">Res. Sol Nascente</span></td>
+            <td><span class="forn-nm">Tigre Tubos</span></td>
+            <td style="text-align:center;color:var(--text2)">1</td>
+            <td class="num">R$&nbsp;1.100,00</td>
+            <td><span class="badge badge-rej">Rejeitado</span></td>
+            <td>
+              <div class="stepper" aria-label="Rejeitado por João Ribeiro">
+                <div class="st-av rej" title="João Ribeiro — Rejeitado">JR</div>
+              </div>
+            </td>
+            <td>
+              <button class="btn-view">Visualizar</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

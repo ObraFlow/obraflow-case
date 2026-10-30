@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Alçadas · Skeleton + Erro de API — ObraFlow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#f4f4f5;--surface:#fff;--surface2:#f9fafb;
+  --border:#e4e4e7;
+  --text:#18181b;--text2:#3f3f46;--muted:#71717a;
+  --sb:#18181b;--sb-border:#27272a;--sb-txt:#a1a1aa;--sb-active:#27272a;--sb-atxt:#fafafa;
+  --accent:#d97706;--accent-lt:#fef3c7;--accent-bd:#fde68a;--accent-dk:#92400e;
+  --err:#dc2626;--err-lt:#fee2e2;--err-bd:#fca5a5;--err-dk:#991b1b;
+  --sk:#e4e4e7;--sk2:#f4f4f5;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#09090b;--surface:#18181b;--surface2:#27272a;
+  --border:#27272a;
+  --text:#fafafa;--text2:#d4d4d8;--muted:#a1a1aa;
+  --sb:#09090b;--sb-border:#18181b;--sb-txt:#71717a;--sb-active:#18181b;--sb-atxt:#fafafa;
+  --accent-lt:#2d1a00;--accent-bd:#78350f;--accent-dk:#fbbf24;
+  --err-lt:#3b0d0d;--err-bd:#991b1b;--err-dk:#f87171;
+  --sk:#27272a;--sk2:#3f3f46;
+}}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.app{display:flex;min-height:100vh}
+.sb{width:240px;flex-shrink:0;background:var(--sb);display:flex;flex-direction:column}
+.sb-logo{padding:18px 16px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--sb-border)}
+.logo-mark{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff}
+.logo-txt{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.2px}
+.sb-nav{padding:10px 8px;flex:1}
+.nav-a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--sb-txt);font-size:13.5px;font-weight:500;cursor:pointer;text-decoration:none;margin-bottom:2px}
+.nav-a.active{background:var(--sb-active);color:var(--sb-atxt)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+.pg-title{font-size:15px;font-weight:600}
+.user-sel{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:13px;font-weight:500}
+.av{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* Two panels side by side */
+.panels{flex:1;display:grid;grid-template-columns:1fr 1fr;border-top:none}
+.panel{padding:24px;display:flex;flex-direction:column;gap:16px;overflow-y:auto}
+.panel+.panel{border-left:1px solid var(--border)}
+.panel-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px}
+
+/* Skeleton shimmer */
+@keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
+.sk{background:linear-gradient(90deg,var(--sk) 25%,var(--sk2) 50%,var(--sk) 75%);background-size:200% 100%;animation:shimmer 1.6s ease-in-out infinite;border-radius:6px}
+.sk-text{height:13px}
+.sk-head{height:18px}
+.sk-input{height:38px;border-radius:8px}
+.sk-ruler{height:54px;border-radius:8px}
+.sk-row{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border)}
+.sk-circle{width:26px;height:26px;border-radius:50%;flex-shrink:0}
+.sk-block{flex:1}
+.sk-tabs{display:flex;gap:6px;margin-bottom:0}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.card-head{padding:16px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.card-ttl{font-size:13.5px;font-weight:600;flex:1}
+.card-inner{padding:20px}
+
+/* Error state */
+.err-card{background:var(--surface);border:1.5px solid var(--err-bd);border-radius:12px;padding:44px 32px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:0}
+.err-icon-wrap{width:56px;height:56px;background:var(--err-lt);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:18px}
+.err-ttl{font-size:15px;font-weight:700;color:var(--err-dk);margin:0 0 8px}
+.err-desc{font-size:13px;color:var(--muted);max-width:280px;line-height:1.6;margin:0 0 22px}
+.err-code{font-size:11.5px;font-family:monospace;color:var(--muted);background:var(--surface2);border:1px solid var(--border);padding:4px 10px;border-radius:5px;margin-bottom:20px}
+.btn-retry{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 18px;border-radius:8px;border:1.5px solid var(--err-bd);background:var(--err-lt);color:var(--err-dk);font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer}
+.btn-retry:hover{background:var(--err-bd)}
+</style>
+</helmet>
+
+<div class="app">
+  <aside class="sb" aria-label="Navegação">
+    <div class="sb-logo">
+      <div class="logo-mark" aria-hidden="true">O</div>
+      <span class="logo-txt">ObraFlow</span>
+    </div>
+    <nav class="sb-nav">
+      <a class="nav-a" href="#">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg>
+        Pedidos
+      </a>
+      <a class="nav-a" href="#">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        Novo pedido
+      </a>
+      <a class="nav-a active" href="#" aria-current="page">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Alçadas
+      </a>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <span class="pg-title">Alçadas</span>
+      <div class="user-sel">
+        <div class="av" aria-hidden="true">AC</div>
+        Amanda Costa
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+    </header>
+
+    <div class="panels">
+
+      <!-- Left: Loading skeleton -->
+      <div class="panel" aria-label="Carregando alçadas" aria-busy="true">
+        <p class="panel-label">f) Carregando (skeleton)</p>
+
+        <!-- Tabs skeleton -->
+        <div class="sk-tabs" aria-hidden="true">
+          <div class="sk sk-input" style="width:140px;height:36px"></div>
+          <div class="sk sk-input" style="width:160px;height:36px;opacity:.5"></div>
+        </div>
+
+        <!-- Ruler card skeleton -->
+        <div class="card">
+          <div class="card-head">
+            <div class="sk sk-circle" style="width:18px;height:18px;border-radius:4px"></div>
+            <div class="sk sk-head" style="width:140px"></div>
+            <div class="sk sk-text" style="width:90px;margin-left:auto"></div>
+          </div>
+          <div class="card-inner">
+            <div class="sk sk-ruler" aria-hidden="true"></div>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <div class="sk sk-text" style="width:40px"></div>
+              <div style="flex:1"></div>
+              <div class="sk sk-text" style="width:70px"></div>
+              <div style="flex:1"></div>
+              <div class="sk sk-text" style="width:70px"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table card skeleton -->
+        <div class="card">
+          <div class="card-head">
+            <div class="sk sk-head" style="width:180px"></div>
+          </div>
+          <!-- 3 skeleton rows -->
+          <div class="sk-row" aria-hidden="true">
+            <div class="sk sk-circle"></div>
+            <div class="sk-block">
+              <div class="sk sk-head" style="width:55%;margin-bottom:5px"></div>
+              <div class="sk sk-text" style="width:40%"></div>
+            </div>
+            <div class="sk sk-input" style="width:160px;height:24px"></div>
+            <div class="sk sk-input" style="width:60px;height:24px"></div>
+          </div>
+          <div class="sk-row" style="opacity:.7" aria-hidden="true">
+            <div class="sk sk-circle"></div>
+            <div class="sk-block">
+              <div class="sk sk-head" style="width:70%;margin-bottom:5px"></div>
+              <div class="sk sk-text" style="width:50%"></div>
+            </div>
+            <div class="sk sk-input" style="width:200px;height:24px"></div>
+            <div class="sk sk-input" style="width:60px;height:24px"></div>
+          </div>
+          <div class="sk-row" style="opacity:.45;border-bottom:none" aria-hidden="true">
+            <div class="sk sk-circle"></div>
+            <div class="sk-block">
+              <div class="sk sk-head" style="width:45%;margin-bottom:5px"></div>
+              <div class="sk sk-text" style="width:35%"></div>
+            </div>
+            <div class="sk sk-input" style="width:240px;height:24px"></div>
+            <div class="sk sk-input" style="width:60px;height:24px"></div>
+          </div>
+        </div>
+
+        <!-- Bottom row skeleton -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="card">
+            <div class="card-head"><div class="sk sk-head" style="width:100px"></div></div>
+            <div class="card-inner" style="display:flex;gap:10px">
+              <div class="sk sk-input" style="flex:0 0 140px;height:38px"></div>
+              <div class="sk sk-input" style="flex:1;height:38px"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div class="sk sk-head" style="width:70px"></div></div>
+            <div class="card-inner" style="display:flex;flex-direction:column;gap:10px">
+              <div class="sk sk-text" style="width:100%"></div>
+              <div class="sk sk-text" style="width:80%"></div>
+              <div class="sk sk-text" style="width:90%"></div>
+              <div class="sk sk-text" style="width:70%"></div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /panel left -->
+
+      <!-- Right: API error -->
+      <div class="panel" aria-label="Erro ao carregar alçadas">
+        <p class="panel-label">f) Erro de API — Tentar novamente</p>
+
+        <!-- Tabs still visible (from cache) -->
+        <div style="display:flex;align-items:center;gap:12px" aria-hidden="true">
+          <span style="font-size:12.5px;color:var(--muted);font-weight:500">Obra</span>
+          <div style="display:flex;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px;opacity:.5">
+            <button style="padding:6px 18px;border-radius:6px;font-size:13.5px;font-weight:500;color:var(--muted);border:none;background:transparent;font-family:inherit">Edifício Maré</button>
+            <button style="padding:6px 18px;border-radius:6px;font-size:13.5px;font-weight:500;background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1),0 0 0 1px var(--border);border:none;font-family:inherit">Res. Sol Nascente</button>
+          </div>
+        </div>
+
+        <div class="err-card" role="alert">
+          <div class="err-icon-wrap" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--err)" stroke-width="1.75"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <h3 class="err-ttl">Falha ao carregar as alçadas</h3>
+          <p class="err-desc">Não foi possível buscar as faixas desta obra. Verifique a conexão e tente novamente.</p>
+          <div class="err-code" aria-label="Código de erro">HTTP 503 — Service Unavailable</div>
+          <button class="btn-retry" aria-label="Tentar carregar as alçadas novamente">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 .49-5"/></svg>
+            Tentar novamente
+          </button>
+        </div>
+
+      </div><!-- /panel right -->
+
+    </div><!-- /panels -->
+  </div><!-- /main -->
+</div>
+</x-dc>
+</body>
+</html>

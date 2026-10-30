@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Novo Pedido · Toast cadastrado — ObraFlow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#f4f4f5;--surface:#fff;--surface2:#f9fafb;
+  --border:#e4e4e7;
+  --text:#18181b;--text2:#3f3f46;--muted:#71717a;
+  --sb:#18181b;--sb-border:#27272a;--sb-txt:#a1a1aa;--sb-active:#27272a;--sb-atxt:#fafafa;
+  --accent:#d97706;--accent-lt:#fef3c7;--accent-bd:#fde68a;--accent-dk:#92400e;
+  --err:#dc2626;--err-lt:#fee2e2;--err-bd:#fca5a5;--err-dk:#991b1b;
+  --green:#16a34a;--green-lt:#dcfce7;--green-bd:#86efac;--green-dk:#14532d;
+  --amber:#d97706;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#09090b;--surface:#18181b;--surface2:#27272a;--border:#27272a;
+  --text:#fafafa;--text2:#d4d4d8;--muted:#a1a1aa;
+  --sb:#09090b;--sb-border:#18181b;--sb-txt:#71717a;--sb-active:#18181b;--sb-atxt:#fafafa;
+  --accent-lt:#2d1a00;--accent-bd:#78350f;--accent-dk:#fbbf24;
+  --green-lt:#052e16;--green-bd:#166534;--green-dk:#4ade80;
+}}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.app{display:flex;min-height:100vh;position:relative}
+/* Sidebar */
+.sb{width:240px;flex-shrink:0;background:var(--sb);display:flex;flex-direction:column}
+.sb-logo{padding:18px 16px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--sb-border)}
+.logo-mark{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff}
+.logo-txt{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.2px}
+.sb-nav{padding:10px 8px;flex:1}
+.nav-a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--sb-txt);font-size:13.5px;font-weight:500;cursor:pointer;text-decoration:none;margin-bottom:2px}
+.nav-a.active{background:var(--sb-active);color:var(--sb-atxt)}
+/* Main */
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+.pg-title{font-size:15px;font-weight:600}
+.user-sel{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:13px;font-weight:500}
+.av{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.content{flex:1;padding:24px;overflow-y:auto;display:flex;flex-direction:column;gap:16px}
+/* Form */
+.form-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.card-head{padding:14px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-ttl{font-size:13.5px;font-weight:600}
+.card-inner{padding:20px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.field-row.thirds{grid-template-columns:2fr 1fr 1fr}
+.field{display:flex;flex-direction:column;gap:5px}
+.field-lbl{font-size:12px;font-weight:500;color:var(--text2)}
+.inp{height:38px;border:1px solid var(--border);border-radius:8px;padding:0 12px;font-family:inherit;font-size:13.5px;background:var(--surface);color:var(--text);width:100%}
+.inp:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,119,6,.12)}
+/* Table */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{padding:10px 14px;font-size:12px;font-weight:600;color:var(--muted);text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+.tbl td{padding:12px 14px;font-size:13.5px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:11.5px;font-weight:600}
+.badge-g{background:var(--green-lt);color:var(--green-dk)}
+/* Footer strip */
+.footer-strip{background:var(--surface);border-top:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.total-lbl{font-size:13px;color:var(--muted);font-weight:500}
+.total-val{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
+.btn-row{display:flex;gap:10px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 20px;border-radius:8px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;border:1px solid var(--border)}
+.btn-secondary{background:var(--surface);color:var(--text2)}
+.btn-primary{background:var(--green);color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(22,163,74,.25)}
+.btn-primary.done{background:var(--green-dk);opacity:.7}
+/* Label tag */
+.screen-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:2px}
+/* Toast */
+.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:200}
+.toast{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:10px;box-shadow:0 4px 24px rgba(0,0,0,.14);max-width:360px;min-width:280px}
+.toast-icon{width:22px;height:22px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.toast-body{flex:1;min-width:0}
+.toast-title{font-size:13.5px;font-weight:600;color:var(--text)}
+.toast-desc{font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.4}
+.toast-close{color:var(--muted);cursor:pointer;flex-shrink:0;line-height:1;margin-top:2px;background:none;border:none;padding:0;font-size:16px}
+/* Obra bar */
+.obra-bar{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+.obra-bar-lbl{font-size:12.5px;color:var(--muted);font-weight:500;flex-shrink:0}
+.obra-tabs{display:flex;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px}
+.obra-tab{padding:6px 16px;border-radius:6px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:transparent;font-family:inherit}
+.obra-tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1),0 0 0 1px var(--border)}
+/* Success state on submit */
+.btn-primary.success-state{background:var(--green);opacity:1;gap:8px}
+</style>
+</helmet>
+
+<div class="app">
+  <aside class="sb" aria-label="Navegação">
+    <div class="sb-logo">
+      <div class="logo-mark" aria-hidden="true">O</div>
+      <span class="logo-txt">ObraFlow</span>
+    </div>
+    <nav class="sb-nav">
+      <a class="nav-a" href="#">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg>
+        Pedidos
+      </a>
+      <a class="nav-a active" href="#" aria-current="page">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        Novo pedido
+      </a>
+      <a class="nav-a" href="#">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Alçadas
+      </a>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <span class="pg-title">Novo pedido</span>
+      <div class="user-sel">
+        <div class="av" aria-hidden="true">BL</div>
+        Beatriz Lima
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+    </header>
+
+    <div class="content">
+      <p class="screen-lbl">g) Toast — Pedido cadastrado</p>
+
+      <!-- Obra selector -->
+      <div class="obra-bar">
+        <span class="obra-bar-lbl">Obra</span>
+        <div class="obra-tabs" role="tablist">
+          <button class="obra-tab active" role="tab" aria-selected="true">Edifício Maré</button>
+          <button class="obra-tab" role="tab" aria-selected="false">Res. Sol Nascente</button>
+        </div>
+      </div>
+
+      <!-- Items card -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-ttl">Itens do pedido</span>
+          <span style="font-size:12.5px;color:var(--muted)">2 itens</span>
+        </div>
+        <table class="tbl" aria-label="Itens do pedido">
+          <thead>
+            <tr>
+              <th style="width:40%">Descrição</th>
+              <th>Categoria</th>
+              <th style="text-align:right">Qtd.</th>
+              <th style="text-align:right">Valor unit.</th>
+              <th style="text-align:right">Total</th>
+              <th style="width:36px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Vergalhão CA-50 ø 10mm × 12m</td>
+              <td><span style="font-size:12px;color:var(--muted)">Materiais</span></td>
+              <td style="text-align:right;font-variant-numeric:tabular-nums">50</td>
+              <td style="text-align:right;font-variant-numeric:tabular-nums">R$&nbsp;180,00</td>
+              <td style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums">R$&nbsp;9.000,00</td>
+              <td><button style="border:none;background:none;color:var(--muted);cursor:pointer;padding:4px;border-radius:4px" aria-label="Remover item" disabled>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button></td>
+            </tr>
+            <tr>
+              <td>Concreto usinado fck 25 MPa</td>
+              <td><span style="font-size:12px;color:var(--muted)">Serviços</span></td>
+              <td style="text-align:right;font-variant-numeric:tabular-nums">7 m³</td>
+              <td style="text-align:right;font-variant-numeric:tabular-nums">R$&nbsp;2.000,00</td>
+              <td style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums">R$&nbsp;14.000,00</td>
+              <td><button style="border:none;background:none;color:var(--muted);cursor:pointer;padding:4px;border-radius:4px" aria-label="Remover item" disabled>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Observação -->
+      <div class="card">
+        <div class="card-inner" style="padding:16px 20px">
+          <div class="field">
+            <label class="field-lbl">Observação (opcional)</label>
+            <textarea class="inp" rows="2" style="height:auto;padding:10px 12px;resize:none;color:var(--muted)" disabled>Urgente — concretagem agendada para sexta-feira</textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alçada preview -->
+      <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:var(--green-lt);border:1px solid var(--green-bd);border-radius:10px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+        <span style="font-size:13px;color:var(--green-dk);font-weight:500">Faixa 2 — aprovação de <strong>João Ribeiro</strong> e <strong>Amanda Costa</strong></span>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer-strip">
+      <div>
+        <div class="total-lbl">Total do pedido</div>
+        <div class="total-val">R$&nbsp;23.000,00</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" disabled>Cancelar</button>
+        <button class="btn btn-primary success-state" disabled aria-label="Pedido cadastrado com sucesso">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>
+          Pedido cadastrado
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast de sucesso -->
+<div class="toast-wrap" role="status" aria-live="polite" aria-atomic="true">
+  <div class="toast">
+    <div class="toast-icon" aria-hidden="true">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>
+    </div>
+    <div class="toast-body">
+      <div class="toast-title">Pedido #13 cadastrado</div>
+      <div class="toast-desc">Encaminhado para aprovação de João Ribeiro</div>
+    </div>
+    <button class="toast-close" aria-label="Fechar notificação">×</button>
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>

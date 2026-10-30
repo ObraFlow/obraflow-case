@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Alçadas · Modal de edição — arrastar aprovador — ObraFlow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#f4f4f5;--surface:#fff;--surface2:#f9fafb;
+  --border:#e4e4e7;--border2:#f4f4f5;
+  --text:#18181b;--text2:#3f3f46;--muted:#71717a;
+  --sb:#18181b;--sb-border:#27272a;--sb-txt:#a1a1aa;--sb-active:#27272a;--sb-atxt:#fafafa;
+  --accent:#d97706;--accent-lt:#fef3c7;--accent-bd:#fde68a;--accent-dk:#92400e;
+  --green:#16a34a;--green-lt:#dcfce7;--green-bd:#86efac;--green-dk:#166534;
+  --err:#dc2626;--err-lt:#fee2e2;--err-bd:#fca5a5;--err-dk:#991b1b;
+  --blue:#2563eb;--blue-lt:#eff6ff;--blue-bd:#bfdbfe;--blue-dk:#1e40af;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#09090b;--surface:#18181b;--surface2:#27272a;
+  --border:#27272a;--border2:#3f3f46;
+  --text:#fafafa;--text2:#d4d4d8;--muted:#a1a1aa;
+  --sb:#09090b;--sb-border:#18181b;--sb-txt:#71717a;--sb-active:#18181b;--sb-atxt:#fafafa;
+  --accent-lt:#2d1a00;--accent-bd:#78350f;--accent-dk:#fbbf24;
+  --green-lt:#052e16;--green-bd:#166534;--green-dk:#4ade80;
+  --err-lt:#3b0d0d;--err-bd:#991b1b;--err-dk:#f87171;
+  --blue-lt:#1e3a5f;--blue-bd:#1d4ed8;--blue-dk:#93c5fd;
+}}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.app{display:flex;min-height:100vh}
+.sb{width:240px;flex-shrink:0;background:var(--sb);display:flex;flex-direction:column}
+.sb-logo{padding:18px 16px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--sb-border)}
+.logo-mark{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff}
+.logo-txt{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.2px}
+.sb-nav{padding:10px 8px;flex:1}
+.nav-a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--sb-txt);font-size:13.5px;font-weight:500;cursor:pointer;text-decoration:none;margin-bottom:2px}
+.nav-a.active{background:var(--sb-active);color:var(--sb-atxt)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
+.topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+.pg-title{font-size:15px;font-weight:600}
+.user-sel{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:13px;font-weight:500}
+.av{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.content{flex:1;padding:24px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;opacity:.35;pointer-events:none;filter:blur(1px)}
+
+/* Page background content (blurred) */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.card-head{padding:16px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.card-ttl{font-size:13.5px;font-weight:600;flex:1}
+.card-sub{font-size:12px;color:var(--muted)}
+
+/* MODAL OVERLAY */
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-start;justify-content:center;padding:40px 24px;z-index:100;overflow-y:auto}
+.modal{background:var(--surface);border-radius:14px;width:520px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}
+.modal-hd{padding:20px 22px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.modal-title{font-size:15px;font-weight:600;flex:1}
+.modal-close{width:28px;height:28px;border:none;background:transparent;cursor:pointer;border-radius:5px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.modal-close:hover{background:var(--surface2)}
+.modal-body{padding:20px 22px;display:flex;flex-direction:column;gap:20px}
+.modal-ft{padding:16px 22px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
+
+/* Form fields */
+.field{display:flex;flex-direction:column;gap:5px}
+.field-lbl{font-size:13px;font-weight:600}
+.field-help{font-size:12px;color:var(--muted)}
+.inp-row{display:flex;align-items:center;gap:10px}
+.inp-wrap{position:relative}
+.inp-prefix{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--muted);font-weight:500;pointer-events:none}
+.form-inp{height:38px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:13.5px;font-variant-numeric:tabular-nums;padding:0 12px;outline:none;width:100%}
+.form-inp.with-pre{padding-left:38px}
+.form-inp:focus{border-color:var(--accent);background:var(--surface)}
+.chk-row{display:flex;align-items:center;gap:8px;cursor:pointer}
+.chk{width:16px;height:16px;border:2px solid var(--border);border-radius:4px;flex-shrink:0;background:var(--surface2)}
+.chk-lbl{font-size:13px;font-weight:500}
+
+/* Approvers */
+.ap-list{display:flex;flex-direction:column;gap:6px}
+.ap-item{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;position:relative}
+.ap-item.dragging{background:var(--blue-lt);border-color:var(--blue-bd);box-shadow:0 4px 16px rgba(37,99,235,.18);opacity:.9;transform:rotate(-1deg)}
+.ap-handle{color:var(--muted);cursor:grab;flex-shrink:0;font-size:15px;letter-spacing:-1px;line-height:1}
+.ap-num{width:22px;height:22px;border-radius:50%;background:var(--text);color:var(--bg);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ap-name{flex:1;font-size:13.5px;font-weight:500}
+.ap-role{font-size:12px;color:var(--muted)}
+.ap-arrows{display:flex;flex-direction:column;gap:2px}
+.ap-arr{width:22px;height:18px;border:1px solid var(--border);border-radius:4px;background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:11px}
+.ap-arr:hover{background:var(--surface2)}
+.ap-arr[disabled]{opacity:.3;cursor:default}
+.ap-rem{width:26px;height:26px;border:none;background:transparent;cursor:pointer;border-radius:5px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.ap-rem:hover{background:var(--err-lt);color:var(--err)}
+
+/* Drop indicator */
+.drop-line{height:3px;background:var(--blue);border-radius:2px;margin:2px 0}
+
+/* Combobox add */
+.add-ap-row{display:flex;gap:8px}
+.combo{flex:1;height:36px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:13px;padding:0 10px;outline:none}
+.combo:focus{border-color:var(--accent)}
+.btn-ap-add{height:36px;padding:0 14px;border-radius:7px;border:1px solid var(--accent-bd);background:var(--accent-lt);color:var(--accent-dk);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
+
+/* Buttons */
+.btn-cancel{height:38px;padding:0 18px;border-radius:8px;border:1px solid var(--border);background:transparent;font-family:inherit;font-size:13.5px;font-weight:500;cursor:pointer;color:var(--text2)}
+.btn-save{height:38px;padding:0 20px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer}
+.btn-save:hover{background:var(--accent-dk)}
+</style>
+</helmet>
+
+<div class="app">
+  <aside class="sb" aria-label="Navegação">
+    <div class="sb-logo">
+      <div class="logo-mark" aria-hidden="true">O</div>
+      <span class="logo-txt">ObraFlow</span>
+    </div>
+    <nav class="sb-nav">
+      <a class="nav-a" href="#">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg>
+        Pedidos
+      </a>
+      <a class="nav-a" href="#">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        Novo pedido
+      </a>
+      <a class="nav-a active" href="#" aria-current="page">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Alçadas
+      </a>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <span class="pg-title">Alçadas</span>
+      <div class="user-sel">
+        <div class="av" aria-hidden="true">AC</div>
+        Amanda Costa
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+    </header>
+
+    <!-- Background page (blurred) -->
+    <div class="content" aria-hidden="true">
+      <div class="card" style="height:140px"></div>
+      <div class="card" style="height:220px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card" style="height:130px"></div>
+        <div class="card" style="height:130px"></div>
+      </div>
+    </div>
+
+    <!-- Modal overlay -->
+    <div class="overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal">
+        <div class="modal-hd">
+          <span class="modal-title" id="modal-title">Editar faixa — Faixa 3</span>
+          <button class="modal-close" aria-label="Fechar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+
+          <!-- Limit field -->
+          <div class="field">
+            <label class="field-lbl" for="inp-limit">Limite superior da faixa</label>
+            <div class="inp-row">
+              <div class="inp-wrap" style="flex:1">
+                <span class="inp-prefix">R$</span>
+                <input class="form-inp with-pre" id="inp-limit" type="text" value="50.000,00" aria-label="Limite superior em reais" inputmode="decimal">
+              </div>
+            </div>
+            <div class="chk-row" style="margin-top:6px">
+              <div class="chk" style="border-color:var(--blue);background:var(--blue);display:flex;align-items:center;justify-content:center">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>
+              </div>
+              <span class="chk-lbl">Sem limite superior (faixa cobre qualquer valor acima)</span>
+            </div>
+            <p class="field-help" style="margin-top:4px">Esta faixa cobre pedidos a partir de <strong>R$ 50.000,01</strong> (início calculado automaticamente).</p>
+          </div>
+
+          <!-- Approvers -->
+          <div class="field">
+            <div class="field-lbl" id="ap-list-lbl">Aprovadores <span style="color:var(--muted);font-weight:400">(na ordem do fluxo)</span></div>
+
+            <div class="ap-list" aria-labelledby="ap-list-lbl">
+
+              <!-- Item 1 - normal -->
+              <div class="ap-item" draggable="true">
+                <span class="ap-handle" aria-hidden="true">⠿</span>
+                <div class="ap-num" aria-hidden="true">1</div>
+                <div style="flex:1">
+                  <div class="ap-name">João Ribeiro</div>
+                  <div class="ap-role">Engenheiro</div>
+                </div>
+                <div class="ap-arrows" aria-hidden="true">
+                  <button class="ap-arr" disabled>↑</button>
+                  <button class="ap-arr">↓</button>
+                </div>
+                <button class="ap-rem" aria-label="Remover João Ribeiro">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+
+              <!-- Drop indicator -->
+              <div class="drop-line" aria-hidden="true"></div>
+
+              <!-- Item 2 — being dragged -->
+              <div class="ap-item dragging" draggable="true" aria-grabbed="true">
+                <span class="ap-handle" aria-hidden="true">⠿</span>
+                <div class="ap-num" style="background:var(--blue)" aria-hidden="true">2</div>
+                <div style="flex:1">
+                  <div class="ap-name">Amanda Costa</div>
+                  <div class="ap-role">Ger. Suprimentos</div>
+                </div>
+                <div class="ap-arrows" aria-hidden="true">
+                  <button class="ap-arr">↑</button>
+                  <button class="ap-arr">↓</button>
+                </div>
+                <button class="ap-rem" aria-label="Remover Amanda Costa">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+
+              <!-- Item 3 - normal -->
+              <div class="ap-item">
+                <span class="ap-handle" aria-hidden="true">⠿</span>
+                <div class="ap-num" aria-hidden="true">3</div>
+                <div style="flex:1">
+                  <div class="ap-name">Carlos Mendes</div>
+                  <div class="ap-role">Dir. Financeiro</div>
+                </div>
+                <div class="ap-arrows" aria-hidden="true">
+                  <button class="ap-arr">↑</button>
+                  <button class="ap-arr" disabled>↓</button>
+                </div>
+                <button class="ap-rem" aria-label="Remover Carlos Mendes">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Add approver -->
+            <div class="add-ap-row" style="margin-top:8px">
+              <select class="combo" aria-label="Adicionar aprovador">
+                <option value="">Adicionar aprovador…</option>
+                <option>Beatriz Lima</option>
+                <option>Fernando Souza</option>
+                <option>Larissa Matos</option>
+              </select>
+              <button class="btn-ap-add">Adicionar</button>
+            </div>
+          </div>
+
+        </div><!-- /modal-body -->
+
+        <div class="modal-ft">
+          <button class="btn-cancel">Cancelar</button>
+          <button class="btn-save">Salvar faixa</button>
+        </div>
+      </div><!-- /modal -->
+    </div><!-- /overlay -->
+
+  </div><!-- /main -->
+</div>
+</x-dc>
+</body>
+</html>

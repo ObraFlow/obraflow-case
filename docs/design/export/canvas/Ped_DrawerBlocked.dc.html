@@ -1,0 +1,275 @@
+<x-dc>
+<helmet>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="./support.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fafafa;--surface:#fff;--surface2:#f4f4f5;--border:#e4e4e7;
+  --text:#09090b;--text2:#52525b;--muted:#a1a1aa;
+  --sb:#18181b;--sb-border:#27272a;--sb-txt:#a1a1aa;--sb-active:#27272a;--sb-atxt:#fff;
+  --accent:#d97706;--accent-lt:#fffbeb;--accent-bd:#fde68a;--accent-dk:#92400e;
+  --green:#16a34a;--green-lt:#f0fdf4;--green-bd:#bbf7d0;--green-dk:#14532d;
+  --amber:#d97706;--amber-lt:#fffbeb;--amber-bd:#fde68a;--amber-dk:#92400e;
+  --red:#dc2626;--red-lt:#fef2f2;--red-bd:#fecaca;--red-dk:#7f1d1d;
+  --blue:#2563eb;--blue-lt:#eff6ff;--blue-bd:#bfdbfe;--blue-dk:#1e40af;
+  --radius:8px;
+}
+body{display:flex;height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;background:var(--bg);color:var(--text);overflow:hidden}
+.sidebar{width:220px;background:var(--sb);display:flex;flex-direction:column;flex-shrink:0}
+.logo{padding:20px 16px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--sb-border)}
+.logo-mark{width:32px;height:32px;background:var(--accent);border-radius:8px;display:grid;place-items:center}
+.logo-name{color:#fff;font-weight:700;font-size:15px;letter-spacing:-.3px}
+.logo-sub{color:var(--sb-txt);font-size:11px;margin-top:1px}
+.nav{flex:1;padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--sb-txt);text-decoration:none;font-size:13px;font-weight:500}
+.nav-item.active{background:var(--sb-active);color:var(--sb-atxt)}
+.nav-sep{height:1px;background:var(--sb-border);margin:8px 0}
+.user-row{padding:12px 16px;border-top:1px solid var(--sb-border);display:flex;align-items:center;gap:10px}
+.avatar{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;flex-shrink:0}
+.av-ac{background:#dbeafe;color:#1e40af}
+.user-name{color:#fff;font-size:12px;font-weight:600;line-height:1.2}
+.user-role{color:var(--sb-txt);font-size:11px}
+/* Main area splits into list + drawer */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:57px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:12px;background:var(--surface);flex-shrink:0}
+.page-title{font-size:17px;font-weight:700;letter-spacing:-.3px}
+.topbar-r{margin-left:auto;display:flex;align-items:center;gap:10px}
+.btn{height:34px;padding:0 14px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--accent);color:#fff}
+.body-split{flex:1;display:flex;overflow:hidden}
+/* List panel */
+.list-panel{flex:1;overflow-y:auto;padding:20px 24px}
+.filters{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.tabs{display:flex;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px}
+.tab{padding:5px 12px;border-radius:5px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text2);border:none;background:transparent}
+.tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead th{padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;background:var(--surface2);border-bottom:1px solid var(--border)}
+tbody tr{border-bottom:1px solid var(--border)}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover:not(.active-row){background:var(--surface2)}
+.active-row td{background:var(--amber-lt)!important}
+td{padding:11px 14px;font-size:13px;vertical-align:middle}
+.num{font-variant-numeric:tabular-nums}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-amber{background:var(--amber-lt);color:var(--amber-dk);border:1px solid var(--amber-bd)}
+.badge-green{background:var(--green-lt);color:var(--green-dk);border:1px solid var(--green-bd)}
+.badge-red{background:var(--red-lt);color:var(--red-dk);border:1px solid var(--red-bd)}
+.ap-dots{display:flex;gap:3px;align-items:center}
+.ap-dot{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:8px;font-weight:700}
+.ap-done{background:var(--green-lt);color:var(--green-dk);border:1.5px solid var(--green-bd)}
+.ap-wait{background:var(--amber-lt);color:var(--amber-dk);border:1.5px solid var(--amber-bd)}
+.ap-idle{background:var(--surface2);color:var(--muted);border:1.5px solid var(--border)}
+.ap-sep{color:var(--muted);font-size:10px}
+/* Drawer panel */
+.drawer{width:420px;border-left:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;flex-shrink:0}
+.drawer-header{padding:20px 22px 16px;border-bottom:1px solid var(--border)}
+.drawer-title-row{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+.drawer-num{font-size:20px;font-weight:800;letter-spacing:-.5px}
+.drawer-close{margin-left:auto;width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:none;cursor:pointer;display:grid;place-items:center;color:var(--muted)}
+.drawer-meta{font-size:12px;color:var(--text2)}
+.drawer-body{flex:1;overflow-y:auto;padding:20px 22px}
+.drawer-section{margin-bottom:22px}
+.drawer-section-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.info-item{}
+.info-label{font-size:11px;color:var(--muted);margin-bottom:2px}
+.info-value{font-size:13px;font-weight:600;color:var(--text)}
+.items-list{}
+.item-row{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--surface2);gap:12px}
+.item-row:last-child{border-bottom:none}
+.item-name{font-size:13px;font-weight:500}
+.item-detail{font-size:11px;color:var(--text2);margin-top:1px}
+.item-total{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.total-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0 0;border-top:2px solid var(--border);margin-top:4px}
+.total-label{font-size:13px;font-weight:700}
+.total-value{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+/* Approval chain */
+.chain{display:flex;flex-direction:column;gap:10px}
+.chain-step{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;border:1px solid var(--border)}
+.chain-step.step-done{background:var(--green-lt);border-color:var(--green-bd)}
+.chain-step.step-wait{background:var(--amber-lt);border-color:var(--amber-bd)}
+.chain-step.step-blocked{background:var(--surface2);border-color:var(--border);opacity:.6}
+.chain-avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;flex-shrink:0}
+.av-jr{background:#dcfce7;color:#14532d}
+.chain-info{flex:1}
+.chain-name{font-size:13px;font-weight:600}
+.chain-role{font-size:11px;color:var(--text2)}
+.chain-status{font-size:11px;font-weight:600}
+.chain-status-done{color:var(--green-dk)}
+.chain-status-wait{color:var(--amber-dk)}
+.chain-status-blocked{color:var(--muted)}
+.chain-arrow{text-align:center;font-size:16px;color:var(--muted)}
+/* Blocked notice */
+.blocked-notice{background:var(--amber-lt);border:1px solid var(--amber-bd);border-radius:8px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start;margin-bottom:18px}
+.blocked-notice svg{color:var(--amber-dk);flex-shrink:0;margin-top:1px}
+.blocked-notice-text{font-size:12px;color:var(--amber-dk);line-height:1.5;font-weight:500}
+/* Drawer footer */
+.drawer-footer{padding:16px 22px;border-top:1px solid var(--border);display:flex;gap:10px}
+.btn-approve{flex:1;height:40px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:not-allowed;opacity:.4;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-reject{width:40px;height:40px;background:var(--red-lt);border:1px solid var(--red-bd);border-radius:8px;cursor:not-allowed;opacity:.4;display:grid;place-items:center;color:var(--red)}
+</style>
+</helmet>
+
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-mark"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+    <div><div class="logo-name">ObraFlow</div><div class="logo-sub">Dokimos</div></div>
+  </div>
+  <nav class="nav">
+    <a class="nav-item" href="#"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Obras</a>
+    <a class="nav-item active" href="#"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Pedidos</a>
+    <div class="nav-sep"></div>
+    <a class="nav-item" href="#"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Alçadas</a>
+  </nav>
+  <div class="user-row">
+    <div class="avatar av-ac">AC</div>
+    <div><div class="user-name">Amanda Costa</div><div class="user-role">Ger. Suprimentos</div></div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <h1 class="page-title">Pedidos de compra</h1>
+    <div class="topbar-r">
+      <button class="btn btn-primary"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo pedido</button>
+    </div>
+  </div>
+  <div class="body-split">
+    <!-- List panel (condensed) -->
+    <div class="list-panel">
+      <div class="filters">
+        <div class="tabs">
+          <button class="tab active">Todos os pedidos</button>
+          <button class="tab">Aguardando minha aprovação</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Pedido</th><th>Obra</th><th>Total</th><th>Status</th><th>Cadeia</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="num" style="font-weight:600">#8</span></td><td style="color:var(--text2)">Ed. Maré</td><td class="num" style="font-weight:600">R$&nbsp;47.200,00</td><td><span class="badge badge-green">Aprovado</span></td><td><div class="ap-dots"><div class="ap-dot ap-done">JR</div><span class="ap-sep">→</span><div class="ap-dot ap-done">AC</div></div></td></tr>
+            <tr><td><span class="num" style="font-weight:600">#9</span></td><td style="color:var(--text2)">Torre das Artes</td><td class="num" style="font-weight:600">R$&nbsp;12.500,00</td><td><span class="badge badge-amber">Em análise</span></td><td><div class="ap-dots"><div class="ap-dot ap-done">JR</div><span class="ap-sep">→</span><div class="ap-dot ap-wait">AC</div></div></td></tr>
+            <!-- Row 10 — selected/active -->
+            <tr class="active-row">
+              <td><span class="num" style="font-weight:700">#10</span></td>
+              <td style="color:var(--text2)">Res. Pinheiro</td>
+              <td class="num" style="font-weight:600">R$&nbsp;68.000,00</td>
+              <td><span class="badge badge-amber">Em análise</span></td>
+              <td><div class="ap-dots"><div class="ap-dot ap-idle">JR</div><span class="ap-sep">→</span><div class="ap-dot ap-idle">AC</div></div></td>
+            </tr>
+            <tr><td><span class="num" style="font-weight:600">#11</span></td><td style="color:var(--text2)">Ed. Maré</td><td class="num" style="font-weight:600">R$&nbsp;31.000,00</td><td><span class="badge badge-amber">Em análise</span></td><td><div class="ap-dots"><div class="ap-dot ap-idle">JR</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Drawer panel -->
+    <div class="drawer">
+      <div class="drawer-header">
+        <div class="drawer-title-row">
+          <div class="drawer-num">#10</div>
+          <span class="badge badge-amber">Em análise</span>
+          <button class="drawer-close">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="drawer-meta">Residencial Pinheiro · Solicitado por João Ribeiro em 18/10/2026</div>
+      </div>
+      <div class="drawer-body">
+
+        <!-- Info -->
+        <div class="drawer-section">
+          <div class="drawer-section-title">Informações</div>
+          <div class="info-grid">
+            <div class="info-item"><div class="info-label">Obra</div><div class="info-value">Residencial Pinheiro</div></div>
+            <div class="info-item"><div class="info-label">Entrega solicitada</div><div class="info-value">30/10/2026</div></div>
+            <div class="info-item"><div class="info-label">Solicitante</div><div class="info-value">João Ribeiro</div></div>
+            <div class="info-item"><div class="info-label">Cadastrado em</div><div class="info-value">18/10/2026 · 14:32</div></div>
+          </div>
+        </div>
+
+        <!-- Items -->
+        <div class="drawer-section">
+          <div class="drawer-section-title">Itens</div>
+          <div class="items-list">
+            <div class="item-row">
+              <div><div class="item-name">Concreto usinado fck 30MPa</div><div class="item-detail">20 m³ × R$ 2.400,00</div></div>
+              <div class="item-total">R$&nbsp;48.000,00</div>
+            </div>
+            <div class="item-row">
+              <div><div class="item-name">Forma de alumínio (aluguel)</div><div class="item-detail">40 m² × R$ 500,00</div></div>
+              <div class="item-total">R$&nbsp;20.000,00</div>
+            </div>
+            <div class="total-row">
+              <div class="total-label">Total</div>
+              <div class="total-value">R$&nbsp;68.000,00</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Approval chain — BLOCKED state -->
+        <div class="drawer-section">
+          <div class="drawer-section-title">Cadeia de aprovação · Faixa 3</div>
+
+          <!-- Blocked notice -->
+          <div class="blocked-notice">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+            <div class="blocked-notice-text">
+              Aguardando a <strong>1ª aprovação de João Ribeiro</strong>. Você só pode agir após a etapa anterior ser concluída — a aprovação é estritamente sequencial.
+            </div>
+          </div>
+
+          <div class="chain">
+            <!-- Step 1 — waiting (João hasn't acted yet) -->
+            <div class="chain-step step-wait">
+              <div class="chain-avatar av-jr">JR</div>
+              <div class="chain-info">
+                <div class="chain-name">João Ribeiro</div>
+                <div class="chain-role">Engenheiro · 1ª etapa</div>
+              </div>
+              <div class="chain-status chain-status-wait">Aguardando…</div>
+            </div>
+            <div class="chain-arrow">↓</div>
+            <!-- Step 2 — Amanda, blocked -->
+            <div class="chain-step step-blocked">
+              <div class="chain-avatar av-ac">AC</div>
+              <div class="chain-info">
+                <div class="chain-name">Amanda Costa <span style="font-size:10px;font-weight:400;color:var(--muted)">(você)</span></div>
+                <div class="chain-role">Ger. Suprimentos · 2ª etapa</div>
+              </div>
+              <div class="chain-status chain-status-blocked">Bloqueada</div>
+            </div>
+            <div class="chain-arrow">↓</div>
+            <!-- Step 3 — Carlos, blocked -->
+            <div class="chain-step step-blocked">
+              <div class="chain-avatar" style="background:#fce7f3;color:#831843">CM</div>
+              <div class="chain-info">
+                <div class="chain-name">Carlos Mendes</div>
+                <div class="chain-role">Dir. Financeiro · 3ª etapa</div>
+              </div>
+              <div class="chain-status chain-status-blocked">Bloqueada</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <!-- Footer — buttons disabled -->
+      <div class="drawer-footer">
+        <button class="btn-approve" disabled>
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          Aprovar pedido
+        </button>
+        <button class="btn-reject" disabled title="Disponível após 1ª aprovação">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>

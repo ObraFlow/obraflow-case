@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Novo Pedido — ObraFlow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#f4f4f5;--surface:#fff;--surface2:#f9fafb;
+  --border:#e4e4e7;--border2:#f4f4f5;
+  --text:#18181b;--text2:#3f3f46;--muted:#71717a;
+  --sb:#18181b;--sb-border:#27272a;--sb-txt:#a1a1aa;--sb-active:#27272a;--sb-atxt:#fafafa;
+  --accent:#d97706;--accent-h:#b45309;--accent-lt:#fef3c7;--accent-bd:#fde68a;--accent-dk:#92400e;
+  --err:#dc2626;--err-lt:#fee2e2;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#09090b;--surface:#18181b;--surface2:#27272a;
+    --border:#27272a;--border2:#3f3f46;
+    --text:#fafafa;--text2:#d4d4d8;--muted:#a1a1aa;
+    --sb:#09090b;--sb-border:#18181b;--sb-txt:#71717a;--sb-active:#18181b;
+    --accent-lt:#2d1a00;--accent-bd:#78350f;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.app{display:flex;min-height:100vh}
+.sb{width:240px;flex-shrink:0;background:var(--sb);display:flex;flex-direction:column}
+.sb-logo{padding:18px 16px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--sb-border)}
+.logo-mark{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;flex-shrink:0}
+.logo-txt{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.2px}
+.sb-nav{padding:10px 8px;flex:1}
+.nav-a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--sb-txt);font-size:13.5px;font-weight:500;cursor:pointer;text-decoration:none;margin-bottom:2px}
+.nav-a:hover:not(.active){background:#232326;color:#d4d4d8}
+.nav-a.active{background:var(--sb-active);color:var(--sb-atxt)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+.pg-title{font-size:15px;font-weight:600;color:var(--text)}
+.viewing{display:flex;align-items:center;gap:8px}
+.viewing-lbl{font-size:12.5px;color:var(--muted)}
+.user-sel{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:13px;font-weight:500;color:var(--text);cursor:pointer}
+.av{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+/* Empty state centered */
+.empty-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:40px}
+.empty-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:48px 40px;max-width:480px;width:100%;text-align:center}
+.empty-icon-wrap{width:72px;height:72px;border-radius:50%;background:var(--accent-lt);border:1.5px solid var(--accent-bd);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;color:var(--accent)}
+.empty-ttl{font-size:18px;font-weight:700;color:var(--text);letter-spacing:-.2px;margin:0 0 8px}
+.empty-desc{font-size:14px;color:var(--muted);line-height:1.6;margin:0 0 28px}
+.empty-desc strong{color:var(--text2)}
+.empty-cta{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:0 20px;height:40px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none;transition:background .15s}
+.empty-cta:hover{background:var(--accent-h)}
+.empty-hint{font-size:12px;color:var(--muted);margin-top:14px;line-height:1.4}
+.empty-hint a{color:var(--accent);text-decoration:none}
+.empty-hint a:hover{text-decoration:underline}
+/* Illustration lines */
+.ilu{display:flex;flex-direction:column;gap:7px;margin:24px auto 0;max-width:280px;padding:16px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;text-align:left}
+.ilu-row{display:flex;align-items:center;gap:10px}
+.ilu-dot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0}
+.ilu-line{height:8px;border-radius:4px;background:var(--border)}
+</style>
+</helmet>
+
+<div class="app">
+  <aside class="sb" aria-label="Navegação">
+    <div class="sb-logo">
+      <div class="logo-mark" aria-hidden="true">O</div>
+      <span class="logo-txt">ObraFlow</span>
+    </div>
+    <nav class="sb-nav">
+      <a class="nav-a" href="#">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg>
+        Pedidos
+      </a>
+      <a class="nav-a active" href="#" aria-current="page">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        Novo pedido
+      </a>
+      <a class="nav-a" href="#">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Alçadas
+      </a>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <span class="pg-title">Novo pedido</span>
+      <div class="viewing">
+        <span class="viewing-lbl">Visualizando como</span>
+        <div class="user-sel" role="combobox" aria-label="Selecionar usuário">
+          <div class="av" aria-hidden="true">BL</div>
+          Beatriz Lima
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </div>
+    </header>
+
+    <div class="empty-wrap">
+      <div class="empty-box" role="main" aria-labelledby="empty-ttl">
+        <!-- Icon -->
+        <div class="empty-icon-wrap" aria-hidden="true">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+
+        <h1 class="empty-ttl" id="empty-ttl">Nenhuma obra cadastrada</h1>
+        <p class="empty-desc">
+          Para criar um pedido você precisa ter ao menos uma obra ativa no sistema.
+          <strong>Cadastre a primeira obra</strong> e configure as regras de alçada para começar a usar o Dokimos.
+        </p>
+
+        <!-- Decorative illustration of a locked form -->
+        <div class="ilu" aria-hidden="true">
+          <div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Novo pedido</div>
+          <div class="ilu-row">
+            <div class="ilu-dot"></div>
+            <div class="ilu-line" style="width:60%"></div>
+          </div>
+          <div class="ilu-row">
+            <div class="ilu-dot"></div>
+            <div class="ilu-line" style="width:40%"></div>
+          </div>
+          <div style="margin-top:6px;display:flex;gap:6px">
+            <div style="flex:1;height:28px;border-radius:5px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;padding:0 8px;gap:6px">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--muted)"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg>
+              <div style="height:6px;border-radius:3px;background:var(--border);width:60%"></div>
+            </div>
+            <div style="width:90px;height:28px;border-radius:5px;background:var(--border);display:flex;align-items:center;justify-content:center">
+              <div style="height:6px;width:50px;border-radius:3px;background:var(--muted);opacity:.4"></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:28px">
+          <a class="empty-cta" href="#">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            Cadastrar obra
+          </a>
+        </div>
+
+        <p class="empty-hint">
+          Precisa de ajuda?
+          <a href="#">Veja o guia de configuração inicial</a>
+          ou fale com o suporte.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

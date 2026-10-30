@@ -1,0 +1,31 @@
+# dependências
+node_modules/
+
+# código gerado
+apps/api/prisma/generated/
+
+# build
+dist/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# ambiente
+.env
+.env.*
+!.env.example
+
+# testes
+coverage/
+test-results/
+playwright-report/
+
+# editor / sistema
+*.pem
+.vercel
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+*.log

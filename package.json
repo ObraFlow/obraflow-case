@@ -1,0 +1,26 @@
+{
+  "name": "obraflow-case",
+  "private": true,
+  "description": "Desafio ObraFlow — Dokimos: pedidos de compra com aprovação por alçada",
+  "packageManager": "pnpm@11.16.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "dev:api": "pnpm --filter @obraflow/api start:dev",
+    "test:api": "pnpm --filter @obraflow/api test",
+    "db:migrate": "pnpm --filter @obraflow/api db:migrate",
+    "db:seed": "pnpm --filter @obraflow/api db:seed",
+    "test:api:e2e": "pnpm --filter @obraflow/api test:e2e",
+    "dev:web": "pnpm --filter @obraflow/web dev",
+    "test:web": "pnpm --filter @obraflow/web test",
+    "test:web:e2e": "pnpm --filter @obraflow/web test:e2e",
+    "test": "pnpm test:api && pnpm test:web"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.10",
+    "prettier-plugin-tailwindcss": "^0.8.1"
+  }
+}

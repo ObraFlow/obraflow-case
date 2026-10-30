@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Novo Pedido · Erros — ObraFlow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{--bg:#f4f4f5;--surface:#fff;--surface2:#f9fafb;--border:#e4e4e7;--border2:#f4f4f5;--text:#18181b;--text2:#3f3f46;--muted:#71717a;--sb:#18181b;--sb-border:#27272a;--sb-txt:#a1a1aa;--sb-active:#27272a;--sb-atxt:#fafafa;--accent:#d97706;--accent-h:#b45309;--accent-lt:#fef3c7;--accent-bd:#fde68a;--accent-dk:#92400e;--err:#dc2626;--err-lt:#fee2e2;}
+@media(prefers-color-scheme:dark){:root{--bg:#09090b;--surface:#18181b;--surface2:#27272a;--border:#27272a;--border2:#3f3f46;--text:#fafafa;--text2:#d4d4d8;--muted:#a1a1aa;--sb:#09090b;--sb-border:#18181b;--sb-txt:#71717a;--sb-active:#18181b;--sb-atxt:#fafafa;--err-lt:#3b0d0d;}}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+a{color:var(--accent)}a:hover{color:var(--accent-h)}
+.app{display:flex;min-height:100vh}
+.sb{width:240px;flex-shrink:0;background:var(--sb);display:flex;flex-direction:column}
+.sb-logo{padding:18px 16px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--sb-border)}
+.logo-mark{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;flex-shrink:0}
+.logo-txt{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.2px}
+.sb-nav{padding:10px 8px;flex:1}
+.nav-a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--sb-txt);font-size:13.5px;font-weight:500;cursor:pointer;text-decoration:none;margin-bottom:2px}
+.nav-a:hover:not(.active){background:#232326;color:#d4d4d8}
+.nav-a.active{background:var(--sb-active);color:var(--sb-atxt)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+.pg-title{font-size:15px;font-weight:600;color:var(--text)}
+.viewing{display:flex;align-items:center;gap:8px}
+.viewing-lbl{font-size:12.5px;color:var(--muted)}
+.user-sel{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:13px;font-weight:500;color:var(--text);cursor:pointer}
+.av{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.content{flex:1;padding:28px;overflow-y:auto}
+.ci{display:flex;gap:24px;align-items:flex-start;max-width:1120px}
+.form-col{flex:1;display:flex;flex-direction:column;gap:16px;min-width:0}
+.summary-col{width:300px;flex-shrink:0;position:sticky;top:28px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.card-hd{padding:14px 20px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between}
+.card-ttl{font-size:13.5px;font-weight:600;color:var(--text)}
+.badge{font-size:12px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:2px 8px;font-weight:500}
+.card-bd{padding:20px}
+.fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 20px}
+.fg{display:flex;flex-direction:column;gap:4px}
+label{font-size:12.5px;font-weight:500;color:var(--text2)}
+.req{color:var(--accent)}
+.inp,.sel,.ta{width:100%;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:13.5px;color:var(--text);background:var(--surface);outline:none;transition:border .15s,box-shadow .15s}
+.inp,.sel{height:36px;padding:0 10px}
+.sel{appearance:auto}
+.ta{padding:8px 10px;resize:vertical;min-height:60px}
+.inp:focus,.sel:focus,.ta:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,119,6,.12)}
+.inp.err,.sel.err{border-color:var(--err);box-shadow:0 0 0 3px rgba(220,38,38,.09)}
+.errmsg{font-size:11.5px;color:var(--err);margin-top:2px;display:flex;align-items:center;gap:3px}
+.cw{position:relative}
+.cw .inp{padding-right:32px}
+.cw-icon{position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:0 6px 10px;white-space:nowrap}
+.tbl th.r{text-align:right}
+.tbl td{padding:4px 4px;vertical-align:top}
+.tbl tbody tr+tr td{padding-top:7px}
+.ii{border:1px solid var(--border);border-radius:6px;padding:0 8px;height:34px;font-family:inherit;font-size:13px;color:var(--text);background:var(--surface);width:100%;outline:none}
+.ii:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(217,119,6,.12)}
+.ii.err{border-color:var(--err);box-shadow:0 0 0 2px rgba(220,38,38,.1)}
+.isel{border:1px solid var(--border);border-radius:6px;padding:0 6px;height:34px;font-family:inherit;font-size:13px;color:var(--text);background:var(--surface);width:100%;outline:none;appearance:auto}
+.itotal{font-size:13px;font-weight:500;color:var(--text);font-variant-numeric:tabular-nums;text-align:right;padding:0 10px;height:34px;display:flex;align-items:center;justify-content:flex-end;background:var(--surface2);border:1px solid var(--border);border-radius:6px;white-space:nowrap}
+.itotal.dash{color:var(--muted);font-weight:400}
+.rm-btn{width:30px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:6px;color:var(--muted);cursor:pointer;border:none;background:transparent}
+.rm-btn:hover{background:var(--err-lt);color:var(--err)}
+.items-footer{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:14px;border-top:1px solid var(--border2)}
+.add-btn{display:flex;align-items:center;gap:6px;color:var(--accent);font-size:13px;font-weight:500;cursor:pointer;border:none;background:transparent;font-family:inherit;padding:0}
+.add-btn:hover{color:var(--accent-h)}
+.ierr{font-size:11px;color:var(--err);margin-top:2px;white-space:nowrap}
+.sm-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.sm-hd{padding:14px 20px;border-bottom:1px solid var(--border2)}
+.sm-bd{padding:20px;display:flex;flex-direction:column;gap:18px}
+.tot-lbl{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.tot-amt{font-size:32px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-.5px;line-height:1.1;margin-top:4px}
+.tot-amt.dash{color:var(--muted);font-size:24px}
+.tot-sub{font-size:12.5px;color:var(--muted);margin-top:4px}
+.div{height:1px;background:var(--border2)}
+.chain-lbl{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.chain-hint{font-size:12.5px;color:var(--muted);font-style:italic}
+.sub-btn{width:100%;height:40px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.sub-btn:disabled{background:var(--border);color:var(--muted);cursor:not-allowed}
+.pend-list{list-style:none;padding:0;margin:10px 0 0;display:flex;flex-direction:column;gap:4px}
+.pend-li{display:flex;align-items:flex-start;gap:6px;font-size:12px;color:var(--muted);line-height:1.4}
+.pend-dot{color:var(--err);font-weight:900;flex-shrink:0;font-size:14px;line-height:1}
+</style>
+</helmet>
+
+<div class="app">
+  <aside class="sb" aria-label="Navegação">
+    <div class="sb-logo">
+      <div class="logo-mark" aria-hidden="true">O</div>
+      <span class="logo-txt">ObraFlow</span>
+    </div>
+    <nav class="sb-nav" aria-label="Menu principal">
+      <a class="nav-a" href="#">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg>
+        Pedidos
+      </a>
+      <a class="nav-a active" href="#" aria-current="page">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        Novo pedido
+      </a>
+      <a class="nav-a" href="#">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Alçadas
+      </a>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <span class="pg-title">Novo pedido</span>
+      <div class="viewing">
+        <span class="viewing-lbl">Visualizando como</span>
+        <div class="user-sel">
+          <div class="av" aria-hidden="true">BL</div>
+          Beatriz Lima
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="ci">
+        <div class="form-col">
+
+          <!-- Dados gerais — Fornecedor vazio -->
+          <div class="card">
+            <div class="card-hd"><span class="card-ttl">Dados gerais</span></div>
+            <div class="card-bd">
+              <div class="fgrid">
+                <div class="fg">
+                  <label for="obra">Obra <span class="req">*</span></label>
+                  <select class="sel" id="obra">
+                    <option selected>Edifício Maré</option>
+                    <option>Residencial Sol Nascente</option>
+                  </select>
+                </div>
+                <div class="fg">
+                  <label for="forn">Fornecedor <span class="req">*</span></label>
+                  <div class="cw">
+                    <input class="inp err" id="forn" type="text" value="" placeholder="Buscar fornecedor…" autocomplete="off" aria-invalid="true" aria-describedby="forn-err">
+                    <svg class="cw-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                  </div>
+                  <span class="errmsg" id="forn-err" role="alert">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                    Selecione um fornecedor
+                  </span>
+                </div>
+                <div class="fg">
+                  <label for="data">Data do pedido <span class="req">*</span></label>
+                  <input class="inp" id="data" type="date" value="2026-10-21">
+                </div>
+                <div class="fg">
+                  <label for="obs">Observações internas</label>
+                  <textarea class="ta" id="obs" placeholder="Justifique a compra ou adicione informações para os aprovadores…"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Itens — erros nas linhas 2 e 3 -->
+          <div class="card">
+            <div class="card-hd">
+              <span class="card-ttl">Itens do pedido</span>
+              <span class="badge">3 itens</span>
+            </div>
+            <div class="card-bd" style="padding:16px 20px">
+              <div class="tbl-wrap">
+                <table class="tbl" aria-label="Itens do pedido">
+                  <thead>
+                    <tr>
+                      <th style="text-align:left;width:34%">Descrição</th>
+                      <th class="r" style="width:12%">Qtd.</th>
+                      <th style="width:9%">Un.</th>
+                      <th class="r" style="width:14%">Preço unit.</th>
+                      <th class="r" style="width:16%">Total</th>
+                      <th style="width:30px"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Item 1: válido -->
+                    <tr>
+                      <td><input class="ii" type="text" value="Cimento CP-II 50kg" aria-label="Descrição, item 1"></td>
+                      <td><input class="ii" type="number" value="100" style="text-align:right" aria-label="Quantidade, item 1"></td>
+                      <td><select class="isel" aria-label="Un., item 1"><option selected>un</option><option>kg</option><option>m</option><option>m²</option><option>m³</option><option>h</option><option>sc</option><option>l</option></select></td>
+                      <td><input class="ii" type="text" value="32,00" style="text-align:right;font-variant-numeric:tabular-nums" aria-label="Preço, item 1"></td>
+                      <td><div class="itotal">R$&nbsp;3.200,00</div></td>
+                      <td><button class="rm-btn" aria-label="Remover item 1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></td>
+                    </tr>
+                    <!-- Item 2: quantidade negativa -->
+                    <tr>
+                      <td><input class="ii" type="text" value="Areia média" aria-label="Descrição, item 2"></td>
+                      <td>
+                        <div>
+                          <input class="ii err" type="number" value="-5" style="text-align:right" aria-label="Quantidade, item 2" aria-invalid="true" aria-describedby="qty2-err">
+                          <div class="ierr" id="qty2-err" role="alert">Deve ser &gt; 0</div>
+                        </div>
+                      </td>
+                      <td><select class="isel" aria-label="Un., item 2"><option>un</option><option>kg</option><option>m</option><option>m²</option><option selected>m³</option><option>h</option><option>sc</option><option>l</option></select></td>
+                      <td><input class="ii" type="text" value="145,00" style="text-align:right;font-variant-numeric:tabular-nums" aria-label="Preço, item 2"></td>
+                      <td><div class="itotal dash">—</div></td>
+                      <td><button class="rm-btn" aria-label="Remover item 2"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></td>
+                    </tr>
+                    <!-- Item 3: preço inválido -->
+                    <tr>
+                      <td><input class="ii" type="text" value="Vergalhão CA-50 10mm" aria-label="Descrição, item 3"></td>
+                      <td><input class="ii" type="number" value="300" style="text-align:right" aria-label="Quantidade, item 3"></td>
+                      <td><select class="isel" aria-label="Un., item 3"><option>un</option><option>kg</option><option selected>m</option><option>m²</option><option>m³</option><option>h</option><option>sc</option><option>l</option></select></td>
+                      <td>
+                        <div>
+                          <input class="ii err" type="text" value="abc" style="text-align:right" aria-label="Preço, item 3" aria-invalid="true" aria-describedby="preco3-err">
+                          <div class="ierr" id="preco3-err" role="alert">Preço inválido</div>
+                        </div>
+                      </td>
+                      <td><div class="itotal dash">—</div></td>
+                      <td><button class="rm-btn" aria-label="Remover item 3"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="items-footer">
+                <button class="add-btn">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                  Adicionar item
+                </button>
+                <div style="text-align:right">
+                  <div style="font-size:11.5px;color:var(--muted);font-weight:500">Total parcial</div>
+                  <div style="font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--muted);letter-spacing:-.3px">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUMMARY: disabled + pending list -->
+        <div class="summary-col">
+          <div class="sm-card">
+            <div class="sm-hd"><span class="card-ttl">Resumo do pedido</span></div>
+            <div class="sm-bd">
+              <div>
+                <div class="tot-lbl">Total do pedido</div>
+                <div class="tot-amt dash">—</div>
+                <div class="tot-sub">Corrija os erros para calcular</div>
+              </div>
+              <div class="div"></div>
+              <div>
+                <div class="chain-lbl">Cadeia de aprovação</div>
+                <div class="chain-hint">Disponível após corrigir os erros</div>
+              </div>
+              <div class="div"></div>
+              <div>
+                <button class="sub-btn" disabled aria-disabled="true">Cadastrar pedido</button>
+                <ul class="pend-list" aria-label="Pendências">
+                  <li class="pend-li"><span class="pend-dot" aria-hidden="true">·</span>Selecione um fornecedor</li>
+                  <li class="pend-li"><span class="pend-dot" aria-hidden="true">·</span>Item 2: quantidade deve ser maior que zero</li>
+                  <li class="pend-li"><span class="pend-dot" aria-hidden="true">·</span>Item 3: preço unitário inválido</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Pedidos · Toast aprovado — ObraFlow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#f4f4f5;--surface:#fff;--surface2:#f9fafb;
+  --border:#e4e4e7;
+  --text:#18181b;--text2:#3f3f46;--muted:#71717a;
+  --sb:#18181b;--sb-border:#27272a;--sb-txt:#a1a1aa;--sb-active:#27272a;--sb-atxt:#fafafa;
+  --accent:#d97706;--accent-lt:#fef3c7;--accent-bd:#fde68a;--accent-dk:#92400e;
+  --err:#dc2626;--err-lt:#fee2e2;--err-bd:#fca5a5;--err-dk:#991b1b;
+  --green:#16a34a;--green-lt:#dcfce7;--green-bd:#86efac;--green-dk:#14532d;
+  --amber:#d97706;--amber-lt:#fef3c7;--amber-bd:#fde68a;--amber-dk:#92400e;
+  --blue:#2563eb;--blue-lt:#eff6ff;--blue-bd:#bfdbfe;--blue-dk:#1e40af;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#09090b;--surface:#18181b;--surface2:#27272a;--border:#27272a;
+  --text:#fafafa;--text2:#d4d4d8;--muted:#a1a1aa;
+  --sb:#09090b;--sb-border:#18181b;--sb-txt:#71717a;--sb-active:#18181b;--sb-atxt:#fafafa;
+  --accent-lt:#2d1a00;--accent-bd:#78350f;--accent-dk:#fbbf24;
+  --green-lt:#052e16;--green-bd:#166534;--green-dk:#4ade80;
+  --amber-lt:#2d1a00;--amber-bd:#78350f;--amber-dk:#fbbf24;
+  --blue-lt:#0f1e3d;--blue-bd:#1e3a6e;--blue-dk:#93c5fd;
+}}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.app{display:flex;min-height:100vh;position:relative}
+.sb{width:240px;flex-shrink:0;background:var(--sb);display:flex;flex-direction:column}
+.sb-logo{padding:18px 16px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--sb-border)}
+.logo-mark{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff}
+.logo-txt{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.2px}
+.sb-nav{padding:10px 8px;flex:1}
+.nav-a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--sb-txt);font-size:13.5px;font-weight:500;cursor:pointer;text-decoration:none;margin-bottom:2px}
+.nav-a.active{background:var(--sb-active);color:var(--sb-atxt)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+.pg-title{font-size:15px;font-weight:600}
+.user-sel{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:13px;font-weight:500}
+.av{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.content{flex:1;padding:24px;overflow-y:auto;display:flex;flex-direction:column;gap:16px}
+.screen-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:2px}
+/* Filters */
+.filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.filter-tabs{display:flex;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px}
+.filter-tab{padding:5px 14px;border-radius:6px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:transparent;font-family:inherit;white-space:nowrap}
+.filter-tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1),0 0 0 1px var(--border)}
+.search{display:flex;align-items:center;gap:7px;height:36px;padding:0 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--muted);font-size:13.5px;flex:1;max-width:260px}
+.search input{border:none;background:none;font-family:inherit;font-size:13.5px;color:var(--text);width:100%}
+.search input:focus{outline:none}
+.btn-sm{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap}
+/* Table */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{padding:10px 16px;font-size:12px;font-weight:600;color:var(--muted);text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surface2)}
+.tbl td{padding:13px 16px;font-size:13.5px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr.highlight-row td{background:#f0fdf4}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:5px;font-size:12px;font-weight:600;white-space:nowrap}
+.badge-pending{background:var(--amber-lt);color:var(--amber-dk)}
+.badge-approved{background:var(--green-lt);color:var(--green-dk)}
+.badge-rejected{background:var(--err-lt);color:var(--err-dk)}
+.badge-review{background:var(--blue-lt);color:var(--blue-dk)}
+/* Approver dots */
+.ap-dots{display:flex;gap:-4px}
+.ap-dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--surface);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;margin-left:-6px}
+.ap-dot:first-child{margin-left:0}
+.ap-dot.done{background:var(--green)}
+.ap-dot.wait{background:var(--muted)}
+/* Toast */
+.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:200}
+.toast{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:10px;box-shadow:0 4px 24px rgba(0,0,0,.14);max-width:360px;min-width:280px}
+.toast-icon{width:22px;height:22px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.toast-body{flex:1;min-width:0}
+.toast-title{font-size:13.5px;font-weight:600;color:var(--text)}
+.toast-desc{font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.4}
+.toast-close{color:var(--muted);cursor:pointer;flex-shrink:0;line-height:1;margin-top:2px;background:none;border:none;padding:0;font-size:16px}
+</style>
+</helmet>
+
+<div class="app">
+  <aside class="sb" aria-label="Navegação">
+    <div class="sb-logo">
+      <div class="logo-mark" aria-hidden="true">O</div>
+      <span class="logo-txt">ObraFlow</span>
+    </div>
+    <nav class="sb-nav">
+      <a class="nav-a active" href="#" aria-current="page">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg>
+        Pedidos
+      </a>
+      <a class="nav-a" href="#">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        Novo pedido
+      </a>
+      <a class="nav-a" href="#">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Alçadas
+      </a>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <span class="pg-title">Pedidos</span>
+      <div class="user-sel">
+        <div class="av" aria-hidden="true">AC</div>
+        Amanda Costa
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+    </header>
+
+    <div class="content">
+      <p class="screen-lbl">k) Toast — Pedido aprovado</p>
+
+      <!-- Filters -->
+      <div class="filters">
+        <div class="filter-tabs" role="tablist">
+          <button class="filter-tab" role="tab">Todos</button>
+          <button class="filter-tab active" role="tab" aria-selected="true">Aguardando minha aprovação</button>
+          <button class="filter-tab" role="tab">Aprovados</button>
+          <button class="filter-tab" role="tab">Rejeitados</button>
+        </div>
+        <div class="search" role="search">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="search" placeholder="Buscar pedido ou obra…" aria-label="Buscar pedido">
+        </div>
+        <button class="btn-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
+          Filtros
+        </button>
+      </div>
+
+      <!-- Pedidos table -->
+      <div class="card">
+        <table class="tbl" aria-label="Lista de pedidos">
+          <thead>
+            <tr>
+              <th>Pedido</th>
+              <th>Obra</th>
+              <th>Solicitante</th>
+              <th style="text-align:right">Valor</th>
+              <th>Data</th>
+              <th>Status</th>
+              <th>Aprovadores</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="highlight-row">
+              <td><span style="font-weight:600">#8</span></td>
+              <td>Edifício Maré</td>
+              <td style="color:var(--text2)">Beatriz Lima</td>
+              <td style="text-align:right;font-variant-numeric:tabular-nums;font-weight:600">R$&nbsp;8.500,00</td>
+              <td style="color:var(--muted);white-space:nowrap">21 out 2026</td>
+              <td><span class="badge badge-approved">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                Aprovado
+              </span></td>
+              <td>
+                <div class="ap-dots">
+                  <div class="ap-dot done" title="João Ribeiro" style="background:var(--green)">JR</div>
+                  <div class="ap-dot done" title="Amanda Costa (você)" style="background:var(--green)">AC</div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><span style="font-weight:600">#9</span></td>
+              <td>Res. Sol Nascente</td>
+              <td style="color:var(--text2)">Beatriz Lima</td>
+              <td style="text-align:right;font-variant-numeric:tabular-nums;font-weight:600">R$&nbsp;23.000,00</td>
+              <td style="color:var(--muted);white-space:nowrap">21 out 2026</td>
+              <td><span class="badge badge-pending">Aguardando</span></td>
+              <td>
+                <div class="ap-dots">
+                  <div class="ap-dot done" title="João Ribeiro" style="background:var(--green)">JR</div>
+                  <div class="ap-dot wait" title="Amanda Costa (aguardando)" style="background:var(--amber)">AC</div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><span style="font-weight:600">#10</span></td>
+              <td>Edifício Maré</td>
+              <td style="color:var(--text2)">Beatriz Lima</td>
+              <td style="text-align:right;font-variant-numeric:tabular-nums;font-weight:600">R$&nbsp;4.200,00</td>
+              <td style="color:var(--muted);white-space:nowrap">20 out 2026</td>
+              <td><span class="badge badge-review">Em análise</span></td>
+              <td>
+                <div class="ap-dots">
+                  <div class="ap-dot wait" title="João Ribeiro (aguardando)" style="background:var(--amber)">JR</div>
+                  <div class="ap-dot wait" title="Amanda Costa (aguardando)" style="background:var(--muted)">AC</div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><span style="font-weight:600">#11</span></td>
+              <td>Torre das Artes</td>
+              <td style="color:var(--text2)">João Ribeiro</td>
+              <td style="text-align:right;font-variant-numeric:tabular-nums;font-weight:600">R$&nbsp;67.000,00</td>
+              <td style="color:var(--muted);white-space:nowrap">19 out 2026</td>
+              <td><span class="badge badge-rejected">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                Rejeitado
+              </span></td>
+              <td>
+                <div class="ap-dots">
+                  <div class="ap-dot done" title="João Ribeiro" style="background:var(--green)">JR</div>
+                  <div class="ap-dot" title="Amanda Costa — rejeitado" style="background:var(--err)">AC</div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><span style="font-weight:600">#12</span></td>
+              <td>Res. Sol Nascente</td>
+              <td style="color:var(--text2)">João Ribeiro</td>
+              <td style="text-align:right;font-variant-numeric:tabular-nums;font-weight:600">R$&nbsp;15.300,00</td>
+              <td style="color:var(--muted);white-space:nowrap">19 out 2026</td>
+              <td><span class="badge badge-pending">Aguardando</span></td>
+              <td>
+                <div class="ap-dots">
+                  <div class="ap-dot wait" title="Amanda Costa (aguardando)" style="background:var(--amber)">AC</div>
+                  <div class="ap-dot wait" title="Carlos Mendes (aguardando)" style="background:var(--muted)">CM</div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12.5px;color:var(--muted)">5 pedidos · mostrando 1–5</span>
+        <div style="display:flex;gap:4px">
+          <button class="btn-sm" disabled style="opacity:.4">← Anterior</button>
+          <button class="btn-sm" disabled style="opacity:.4">Próximo →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast de sucesso -->
+<div class="toast-wrap" role="status" aria-live="polite" aria-atomic="true">
+  <div class="toast">
+    <div class="toast-icon" aria-hidden="true">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>
+    </div>
+    <div class="toast-body">
+      <div class="toast-title">Pedido #8 aprovado</div>
+      <div class="toast-desc">Notificação enviada ao solicitante</div>
+    </div>
+    <button class="toast-close" aria-label="Fechar notificação">×</button>
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>

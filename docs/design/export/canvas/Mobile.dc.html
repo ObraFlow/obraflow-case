@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Novo Pedido — ObraFlow Mobile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#f4f4f5;--surface:#fff;--surface2:#f9fafb;
+  --border:#e4e4e7;--border2:#f4f4f5;
+  --text:#18181b;--text2:#3f3f46;--muted:#71717a;
+  --sb:#18181b;
+  --accent:#d97706;--accent-h:#b45309;--accent-lt:#fef3c7;--accent-bd:#fde68a;--accent-dk:#92400e;
+  --err:#dc2626;--err-lt:#fee2e2;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#09090b;--surface:#18181b;--surface2:#27272a;
+    --border:#27272a;--border2:#3f3f46;
+    --text:#fafafa;--text2:#d4d4d8;--muted:#a1a1aa;
+    --err-lt:#3b0d0d;
+    --accent-lt:#2d1a00;--accent-bd:#78350f;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;display:flex;flex-direction:column;max-width:390px;margin:0 auto}
+/* Mobile topbar */
+.topbar{height:52px;background:var(--sb);display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;position:sticky;top:0;z-index:100}
+.hamburger{width:36px;height:36px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:transparent;border:none;cursor:pointer;padding:0;border-radius:8px}
+.ham-line{width:20px;height:2px;background:#d4d4d8;border-radius:1px}
+.pg-title{font-size:15px;font-weight:600;color:#fafafa}
+.av-btn{width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none}
+/* Scrollable content */
+.content{flex:1;overflow-y:auto;padding:16px 16px 100px;display:flex;flex-direction:column;gap:12px}
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.card-hd{padding:12px 16px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between}
+.card-ttl{font-size:13px;font-weight:600;color:var(--text)}
+.badge{font-size:11.5px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:2px 7px;font-weight:500}
+.card-bd{padding:14px 16px}
+/* Form */
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.fg:last-child{margin-bottom:0}
+label{font-size:12px;font-weight:500;color:var(--text2)}
+.req{color:var(--accent)}
+.inp,.sel,.ta{width:100%;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;color:var(--text);background:var(--surface);outline:none}
+.inp,.sel{height:40px;padding:0 12px}
+.sel{appearance:auto}
+.ta{padding:9px 12px;resize:none;min-height:64px}
+.inp:focus,.sel:focus,.ta:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,119,6,.12)}
+.cw{position:relative}
+.cw .inp{padding-right:36px}
+.cw-icon{position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted)}
+/* Item cards — stacked layout */
+.item-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;position:relative;margin-bottom:8px}
+.item-card:last-child{margin-bottom:0}
+.item-num{position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;background:var(--border);color:var(--muted);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.item-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.item-row.s1{grid-template-columns:1fr}
+.ii{border:1px solid var(--border);border-radius:6px;padding:0 10px;height:38px;font-family:inherit;font-size:14px;color:var(--text);background:var(--surface);width:100%;outline:none}
+.ii:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(217,119,6,.12)}
+.isel{border:1px solid var(--border);border-radius:6px;padding:0 8px;height:38px;font-family:inherit;font-size:14px;color:var(--text);background:var(--surface);width:100%;outline:none;appearance:auto}
+.if-lbl{font-size:11px;font-weight:500;color:var(--muted);margin-bottom:3px}
+.itotal-row{display:flex;align-items:center;justify-content:space-between;padding-top:6px;border-top:1px solid var(--border2)}
+.itotal-lbl{font-size:12px;color:var(--muted)}
+.itotal-val{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text)}
+.rm-item{display:flex;align-items:center;gap:5px;color:var(--err);font-size:12px;font-weight:500;cursor:pointer;border:none;background:transparent;font-family:inherit;padding:0;margin-top:2px;align-self:flex-end}
+.add-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:40px;border:1.5px dashed var(--border);border-radius:8px;color:var(--accent);font-size:13.5px;font-weight:500;cursor:pointer;background:transparent;font-family:inherit;margin-top:8px}
+.add-btn:hover{border-color:var(--accent);background:var(--accent-lt)}
+/* Sticky footer */
+.footer{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:390px;background:var(--surface);border-top:1px solid var(--border);padding:12px 16px;display:flex;flex-direction:column;gap:8px;z-index:100}
+.footer-tot{display:flex;align-items:center;justify-content:space-between}
+.footer-lbl{font-size:12px;color:var(--muted);font-weight:500}
+.footer-amt{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text);letter-spacing:-.3px}
+.sub-btn{width:100%;height:44px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit}
+.sub-btn:hover{background:var(--accent-h)}
+/* Chain row in footer */
+.chain-mini{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.chip-n-sm{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.chain-arr-sm{color:var(--border)}
+</style>
+</helmet>
+
+<div style="display:flex;flex-direction:column;min-height:100vh">
+  <!-- Top bar -->
+  <header class="topbar">
+    <button class="hamburger" aria-label="Abrir menu">
+      <div class="ham-line"></div>
+      <div class="ham-line"></div>
+      <div class="ham-line"></div>
+    </button>
+    <span class="pg-title">Novo pedido</span>
+    <button class="av-btn" aria-label="Beatriz Lima — opções">BL</button>
+  </header>
+
+  <!-- Scrollable content -->
+  <main class="content">
+
+    <!-- Dados gerais -->
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-ttl">Dados gerais</span>
+      </div>
+      <div class="card-bd">
+        <div class="fg">
+          <label for="obra">Obra <span class="req">*</span></label>
+          <select class="sel" id="obra">
+            <option value="">Selecione a obra…</option>
+            <option selected>Edifício Maré</option>
+            <option>Residencial Sol Nascente</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label for="forn">Fornecedor <span class="req">*</span></label>
+          <div class="cw">
+            <input class="inp" id="forn" type="text" value="Votorantim Cimentos" autocomplete="off">
+            <svg class="cw-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          </div>
+        </div>
+        <div class="fg">
+          <label for="data">Data do pedido <span class="req">*</span></label>
+          <input class="inp" id="data" type="date" value="2026-10-21">
+        </div>
+        <div class="fg" style="margin-bottom:0">
+          <label for="obs">Observações</label>
+          <textarea class="ta" id="obs" placeholder="Justifique a compra…"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Itens -->
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-ttl">Itens do pedido</span>
+        <span class="badge">3 itens</span>
+      </div>
+      <div class="card-bd">
+
+        <!-- Item 1 -->
+        <div class="item-card">
+          <div class="item-num">1</div>
+          <div class="item-row s1">
+            <div>
+              <div class="if-lbl">Descrição</div>
+              <input class="ii" type="text" value="Cimento CP-II 50kg" aria-label="Descrição, item 1">
+            </div>
+          </div>
+          <div class="item-row">
+            <div>
+              <div class="if-lbl">Qtd.</div>
+              <input class="ii" type="number" value="100" style="text-align:right" aria-label="Quantidade, item 1">
+            </div>
+            <div>
+              <div class="if-lbl">Unidade</div>
+              <select class="isel" aria-label="Unidade, item 1"><option selected>un</option><option>kg</option><option>m</option><option>m²</option><option>m³</option><option>h</option></select>
+            </div>
+          </div>
+          <div class="item-row s1">
+            <div>
+              <div class="if-lbl">Preço unitário</div>
+              <input class="ii" type="text" value="32,00" style="text-align:right;font-variant-numeric:tabular-nums" aria-label="Preço unitário, item 1">
+            </div>
+          </div>
+          <div class="itotal-row">
+            <span class="itotal-lbl">Total do item</span>
+            <span class="itotal-val">R$ 3.200,00</span>
+          </div>
+          <button class="rm-item" aria-label="Remover item 1">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            Remover
+          </button>
+        </div>
+
+        <!-- Item 2 -->
+        <div class="item-card">
+          <div class="item-num">2</div>
+          <div class="item-row s1">
+            <div>
+              <div class="if-lbl">Descrição</div>
+              <input class="ii" type="text" value="Areia média" aria-label="Descrição, item 2">
+            </div>
+          </div>
+          <div class="item-row">
+            <div>
+              <div class="if-lbl">Qtd.</div>
+              <input class="ii" type="number" value="12" style="text-align:right" aria-label="Quantidade, item 2">
+            </div>
+            <div>
+              <div class="if-lbl">Unidade</div>
+              <select class="isel" aria-label="Unidade, item 2"><option>un</option><option>kg</option><option>m</option><option>m²</option><option selected>m³</option><option>h</option></select>
+            </div>
+          </div>
+          <div class="item-row s1">
+            <div>
+              <div class="if-lbl">Preço unitário</div>
+              <input class="ii" type="text" value="145,00" style="text-align:right;font-variant-numeric:tabular-nums" aria-label="Preço unitário, item 2">
+            </div>
+          </div>
+          <div class="itotal-row">
+            <span class="itotal-lbl">Total do item</span>
+            <span class="itotal-val">R$ 1.740,00</span>
+          </div>
+          <button class="rm-item" aria-label="Remover item 2">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            Remover
+          </button>
+        </div>
+
+        <!-- Item 3 -->
+        <div class="item-card">
+          <div class="item-num">3</div>
+          <div class="item-row s1">
+            <div>
+              <div class="if-lbl">Descrição</div>
+              <input class="ii" type="text" value="Vergalhão CA-50 10mm" aria-label="Descrição, item 3">
+            </div>
+          </div>
+          <div class="item-row">
+            <div>
+              <div class="if-lbl">Qtd.</div>
+              <input class="ii" type="number" value="300" style="text-align:right" aria-label="Quantidade, item 3">
+            </div>
+            <div>
+              <div class="if-lbl">Unidade</div>
+              <select class="isel" aria-label="Unidade, item 3"><option>un</option><option>kg</option><option selected>m</option><option>m²</option><option>m³</option><option>h</option></select>
+            </div>
+          </div>
+          <div class="item-row s1">
+            <div>
+              <div class="if-lbl">Preço unitário</div>
+              <input class="ii" type="text" value="25,20" style="text-align:right;font-variant-numeric:tabular-nums" aria-label="Preço unitário, item 3">
+            </div>
+          </div>
+          <div class="itotal-row">
+            <span class="itotal-lbl">Total do item</span>
+            <span class="itotal-val">R$ 7.560,00</span>
+          </div>
+          <button class="rm-item" aria-label="Remover item 3">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            Remover
+          </button>
+        </div>
+
+        <!-- Add item -->
+        <button class="add-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          Adicionar item
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Sticky footer with total + chain + button -->
+  <div class="footer">
+    <div class="footer-tot">
+      <span class="footer-lbl">Total · 3 itens</span>
+      <span class="footer-amt">R$ 12.500,00</span>
+    </div>
+    <!-- Approval chain compact -->
+    <div class="chain-mini" aria-label="Cadeia de aprovação">
+      <div class="chip-n-sm">①</div>
+      <span style="color:var(--text2);font-weight:500;font-size:12px">João Ribeiro</span>
+      <span class="chain-arr-sm" aria-hidden="true">→</span>
+      <div class="chip-n-sm">②</div>
+      <span style="color:var(--text2);font-weight:500;font-size:12px">Amanda Costa</span>
+    </div>
+    <button class="sub-btn">Cadastrar pedido</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

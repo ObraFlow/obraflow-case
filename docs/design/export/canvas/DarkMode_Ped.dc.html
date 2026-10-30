@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Pedidos · Modo escuro — ObraFlow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Dark mode forced — sem dependência de @media */
+:root{
+  --bg:#09090b;--surface:#18181b;--surface2:#27272a;
+  --border:#27272a;
+  --text:#fafafa;--text2:#d4d4d8;--muted:#a1a1aa;
+  --sb:#09090b;--sb-border:#18181b;--sb-txt:#71717a;--sb-active:#18181b;--sb-atxt:#fafafa;
+  --accent:#d97706;--accent-lt:#2d1a00;--accent-bd:#78350f;--accent-dk:#fbbf24;
+  --err:#dc2626;--err-lt:#3b0d0d;--err-bd:#991b1b;--err-dk:#f87171;
+  --green:#16a34a;--green-lt:#052e16;--green-bd:#166534;--green-dk:#4ade80;
+  --amber:#d97706;--amber-lt:#2d1a00;--amber-bd:#78350f;--amber-dk:#fbbf24;
+  --blue:#2563eb;--blue-lt:#0f1e3d;--blue-bd:#1e3a6e;--blue-dk:#93c5fd;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.app{display:flex;min-height:100vh;position:relative}
+.sb{width:240px;flex-shrink:0;background:var(--sb);display:flex;flex-direction:column}
+.sb-logo{padding:18px 16px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--sb-border)}
+.logo-mark{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff}
+.logo-txt{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.2px}
+.sb-nav{padding:10px 8px;flex:1}
+.nav-a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--sb-txt);font-size:13.5px;font-weight:500;cursor:pointer;text-decoration:none;margin-bottom:2px}
+.nav-a.active{background:var(--sb-active);color:var(--sb-atxt)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+.pg-title{font-size:15px;font-weight:600}
+.user-sel{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:13px;font-weight:500}
+.av{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.content{flex:1;padding:24px;overflow-y:auto;display:flex;flex-direction:column;gap:16px}
+.screen-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:2px}
+/* Filters */
+.filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.filter-tabs{display:flex;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px}
+.filter-tab{padding:5px 14px;border-radius:6px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:transparent;font-family:inherit}
+.filter-tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.4),0 0 0 1px var(--border)}
+.search{display:flex;align-items:center;gap:7px;height:36px;padding:0 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--muted);font-size:13.5px;flex:1;max-width:260px}
+.search input{border:none;background:none;font-family:inherit;font-size:13.5px;color:var(--text);width:100%}
+.search input::placeholder{color:var(--muted)}
+.search input:focus{outline:none}
+.btn-sm{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-family:inherit;font-size:13px;font-weight:500;cursor:pointer}
+/* Table */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{padding:10px 16px;font-size:12px;font-weight:600;color:var(--muted);text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surface2)}
+.tbl td{padding:13px 16px;font-size:13.5px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(255,255,255,.03)}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:5px;font-size:12px;font-weight:600;white-space:nowrap}
+.badge-pending{background:var(--amber-lt);color:var(--amber-dk)}
+.badge-approved{background:var(--green-lt);color:var(--green-dk)}
+.badge-rejected{background:var(--err-lt);color:var(--err-dk)}
+.badge-review{background:var(--blue-lt);color:var(--blue-dk)}
+.badge-mine{background:var(--accent-lt);color:var(--accent-dk);border:1px solid var(--accent-bd)}
+/* Approver dots */
+.ap-dots{display:flex}
+.ap-dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--surface);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;margin-left:-6px}
+.ap-dot:first-child{margin-left:0}
+/* Dark-mode moon badge */
+.dark-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:5px;background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.25);color:#93c5fd;font-size:11.5px;font-weight:600}
+/* Stats row */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
+.stat-num{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.stat-lbl{font-size:12px;color:var(--muted);margin-top:2px}
+</style>
+</helmet>
+
+<div class="app">
+  <aside class="sb" aria-label="Navegação">
+    <div class="sb-logo">
+      <div class="logo-mark" aria-hidden="true">O</div>
+      <span class="logo-txt">ObraFlow</span>
+    </div>
+    <nav class="sb-nav">
+      <a class="nav-a active" href="#" aria-current="page">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg>
+        Pedidos
+      </a>
+      <a class="nav-a" href="#">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        Novo pedido
+      </a>
+      <a class="nav-a" href="#">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Alçadas
+      </a>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="pg-title">Pedidos</span>
+        <span class="dark-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          Modo escuro
+        </span>
+      </div>
+      <div class="user-sel">
+        <div class="av" aria-hidden="true">AC</div>
+        Amanda Costa
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+    </header>
+
+    <div class="content">
+      <p class="screen-lbl">l) Modo escuro — lista de pedidos</p>
+
+      <!-- KPI stats -->
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-num" style="color:var(--amber-dk)">3</div>
+          <div class="stat-lbl">Aguardando minha aprovação</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" style="color:var(--green-dk)">12</div>
+          <div class="stat-lbl">Aprovados este mês</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" style="color:var(--err-dk)">1</div>
+          <div class="stat-lbl">Rejeitados este mês</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" style="color:var(--text)">R$&nbsp;148k</div>
+          <div class="stat-lbl">Volume aprovado em outubro</div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters">
+        <div class="filter-tabs" role="tablist">
+          <button class="filter-tab" role="tab">Todos</button>
+          <button class="filter-tab active" role="tab" aria-selected="true">Aguardando minha aprovação</button>
+          <button class="filter-tab" role="tab">Aprovados</button>
+          <button class="filter-tab" role="tab">Rejeitados</button>
+        </div>
+        <div class="search" role="search">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="search" placeholder="Buscar pedido ou obra…" aria-label="Buscar pedido">
+        </div>
+        <button class="btn-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
+          Filtros
+        </button>
+      </div>
+
+      <!-- Pedidos table -->
+      <div class="card">
+        <table class="tbl" aria-label="Lista de pedidos — modo escuro">
+          <thead>
+            <tr>
+              <th>Pedido</th>
+              <th>Obra</th>
+              <th>Solicitante</th>
+              <th style="text-align:right">Valor</th>
+              <th>Data</th>
+              <th>Status</th>
+              <th>Aprovadores</th>
+              <th style="width:100px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span style="font-weight:600">#9</span></td>
+              <td>Res. Sol Nascente</td>
+              <td style="color:var(--text2)">Beatriz Lima</td>
+              <td style="text-align:right;font-variant-numeric:tabular-nums;font-weight:600">R$&nbsp;23.000,00</td>
+              <td style="color:var(--muted);white-space:nowrap">21 out</td>
+              <td>
+                <span class="badge badge-mine">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                  Aguardando você
+                </span>
+              </td>
+              <td>
+                <div class="ap-dots">
+                  <div class="ap-dot" title="João Ribeiro — aprovado" style="background:var(--green)">JR</div>
+                  <div class="ap-dot" title="Amanda Costa — aguardando" style="background:var(--amber)">AC</div>
+                </div>
+              </td>
+              <td style="text-align:right">
+                <div style="display:flex;gap:6px;justify-content:flex-end">
+                  <button style="height:30px;padding:0 12px;border-radius:6px;border:none;background:var(--green);color:#fff;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer">Aprovar</button>
+                  <button style="height:30px;padding:0 12px;border-radius:6px;border:1px solid var(--err-bd);background:transparent;color:var(--err-dk);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer">Rejeitar</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><span style="font-weight:600">#12</span></td>
+              <td>Res. Sol Nascente</td>
+              <td style="color:var(--text2)">João Ribeiro</td>
+              <td style="text-align:right;font-variant-numeric:tabular-nums;font-weight:600">R$&nbsp;15.300,00</td>
+              <td style="color:var(--muted);white-space:nowrap">19 out</td>
+              <td>
+                <span class="badge badge-mine">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                  Aguardando você
+                </span>
+              </td>
+              <td>
+                <div class="ap-dots">
+                  <div class="ap-dot" title="Amanda Costa — aguardando" style="background:var(--amber)">AC</div>
+                  <div class="ap-dot" title="Carlos Mendes — aguardando" style="background:#3f3f46">CM</div>
+                </div>
+              </td>
+              <td style="text-align:right">
+                <div style="display:flex;gap:6px;justify-content:flex-end">
+                  <button style="height:30px;padding:0 12px;border-radius:6px;border:none;background:var(--green);color:#fff;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer">Aprovar</button>
+                  <button style="height:30px;padding:0 12px;border-radius:6px;border:1px solid var(--err-bd);background:transparent;color:var(--err-dk);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer">Rejeitar</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><span style="font-weight:600">#13</span></td>
+              <td>Edifício Maré</td>
+              <td style="color:var(--text2)">Beatriz Lima</td>
+              <td style="text-align:right;font-variant-numeric:tabular-nums;font-weight:600">R$&nbsp;23.000,00</td>
+              <td style="color:var(--muted);white-space:nowrap">21 out</td>
+              <td>
+                <span class="badge badge-mine">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                  Aguardando você
+                </span>
+              </td>
+              <td>
+                <div class="ap-dots">
+                  <div class="ap-dot" title="João Ribeiro — aprovado" style="background:var(--green)">JR</div>
+                  <div class="ap-dot" title="Amanda Costa — aguardando" style="background:var(--amber)">AC</div>
+                </div>
+              </td>
+              <td style="text-align:right">
+                <div style="display:flex;gap:6px;justify-content:flex-end">
+                  <button style="height:30px;padding:0 12px;border-radius:6px;border:none;background:var(--green);color:#fff;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer">Aprovar</button>
+                  <button style="height:30px;padding:0 12px;border-radius:6px;border:1px solid var(--err-bd);background:transparent;color:var(--err-dk);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer">Rejeitar</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12.5px;color:var(--muted)">3 pedidos aguardando aprovação</span>
+        <div style="display:flex;gap:4px">
+          <button class="btn-sm" disabled style="opacity:.3">← Anterior</button>
+          <button class="btn-sm" disabled style="opacity:.3">Próximo →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>

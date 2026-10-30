@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Alçadas · Mobile — ObraFlow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#f4f4f5;--surface:#fff;--surface2:#f9fafb;
+  --border:#e4e4e7;--border2:#f4f4f5;
+  --text:#18181b;--text2:#3f3f46;--muted:#71717a;
+  --accent:#d97706;--accent-lt:#fef3c7;--accent-bd:#fde68a;--accent-dk:#92400e;
+  --green:#16a34a;--green-lt:#dcfce7;--green-bd:#86efac;--green-dk:#166534;
+  --err:#dc2626;--err-lt:#fee2e2;--err-bd:#fca5a5;--err-dk:#991b1b;
+  --blue:#2563eb;--blue-lt:#eff6ff;--blue-bd:#bfdbfe;--blue-dk:#1e40af;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#09090b;--surface:#18181b;--surface2:#27272a;
+  --border:#27272a;--border2:#3f3f46;
+  --text:#fafafa;--text2:#d4d4d8;--muted:#a1a1aa;
+  --accent-lt:#2d1a00;--accent-bd:#78350f;--accent-dk:#fbbf24;
+  --green-lt:#052e16;--green-bd:#166534;--green-dk:#4ade80;
+  --err-lt:#3b0d0d;--err-bd:#991b1b;--err-dk:#f87171;
+  --blue-lt:#1e3a5f;--blue-bd:#1d4ed8;--blue-dk:#93c5fd;
+}}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Inter',system-ui,sans-serif;background:#8B97A8;color:var(--text);font-size:14px;line-height:1.5;padding:24px;display:flex;justify-content:center;align-items:flex-start;gap:32px;min-height:100vh}
+
+/* Phone shell */
+.phone{width:390px;flex-shrink:0;background:var(--bg);border-radius:44px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.35),0 0 0 10px #1a1a1a,0 0 0 12px #2a2a2a}
+.phone-notch{height:44px;background:var(--surface);display:flex;align-items:center;justify-content:center}
+.notch-pill{width:120px;height:30px;background:#1a1a1a;border-radius:0 0 18px 18px}
+
+/* Mobile topbar */
+.mob-top{height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px}
+.mob-back{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:var(--surface2);border:1px solid var(--border)}
+.mob-title{font-size:15px;font-weight:700;flex:1}
+.mob-av{width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+
+/* Obra scroll tabs */
+.obra-scroll{overflow-x:auto;padding:12px 16px 0;background:var(--surface);border-bottom:1px solid var(--border);scrollbar-width:none}
+.obra-scroll::-webkit-scrollbar{display:none}
+.obra-chips{display:flex;gap:6px;width:max-content;padding-bottom:12px}
+.obra-chip{padding:5px 14px;border-radius:20px;font-size:12.5px;font-weight:500;border:1px solid var(--border);background:var(--surface2);color:var(--muted);white-space:nowrap}
+.obra-chip.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+
+/* Scroll body */
+.mob-body{overflow-y:auto;height:640px;background:var(--bg)}
+.mob-content{padding:12px;display:flex;flex-direction:column;gap:12px}
+
+/* Mobile ruler card */
+.mob-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.mob-card-hd{padding:12px 14px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.mob-card-ttl{font-size:13px;font-weight:600;flex:1}
+.mob-card-sub{font-size:11.5px;color:var(--muted)}
+.mob-ruler-outer{padding:12px 14px 10px}
+.mob-ruler{display:flex;height:44px;border-radius:7px;overflow:hidden;border:1px solid var(--border)}
+.mob-rs{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10.5px;font-weight:600;text-align:center;padding:3px 4px;gap:1px}
+.mob-rs+.mob-rs{border-left:2px solid var(--surface)}
+.mob-rs1{flex:16;background:var(--green-lt);color:var(--green-dk)}
+.mob-rs2{flex:32;background:var(--accent-lt);color:var(--accent-dk)}
+.mob-rs3{flex:52;background:var(--blue-lt);color:var(--blue-dk)}
+.mob-rs-sub{font-size:9px;opacity:.7}
+.mob-axis{display:flex;font-size:9.5px;color:var(--muted);margin-top:5px}
+.mob-ax1{flex:16}.mob-ax2{flex:32}.mob-ax3{flex:52}
+.mob-ax-tick::before{content:'';display:block;width:1px;height:3px;background:var(--border);margin-bottom:2px}
+
+/* Tier cards (vertical, stacked) */
+.tier-mob{padding:12px 14px;border-bottom:1px solid var(--border2)}
+.tier-mob:last-child{border-bottom:none}
+.tier-mob-hd{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.tier-mob-num{width:22px;height:22px;border-radius:50%;background:var(--surface2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--muted);flex-shrink:0}
+.tier-mob-range{font-size:13px;font-weight:600;flex:1}
+.tier-mob-acts{display:flex;gap:6px}
+.tier-mob-btn{height:26px;padding:0 9px;border-radius:5px;border:1px solid var(--border);background:transparent;font-family:inherit;font-size:11.5px;font-weight:500;cursor:pointer;color:var(--muted)}
+.tier-mob-btn.rem{color:var(--err)}
+.tier-mob-flow{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.mob-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px 2px 3px;border-radius:14px;font-size:11.5px;font-weight:500;background:var(--surface2);border:1px solid var(--border)}
+.mob-n{width:16px;height:16px;border-radius:50%;background:var(--text);color:var(--bg);font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.mob-arr{color:var(--border);font-size:14px}
+
+/* Add btn */
+.mob-add{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;height:34px;border-radius:8px;border:1.5px dashed var(--border);background:transparent;color:var(--muted);font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer}
+
+/* Tester */
+.mob-tester-inner{padding:12px 14px}
+.mob-tester-row{display:flex;align-items:center;gap:8px}
+.mob-inp-wrap{position:relative;flex:0 0 140px}
+.mob-inp-pre{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);font-weight:500}
+.mob-inp{height:34px;width:100%;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:13px;font-variant-numeric:tabular-nums;padding:0 10px 0 32px;outline:none}
+.mob-result{flex:1;display:flex;align-items:center;gap:6px;padding:7px 10px;background:var(--green-lt);border:1px solid var(--green-bd);border-radius:6px;font-size:11.5px;font-weight:600;color:var(--green-dk)}
+
+/* Bottom nav */
+.mob-nav{height:56px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;padding:0 8px;flex-shrink:0}
+.mob-nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;padding:6px 0;border-radius:8px;color:var(--muted);cursor:pointer}
+.mob-nav-item.active{color:var(--accent)}
+.mob-nav-lbl{font-size:10.5px;font-weight:500}
+
+/* Second phone (modal) */
+.phone2{width:390px;flex-shrink:0;background:var(--bg);border-radius:44px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.35),0 0 0 10px #1a1a1a,0 0 0 12px #2a2a2a}
+.modal-sheet{background:var(--surface);border-radius:18px 18px 0 0;padding-bottom:32px}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 16px}
+.sheet-ttl{font-size:15px;font-weight:700;padding:0 16px 14px;border-bottom:1px solid var(--border)}
+.sheet-body{padding:16px;display:flex;flex-direction:column;gap:16px}
+.sheet-field-lbl{font-size:12.5px;font-weight:600;margin-bottom:5px}
+.sheet-inp{height:38px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:13px;font-variant-numeric:tabular-nums;padding:0 12px;outline:none;width:100%}
+.sheet-inp.pre-inp{padding-left:36px}
+.sheet-inp-wrap{position:relative}
+.sheet-pre{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);font-weight:500}
+.sheet-ap{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px}
+.sheet-ap-n{width:20px;height:20px;border-radius:50%;background:var(--text);color:var(--bg);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sheet-ap-name{flex:1;font-size:13px;font-weight:500}
+.sheet-ap-role{font-size:11.5px;color:var(--muted)}
+.sheet-ap-handle{color:var(--muted);font-size:14px;letter-spacing:-1px}
+.sheet-ap-rem{width:24px;height:24px;border:none;background:transparent;cursor:pointer;border-radius:4px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.sheet-combo{height:36px;width:100%;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:12.5px;padding:0 10px;outline:none;margin-bottom:0}
+.sheet-ft{display:flex;gap:8px;padding:0 16px;margin-top:4px}
+.sheet-cancel{flex:1;height:40px;border-radius:8px;border:1px solid var(--border);background:transparent;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;color:var(--text2)}
+.sheet-save{flex:1;height:40px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
+</style>
+</helmet>
+
+<div style="display:flex;gap:32px;align-items:flex-start;padding:24px">
+
+  <!-- Phone 1: Main list view -->
+  <div class="phone" role="region" aria-label="Mobile: Alçadas — lista de faixas">
+    <div class="phone-notch" aria-hidden="true"><div class="notch-pill"></div></div>
+
+    <div class="mob-top">
+      <div class="mob-back" aria-label="Voltar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+      </div>
+      <span class="mob-title">Alçadas</span>
+      <div class="mob-av" aria-label="Amanda Costa">AC</div>
+    </div>
+
+    <!-- Obra tabs (scrollable) -->
+    <div class="obra-scroll">
+      <div class="obra-chips" role="tablist" aria-label="Selecionar obra">
+        <button class="obra-chip active" role="tab" aria-selected="true">Edifício Maré</button>
+        <button class="obra-chip" role="tab" aria-selected="false">Res. Sol Nascente</button>
+        <button class="obra-chip" role="tab" aria-selected="false">Torre das Artes</button>
+        <button class="obra-chip" role="tab" aria-selected="false">+ Nova obra</button>
+      </div>
+    </div>
+
+    <div class="mob-body">
+      <div class="mob-content">
+
+        <!-- Ruler card -->
+        <div class="mob-card">
+          <div class="mob-card-hd">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--muted)"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+            <span class="mob-card-ttl">Régua de valores</span>
+            <span class="mob-card-sub">3 faixas ✓</span>
+          </div>
+          <div class="mob-ruler-outer">
+            <div class="mob-ruler" role="img" aria-label="Faixas: até R$10.000, até R$50.000, acima">
+              <div class="mob-rs mob-rs1"><span>F1</span><span class="mob-rs-sub">João R.</span></div>
+              <div class="mob-rs mob-rs2"><span>F2</span><span class="mob-rs-sub">J.→A.</span></div>
+              <div class="mob-rs mob-rs3"><span>F3</span><span class="mob-rs-sub">J.→A.→C.</span></div>
+            </div>
+            <div class="mob-axis" aria-hidden="true">
+              <div class="mob-ax1"><div class="mob-ax-tick"><span>R$0</span></div></div>
+              <div class="mob-ax2"><div class="mob-ax-tick"><span>R$10k</span></div></div>
+              <div class="mob-ax3"><div class="mob-ax-tick"><span>R$50k</span></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tier list -->
+        <div class="mob-card">
+          <div class="mob-card-hd">
+            <span class="mob-card-ttl">Faixas de aprovação</span>
+          </div>
+
+          <div class="tier-mob">
+            <div class="tier-mob-hd">
+              <div class="tier-mob-num">1</div>
+              <span class="tier-mob-range">Até R$ 10.000,00</span>
+              <div class="tier-mob-acts">
+                <button class="tier-mob-btn">Editar</button>
+                <button class="tier-mob-btn rem">Remover</button>
+              </div>
+            </div>
+            <div class="tier-mob-flow">
+              <div class="mob-chip"><div class="mob-n">1</div>João Ribeiro</div>
+            </div>
+          </div>
+
+          <div class="tier-mob">
+            <div class="tier-mob-hd">
+              <div class="tier-mob-num">2</div>
+              <span class="tier-mob-range">R$ 10.001 — R$ 50.000</span>
+              <div class="tier-mob-acts">
+                <button class="tier-mob-btn">Editar</button>
+                <button class="tier-mob-btn rem">Remover</button>
+              </div>
+            </div>
+            <div class="tier-mob-flow">
+              <div class="mob-chip"><div class="mob-n">1</div>João Ribeiro</div>
+              <span class="mob-arr" aria-hidden="true">›</span>
+              <div class="mob-chip"><div class="mob-n">2</div>Amanda Costa</div>
+            </div>
+          </div>
+
+          <div class="tier-mob">
+            <div class="tier-mob-hd">
+              <div class="tier-mob-num">3</div>
+              <span class="tier-mob-range">Acima de R$ 50.000</span>
+              <div class="tier-mob-acts">
+                <button class="tier-mob-btn">Editar</button>
+                <button class="tier-mob-btn rem">Remover</button>
+              </div>
+            </div>
+            <div class="tier-mob-flow">
+              <div class="mob-chip"><div class="mob-n">1</div>João</div>
+              <span class="mob-arr" aria-hidden="true">›</span>
+              <div class="mob-chip"><div class="mob-n">2</div>Amanda</div>
+              <span class="mob-arr" aria-hidden="true">›</span>
+              <div class="mob-chip"><div class="mob-n">3</div>Carlos</div>
+            </div>
+          </div>
+
+          <div style="padding:10px 14px">
+            <button class="mob-add">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              Nova faixa
+            </button>
+          </div>
+        </div>
+
+        <!-- Tester card -->
+        <div class="mob-card">
+          <div class="mob-card-hd">
+            <span class="mob-card-ttl">Testar valor</span>
+          </div>
+          <div class="mob-tester-inner">
+            <div class="mob-tester-row">
+              <div class="mob-inp-wrap">
+                <span class="mob-inp-pre">R$</span>
+                <input class="mob-inp" type="text" value="23.000,00" aria-label="Valor a testar" inputmode="decimal">
+              </div>
+              <div class="mob-result" role="status">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m20 6-11 11-5-5"/></svg>
+                Faixa 2 · João → Amanda
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Bottom nav -->
+    <div class="mob-nav" role="navigation" aria-label="Navegação principal">
+      <div class="mob-nav-item" role="link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg>
+        <span class="mob-nav-lbl">Pedidos</span>
+      </div>
+      <div class="mob-nav-item" role="link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 5v14M5 12h14"/></svg>
+        <span class="mob-nav-lbl">Novo</span>
+      </div>
+      <div class="mob-nav-item active" role="link" aria-current="page">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span class="mob-nav-lbl">Alçadas</span>
+      </div>
+    </div>
+  </div><!-- /phone1 -->
+
+  <!-- Phone 2: Bottom sheet modal -->
+  <div class="phone2" role="region" aria-label="Mobile: modal de edição de faixa">
+    <div class="phone-notch" aria-hidden="true"><div class="notch-pill"></div></div>
+
+    <!-- Main page (dimmed) -->
+    <div style="opacity:.25;pointer-events:none;filter:blur(1px)">
+      <div class="mob-top">
+        <div class="mob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg></div>
+        <span class="mob-title">Alçadas</span>
+        <div class="mob-av">AC</div>
+      </div>
+      <div style="padding:12px;background:var(--bg);height:280px;display:flex;flex-direction:column;gap:10px">
+        <div style="height:80px;background:var(--surface);border-radius:10px;border:1px solid var(--border)"></div>
+        <div style="height:160px;background:var(--surface);border-radius:10px;border:1px solid var(--border)"></div>
+      </div>
+    </div>
+
+    <!-- Bottom sheet overlay -->
+    <div style="background:rgba(0,0,0,.45);position:relative" role="dialog" aria-modal="true" aria-label="Editar faixa">
+      <div class="modal-sheet">
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <div class="sheet-ttl" id="sheet-title">Editar faixa — Faixa 2</div>
+
+        <div class="sheet-body">
+
+          <!-- Limit field -->
+          <div>
+            <div class="sheet-field-lbl">Limite superior</div>
+            <div class="sheet-inp-wrap">
+              <span class="sheet-pre">R$</span>
+              <input class="sheet-inp pre-inp" type="text" value="50.000,00" aria-label="Limite superior em reais" inputmode="decimal">
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
+              <div style="width:15px;height:15px;border-radius:3px;border:2px solid var(--border);background:var(--surface2);flex-shrink:0"></div>
+              <span style="font-size:12px;color:var(--muted)">Sem limite superior</span>
+            </div>
+          </div>
+
+          <!-- Approvers -->
+          <div>
+            <div class="sheet-field-lbl" style="margin-bottom:8px">Aprovadores</div>
+            <div class="sheet-ap">
+              <span class="sheet-ap-handle" aria-hidden="true">⠿</span>
+              <div class="sheet-ap-n" aria-hidden="true">1</div>
+              <div style="flex:1">
+                <div class="sheet-ap-name">João Ribeiro</div>
+                <div class="sheet-ap-role">Engenheiro</div>
+              </div>
+              <button class="sheet-ap-rem" aria-label="Remover João Ribeiro">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <div class="sheet-ap">
+              <span class="sheet-ap-handle" aria-hidden="true">⠿</span>
+              <div class="sheet-ap-n" aria-hidden="true">2</div>
+              <div style="flex:1">
+                <div class="sheet-ap-name">Amanda Costa</div>
+                <div class="sheet-ap-role">Ger. Suprimentos</div>
+              </div>
+              <button class="sheet-ap-rem" aria-label="Remover Amanda Costa">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <select class="sheet-combo" aria-label="Adicionar aprovador">
+              <option value="">Adicionar aprovador…</option>
+              <option>Carlos Mendes</option>
+              <option>Beatriz Lima</option>
+            </select>
+          </div>
+
+        </div><!-- /sheet-body -->
+
+        <div class="sheet-ft">
+          <button class="sheet-cancel">Cancelar</button>
+          <button class="sheet-save">Salvar</button>
+        </div>
+      </div><!-- /modal-sheet -->
+    </div><!-- /overlay -->
+
+    <!-- Bottom nav (under overlay) -->
+    <div class="mob-nav" style="opacity:.2" role="navigation" aria-hidden="true">
+      <div class="mob-nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg><span class="mob-nav-lbl">Pedidos</span></div>
+      <div class="mob-nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 5v14M5 12h14"/></svg><span class="mob-nav-lbl">Novo</span></div>
+      <div class="mob-nav-item active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span class="mob-nav-lbl">Alçadas</span></div>
+    </div>
+  </div><!-- /phone2 -->
+
+</div>
+</x-dc>
+</body>
+</html>

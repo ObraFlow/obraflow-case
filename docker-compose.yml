@@ -1,0 +1,60 @@
+# Sobe tudo com um comando:  docker compose up --build
+#   front  → http://localhost:3030
+#   API    → http://localhost:3333/api   (Swagger em /api/docs)
+#   banco  → localhost:5433 (Postgres)
+# Na primeira subida a API aplica as migrations e carrega os dados de demonstração.
+# Para desenvolvimento local (pnpm dev:*), suba só o banco:  docker compose up -d db
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: obraflow
+      POSTGRES_PASSWORD: obraflow
+      POSTGRES_DB: dokimos
+    ports:
+      # 5433 no host para não conflitar com um Postgres local na 5432
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U obraflow -d dokimos"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://obraflow:obraflow@db:5432/dokimos?schema=public
+      PORT: "3333"
+      WEB_ORIGIN: http://localhost:3030
+    ports:
+      - "3333:3333"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3333/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # URL da API vista pelo navegador (não pela rede interna do Docker)
+        NEXT_PUBLIC_API_URL: http://localhost:3333/api
+    ports:
+      - "3030:3030"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  db-data:

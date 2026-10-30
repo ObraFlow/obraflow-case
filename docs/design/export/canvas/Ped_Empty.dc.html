@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Pedidos · Lista Vazia — ObraFlow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#f4f4f5;--surface:#fff;--surface2:#f9fafb;
+  --border:#e4e4e7;--border2:#f4f4f5;
+  --text:#18181b;--text2:#3f3f46;--muted:#71717a;
+  --sb:#18181b;--sb-border:#27272a;--sb-txt:#a1a1aa;--sb-active:#27272a;--sb-atxt:#fafafa;
+  --accent:#d97706;--accent-lt:#fef3c7;--accent-bd:#fde68a;--accent-dk:#92400e;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#09090b;--surface:#18181b;--surface2:#27272a;
+    --border:#27272a;--border2:#3f3f46;
+    --text:#fafafa;--text2:#d4d4d8;--muted:#a1a1aa;
+    --sb:#09090b;--sb-border:#18181b;--sb-txt:#71717a;--sb-active:#18181b;--sb-atxt:#fafafa;
+    --accent-lt:#2d1a00;--accent-bd:#78350f;--accent-dk:#fbbf24;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.app{display:flex;min-height:100vh}
+.sb{width:240px;flex-shrink:0;background:var(--sb);display:flex;flex-direction:column}
+.sb-logo{padding:18px 16px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--sb-border)}
+.logo-mark{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;flex-shrink:0}
+.logo-txt{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.2px}
+.sb-nav{padding:10px 8px;flex:1}
+.nav-a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--sb-txt);font-size:13.5px;font-weight:500;cursor:pointer;text-decoration:none;margin-bottom:2px}
+.nav-a.active{background:var(--sb-active);color:var(--sb-atxt)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+.pg-title{font-size:15px;font-weight:600}
+.user-sel{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:13px;font-weight:500}
+.av{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.viewing{display:flex;align-items:center;gap:8px}
+.viewing-lbl{font-size:12.5px;color:var(--muted)}
+.tabs-bar{display:flex;align-items:center;gap:2px;padding:0 24px;background:var(--surface);border-bottom:1px solid var(--border);height:44px;flex-shrink:0}
+.tab{display:flex;align-items:center;gap:6px;padding:0 14px;height:44px;font-size:13px;font-weight:500;color:var(--muted);text-decoration:none;border-bottom:2px solid transparent;white-space:nowrap}
+.tab.active{color:var(--text);border-bottom-color:var(--accent)}
+.tab-cnt{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;font-size:11px;font-weight:600;background:var(--accent-lt);color:var(--accent-dk)}
+/* Empty state */
+.empty-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:40px}
+.empty-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:52px 40px;max-width:480px;width:100%;text-align:center}
+/* Decorative inbox illustration */
+.ilu{margin:0 auto 24px;width:80px;height:80px;position:relative}
+.ilu-outer{width:80px;height:80px;border-radius:50%;background:var(--surface2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.ilu-badge{position:absolute;bottom:0;right:0;width:24px;height:24px;border-radius:50%;background:var(--surface);border:2px solid var(--border);display:flex;align-items:center;justify-content:center}
+.empty-ttl{font-size:17px;font-weight:700;color:var(--text);letter-spacing:-.2px;margin:0 0 8px}
+.empty-desc{font-size:13.5px;color:var(--muted);line-height:1.6;margin:0 0 24px;max-width:340px;margin-left:auto;margin-right:auto}
+.empty-desc strong{color:var(--text2)}
+/* Decorative lines illustration */
+.ilu-rows{display:flex;flex-direction:column;gap:8px;padding:14px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin:0 auto 24px;max-width:280px}
+.ilu-row{display:flex;align-items:center;gap:8px;opacity:.45}
+.ilu-dot{width:6px;height:6px;border-radius:50%;background:var(--border);flex-shrink:0}
+.ilu-line{height:7px;border-radius:4px;background:var(--border);flex:1}
+.ilu-sq{width:40px;height:7px;border-radius:4px;background:var(--border)}
+.empty-hint{font-size:12.5px;color:var(--muted);margin-top:12px;line-height:1.5}
+</style>
+</helmet>
+
+<div class="app">
+  <aside class="sb" aria-label="Navegação">
+    <div class="sb-logo">
+      <div class="logo-mark" aria-hidden="true">O</div>
+      <span class="logo-txt">ObraFlow</span>
+    </div>
+    <nav class="sb-nav">
+      <a class="nav-a active" href="#" aria-current="page">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg>
+        Pedidos
+      </a>
+      <a class="nav-a" href="#"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Novo pedido</a>
+      <a class="nav-a" href="#"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Alçadas</a>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <span class="pg-title">Pedidos</span>
+      <div class="viewing">
+        <span class="viewing-lbl">Visualizando como</span>
+        <div class="user-sel">
+          <div class="av" aria-hidden="true">AC</div>
+          Amanda Costa
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </div>
+    </header>
+
+    <div class="tabs-bar">
+      <a class="tab active" href="#" aria-selected="true">Aguardando minha decisão <span class="tab-cnt">0</span></a>
+      <a class="tab" href="#">Pendentes <span class="tab-cnt">0</span></a>
+      <a class="tab" href="#">Aprovados <span class="tab-cnt">0</span></a>
+      <a class="tab" href="#">Rejeitados <span class="tab-cnt">0</span></a>
+      <a class="tab" href="#">Todos</a>
+    </div>
+
+    <div class="empty-wrap">
+      <div class="empty-box" role="main">
+        <!-- Decorative icon -->
+        <div class="ilu" aria-hidden="true">
+          <div class="ilu-outer">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M22 12h-6l-2 3h-4l-2-3H2"/>
+              <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+            </svg>
+          </div>
+          <div class="ilu-badge" aria-hidden="true">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--muted)"><path d="m20 6-11 11-5-5"/></svg>
+          </div>
+        </div>
+
+        <h1 class="empty-ttl">Nenhum pedido aguardando sua decisão</h1>
+        <p class="empty-desc">
+          Quando houver pedidos <strong>pendentes da sua aprovação</strong>, eles aparecerão aqui.
+          Você será notificado por e-mail assim que um novo pedido chegar na sua alçada.
+        </p>
+
+        <!-- Decorative empty table rows -->
+        <div class="ilu-rows" aria-hidden="true">
+          <div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;text-align:left;opacity:.6">Pedidos</div>
+          <div class="ilu-row"><div class="ilu-dot"></div><div class="ilu-line" style="max-width:55%"></div><div class="ilu-sq"></div></div>
+          <div class="ilu-row"><div class="ilu-dot"></div><div class="ilu-line" style="max-width:45%"></div><div class="ilu-sq" style="width:32px"></div></div>
+          <div class="ilu-row"><div class="ilu-dot"></div><div class="ilu-line" style="max-width:60%"></div><div class="ilu-sq" style="width:48px"></div></div>
+        </div>
+
+        <p class="empty-hint">
+          Tudo em dia por aqui. Volte a qualquer momento para verificar.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

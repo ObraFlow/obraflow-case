@@ -1,0 +1,11 @@
+packages:
+  - apps/*
+
+# pnpm só roda scripts de instalação dos pacotes listados aqui (proteção contra supply chain)
+allowBuilds:
+  '@prisma/engines': true
+  '@scarf/scarf': false # telemetria de instalação (vem com o swagger-ui): bloqueada
+  esbuild: true
+  prisma: true
+  sharp: false # otimização de imagens do Next: não usamos imagens
+  unrs-resolver: false

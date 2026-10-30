@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Alçadas · Modal com erros de validação — ObraFlow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#f4f4f5;--surface:#fff;--surface2:#f9fafb;
+  --border:#e4e4e7;--border2:#f4f4f5;
+  --text:#18181b;--text2:#3f3f46;--muted:#71717a;
+  --sb:#18181b;--sb-border:#27272a;--sb-txt:#a1a1aa;--sb-active:#27272a;--sb-atxt:#fafafa;
+  --accent:#d97706;--accent-lt:#fef3c7;--accent-bd:#fde68a;--accent-dk:#92400e;
+  --green:#16a34a;--green-lt:#dcfce7;--green-bd:#86efac;--green-dk:#166534;
+  --err:#dc2626;--err-lt:#fee2e2;--err-bd:#fca5a5;--err-dk:#991b1b;
+  --blue:#2563eb;--blue-lt:#eff6ff;--blue-bd:#bfdbfe;--blue-dk:#1e40af;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#09090b;--surface:#18181b;--surface2:#27272a;
+  --border:#27272a;--border2:#3f3f46;
+  --text:#fafafa;--text2:#d4d4d8;--muted:#a1a1aa;
+  --sb:#09090b;--sb-border:#18181b;--sb-txt:#71717a;--sb-active:#18181b;--sb-atxt:#fafafa;
+  --accent-lt:#2d1a00;--accent-bd:#78350f;--accent-dk:#fbbf24;
+  --green-lt:#052e16;--green-bd:#166534;--green-dk:#4ade80;
+  --err-lt:#3b0d0d;--err-bd:#991b1b;--err-dk:#f87171;
+  --blue-lt:#1e3a5f;--blue-bd:#1d4ed8;--blue-dk:#93c5fd;
+}}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.app{display:flex;min-height:100vh}
+.sb{width:240px;flex-shrink:0;background:var(--sb);display:flex;flex-direction:column}
+.sb-logo{padding:18px 16px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--sb-border)}
+.logo-mark{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff}
+.logo-txt{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.2px}
+.sb-nav{padding:10px 8px;flex:1}
+.nav-a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--sb-txt);font-size:13.5px;font-weight:500;cursor:pointer;text-decoration:none;margin-bottom:2px}
+.nav-a.active{background:var(--sb-active);color:var(--sb-atxt)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
+.topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+.pg-title{font-size:15px;font-weight:600}
+.user-sel{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:13px;font-weight:500}
+.av{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.content{flex:1;padding:24px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;opacity:.3;pointer-events:none;filter:blur(1px)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+
+/* MODAL */
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-start;justify-content:center;padding:40px 24px;z-index:100;overflow-y:auto}
+.modal{background:var(--surface);border-radius:14px;width:520px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}
+.modal-hd{padding:20px 22px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.modal-title{font-size:15px;font-weight:600;flex:1}
+.modal-close{width:28px;height:28px;border:none;background:transparent;cursor:pointer;border-radius:5px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.modal-body{padding:20px 22px;display:flex;flex-direction:column;gap:20px}
+.modal-ft{padding:16px 22px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
+
+/* Error summary banner */
+.err-banner{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;background:var(--err-lt);border:1px solid var(--err-bd);border-radius:8px}
+.err-banner-icon{width:18px;height:18px;border-radius:50%;background:var(--err);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.err-banner-body{flex:1}
+.err-banner-ttl{font-size:12.5px;font-weight:700;color:var(--err-dk)}
+.err-banner-list{margin:4px 0 0;padding-left:14px;font-size:12px;color:var(--err-dk);display:flex;flex-direction:column;gap:2px;list-style:disc}
+
+/* Form */
+.field{display:flex;flex-direction:column;gap:5px}
+.field-lbl{font-size:13px;font-weight:600}
+.field-help{font-size:12px;color:var(--muted)}
+.field-err{font-size:12px;color:var(--err);font-weight:500;display:flex;align-items:center;gap:4px}
+.form-inp{height:38px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:13.5px;font-variant-numeric:tabular-nums;padding:0 12px;outline:none;width:100%}
+.form-inp.with-pre{padding-left:38px}
+.form-inp.is-err{border-color:var(--err);background:var(--err-lt)}
+.form-inp:focus{border-color:var(--accent)}
+.inp-wrap{position:relative}
+.inp-prefix{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--muted);font-weight:500;pointer-events:none}
+.chk-row{display:flex;align-items:center;gap:8px;cursor:pointer}
+.chk{width:16px;height:16px;border:2px solid var(--border);border-radius:4px;flex-shrink:0;background:var(--surface2)}
+.chk-lbl{font-size:13px;font-weight:500}
+
+/* Approvers */
+.ap-list{display:flex;flex-direction:column;gap:6px}
+.ap-item{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px}
+.ap-handle{color:var(--muted);cursor:grab;flex-shrink:0;font-size:15px;letter-spacing:-1px;line-height:1}
+.ap-num{width:22px;height:22px;border-radius:50%;background:var(--text);color:var(--bg);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ap-name{flex:1;font-size:13.5px;font-weight:500}
+.ap-role{font-size:12px;color:var(--muted)}
+.ap-arrows{display:flex;flex-direction:column;gap:2px}
+.ap-arr{width:22px;height:18px;border:1px solid var(--border);border-radius:4px;background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:11px}
+.ap-arr[disabled]{opacity:.3;cursor:default}
+.ap-rem{width:26px;height:26px;border:none;background:transparent;cursor:pointer;border-radius:5px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.ap-rem:hover{background:var(--err-lt);color:var(--err)}
+
+/* Empty approvers error state */
+.ap-empty-err{display:flex;align-items:center;gap:8px;padding:14px;background:var(--err-lt);border:1px dashed var(--err-bd);border-radius:8px;color:var(--err-dk);font-size:13px;font-weight:500}
+
+/* Duplicate limit badge */
+.dup-badge{display:inline-flex;align-items:center;gap:5px;padding:2px 7px;border-radius:4px;background:var(--err-lt);border:1px solid var(--err-bd);color:var(--err-dk);font-size:11px;font-weight:600;margin-left:6px}
+
+.add-ap-row{display:flex;gap:8px;margin-top:8px}
+.combo{flex:1;height:36px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:13px;padding:0 10px;outline:none}
+.btn-ap-add{height:36px;padding:0 14px;border-radius:7px;border:1px solid var(--accent-bd);background:var(--accent-lt);color:var(--accent-dk);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;opacity:.5}
+
+.btn-cancel{height:38px;padding:0 18px;border-radius:8px;border:1px solid var(--border);background:transparent;font-family:inherit;font-size:13.5px;font-weight:500;cursor:pointer;color:var(--text2)}
+.btn-save{height:38px;padding:0 20px;border-radius:8px;border:none;background:var(--err);color:#fff;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;opacity:.8}
+</style>
+</helmet>
+
+<div class="app">
+  <aside class="sb" aria-label="Navegação">
+    <div class="sb-logo">
+      <div class="logo-mark" aria-hidden="true">O</div>
+      <span class="logo-txt">ObraFlow</span>
+    </div>
+    <nav class="sb-nav">
+      <a class="nav-a" href="#">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg>
+        Pedidos
+      </a>
+      <a class="nav-a" href="#">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        Novo pedido
+      </a>
+      <a class="nav-a active" href="#" aria-current="page">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Alçadas
+      </a>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <span class="pg-title">Alçadas</span>
+      <div class="user-sel">
+        <div class="av" aria-hidden="true">AC</div>
+        Amanda Costa
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+    </header>
+
+    <!-- Background (blurred) -->
+    <div class="content" aria-hidden="true">
+      <div class="card" style="height:140px"></div>
+      <div class="card" style="height:220px"></div>
+    </div>
+
+    <!-- Modal overlay -->
+    <div class="overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal">
+        <div class="modal-hd">
+          <span class="modal-title" id="modal-title">Nova faixa — Edifício Maré</span>
+          <button class="modal-close" aria-label="Fechar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+
+          <!-- Error summary banner -->
+          <div class="err-banner" role="alert" aria-live="assertive">
+            <div class="err-banner-icon" aria-hidden="true">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </div>
+            <div class="err-banner-body">
+              <div class="err-banner-ttl">Corrija 2 erros antes de salvar</div>
+              <ul class="err-banner-list">
+                <li>O limite R$ 50.000,00 já está em uso na Faixa 3</li>
+                <li>Adicione pelo menos 1 aprovador</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Limit field — error state -->
+          <div class="field">
+            <label class="field-lbl" for="inp-limit">
+              Limite superior da faixa
+            </label>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="inp-wrap" style="flex:1">
+                <span class="inp-prefix" style="color:var(--err)">R$</span>
+                <input class="form-inp with-pre is-err" id="inp-limit" type="text" value="50.000,00" aria-label="Limite superior em reais" aria-invalid="true" aria-describedby="limit-err" inputmode="decimal">
+              </div>
+              <span class="dup-badge" aria-hidden="true">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                Duplicado
+              </span>
+            </div>
+            <p class="field-err" id="limit-err">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              Já existe uma faixa com este limite nesta obra
+            </p>
+            <div class="chk-row" style="margin-top:4px">
+              <div class="chk"></div>
+              <span class="chk-lbl">Sem limite superior (faixa cobre qualquer valor acima)</span>
+            </div>
+          </div>
+
+          <!-- Approvers — empty error state -->
+          <div class="field">
+            <div class="field-lbl" id="ap-list-lbl">
+              Aprovadores
+              <span style="color:var(--muted);font-weight:400">(na ordem do fluxo)</span>
+            </div>
+            <div class="ap-empty-err" role="alert">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              Adicione pelo menos 1 aprovador para esta faixa
+            </div>
+            <div class="add-ap-row">
+              <select class="combo" aria-label="Adicionar aprovador">
+                <option value="">Selecione um aprovador…</option>
+                <option>João Ribeiro</option>
+                <option>Amanda Costa</option>
+                <option>Carlos Mendes</option>
+                <option>Beatriz Lima</option>
+              </select>
+              <button class="btn-ap-add" disabled aria-disabled="true">Adicionar</button>
+            </div>
+          </div>
+
+        </div><!-- /modal-body -->
+
+        <div class="modal-ft">
+          <button class="btn-cancel">Cancelar</button>
+          <button class="btn-save" disabled aria-disabled="true">Salvar faixa</button>
+        </div>
+      </div><!-- /modal -->
+    </div><!-- /overlay -->
+
+  </div><!-- /main -->
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Pedidos · Toast de Conflito — ObraFlow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#f4f4f5;--surface:#fff;--surface2:#f9fafb;
+  --border:#e4e4e7;--border2:#f4f4f5;
+  --text:#18181b;--text2:#3f3f46;--muted:#71717a;
+  --sb:#18181b;--sb-border:#27272a;--sb-txt:#a1a1aa;--sb-active:#27272a;--sb-atxt:#fafafa;
+  --accent:#d97706;--accent-lt:#fef3c7;--accent-bd:#fde68a;--accent-dk:#92400e;
+  --green:#16a34a;--green-lt:#dcfce7;--green-bd:#86efac;--green-dk:#166534;
+  --err:#dc2626;--err-lt:#fee2e2;--err-bd:#fca5a5;--err-dk:#991b1b;
+  --warn:#ca8a04;--warn-lt:#fefce8;--warn-bd:#fef08a;--warn-dk:#713f12;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#09090b;--surface:#18181b;--surface2:#27272a;
+    --border:#27272a;--border2:#3f3f46;
+    --text:#fafafa;--text2:#d4d4d8;--muted:#a1a1aa;
+    --sb:#09090b;--sb-border:#18181b;--sb-txt:#71717a;--sb-active:#18181b;--sb-atxt:#fafafa;
+    --accent-lt:#2d1a00;--accent-bd:#78350f;--accent-dk:#fbbf24;
+    --green-lt:#052e16;--green-bd:#166534;--green-dk:#4ade80;
+    --err-lt:#3b0d0d;--err-bd:#991b1b;--err-dk:#f87171;
+    --warn-lt:#1c1400;--warn-bd:#713f12;--warn-dk:#fde047;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.app{display:flex;min-height:100vh;position:relative}
+.sb{width:240px;flex-shrink:0;background:var(--sb);display:flex;flex-direction:column}
+.sb-logo{padding:18px 16px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--sb-border)}
+.logo-mark{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;flex-shrink:0}
+.logo-txt{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.2px}
+.sb-nav{padding:10px 8px;flex:1}
+.nav-a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--sb-txt);font-size:13.5px;font-weight:500;cursor:pointer;text-decoration:none;margin-bottom:2px}
+.nav-a.active{background:var(--sb-active);color:var(--sb-atxt)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+.pg-title{font-size:15px;font-weight:600}
+.user-sel{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:13px;font-weight:500}
+.av{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.viewing{display:flex;align-items:center;gap:8px}
+.viewing-lbl{font-size:12.5px;color:var(--muted)}
+.tabs-bar{display:flex;align-items:center;gap:2px;padding:0 24px;background:var(--surface);border-bottom:1px solid var(--border);height:44px;flex-shrink:0}
+.tab{display:flex;align-items:center;gap:6px;padding:0 14px;height:44px;font-size:13px;font-weight:500;color:var(--muted);text-decoration:none;border-bottom:2px solid transparent;white-space:nowrap}
+.tab.active{color:var(--text);border-bottom-color:var(--accent)}
+.tab-cnt{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;font-size:11px;font-weight:600;background:var(--accent-lt);color:var(--accent-dk)}
+/* Table (dimmed / updated) */
+.filters{display:flex;align-items:center;gap:10px;padding:14px 24px;flex-shrink:0}
+.filter-search{flex:1;max-width:320px;position:relative}
+.filter-search input{width:100%;height:36px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-family:inherit;font-size:13.5px;padding:0 10px 0 34px;outline:none}
+.filter-search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.filter-sel{height:36px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-family:inherit;font-size:13.5px;padding:0 10px;outline:none}
+.tbl-wrap{flex:1;padding:0 24px 24px;opacity:.6}
+table{width:100%;border-collapse:collapse}
+thead th{padding:10px 12px;text-align:left;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;background:var(--surface);border-bottom:1px solid var(--border)}
+tbody tr{background:var(--surface);border-bottom:1px solid var(--border2)}
+tbody td{padding:14px 12px;font-size:13.5px;vertical-align:middle}
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:5px;font-size:12px;font-weight:600}
+.badge-pend{background:var(--accent-lt);color:var(--accent-dk)}
+.badge-aprv{background:var(--green-lt);color:var(--green-dk)}
+.ped-id{font-weight:600;font-size:13px}
+.ped-date{font-size:12px;color:var(--muted)}
+/* Toast */
+.toast-region{position:fixed;bottom:24px;right:24px;z-index:100;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.toast{background:var(--text);color:var(--bg);border-radius:10px;padding:14px 16px;max-width:400px;display:flex;align-items:flex-start;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.2);pointer-events:all;animation:slide-in .25s ease-out}
+@keyframes slide-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.toast-icon{flex-shrink:0;width:20px;height:20px;border-radius:50%;background:var(--warn);display:flex;align-items:center;justify-content:center;margin-top:1px}
+.toast-body{flex:1;min-width:0}
+.toast-msg{font-size:13.5px;font-weight:500;line-height:1.4}
+.toast-hint{font-size:12px;opacity:.7;margin-top:2px}
+.toast-close{background:transparent;border:none;cursor:pointer;color:inherit;opacity:.6;padding:0;display:flex;align-items:center;justify-content:center;flex-shrink:0;width:20px;height:20px}
+.toast-close:hover{opacity:1}
+</style>
+</helmet>
+
+<div class="app">
+  <aside class="sb" aria-label="Navegação">
+    <div class="sb-logo">
+      <div class="logo-mark" aria-hidden="true">O</div>
+      <span class="logo-txt">ObraFlow</span>
+    </div>
+    <nav class="sb-nav">
+      <a class="nav-a active" href="#" aria-current="page">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg>
+        Pedidos
+      </a>
+      <a class="nav-a" href="#"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Novo pedido</a>
+      <a class="nav-a" href="#"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Alçadas</a>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <span class="pg-title">Pedidos</span>
+      <div class="viewing">
+        <span class="viewing-lbl">Visualizando como</span>
+        <div class="user-sel">
+          <div class="av" aria-hidden="true">AC</div>
+          Amanda Costa
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </div>
+    </header>
+
+    <div class="tabs-bar">
+      <a class="tab active">Aguardando minha decisão <span class="tab-cnt">1</span></a>
+      <a class="tab">Pendentes <span class="tab-cnt">3</span></a>
+      <a class="tab">Aprovados <span class="tab-cnt">7</span></a>
+      <a class="tab">Rejeitados <span class="tab-cnt">2</span></a>
+      <a class="tab">Todos</a>
+    </div>
+
+    <div class="filters">
+      <div class="filter-search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="search" placeholder="Buscar fornecedor ou número…" aria-label="Buscar pedido">
+      </div>
+      <select class="filter-sel"><option>Todas as obras</option></select>
+    </div>
+
+    <!-- Table content updated (PED-001 removed after conflict, now shows updated list) -->
+    <div class="tbl-wrap">
+      <table aria-label="Lista de pedidos (atualizada)">
+        <thead>
+          <tr>
+            <th># / Data</th>
+            <th>Obra</th>
+            <th>Fornecedor</th>
+            <th style="text-align:center">Itens</th>
+            <th style="text-align:right">Valor total</th>
+            <th>Situação</th>
+            <th>Alçada</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="ped-id">PED-003</div><div class="ped-date">20/10/2026</div></td>
+            <td>Edifício Maré</td>
+            <td>Holcim Brasil</td>
+            <td style="text-align:center;color:var(--muted)">5</td>
+            <td style="text-align:right;font-variant-numeric:tabular-nums;font-weight:500">R$&nbsp;38.700,00</td>
+            <td><span class="badge badge-pend">Pendente</span></td>
+            <td style="color:var(--muted);font-size:12.5px">JR✓ → AC●</td>
+            <td style="font-size:12.5px;color:var(--muted)">Aprovar / Rejeitar</td>
+          </tr>
+          <tr>
+            <td><div class="ped-id">PED-002</div><div class="ped-date">17/10/2026</div></td>
+            <td>Res. Sol Nascente</td>
+            <td>Brafer Aço</td>
+            <td style="text-align:center;color:var(--muted)">2</td>
+            <td style="text-align:right;font-variant-numeric:tabular-nums;font-weight:500">R$&nbsp;4.200,00</td>
+            <td><span class="badge badge-aprv">Aprovado</span></td>
+            <td style="color:var(--muted);font-size:12.5px">JR✓</td>
+            <td style="font-size:12.5px;font-style:italic;color:var(--muted)">Fluxo concluído</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div class="toast-region" role="region" aria-label="Notificações" aria-live="polite">
+    <div class="toast" role="alert">
+      <div class="toast-icon" aria-hidden="true">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:#fff"><path d="m20 6-11 11-5-5"/></svg>
+      </div>
+      <div class="toast-body">
+        <div class="toast-msg">Este pedido já foi decidido por outra pessoa. A lista foi atualizada.</div>
+        <div class="toast-hint">PED-001 · Aprovado por Carlos Mendes</div>
+      </div>
+      <button class="toast-close" aria-label="Fechar notificação">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

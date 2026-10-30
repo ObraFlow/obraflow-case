@@ -1,0 +1,221 @@
+<x-dc>
+<helmet>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="./support.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fafafa;--surface:#fff;--surface2:#f4f4f5;--border:#e4e4e7;
+  --text:#09090b;--text2:#52525b;--muted:#a1a1aa;
+  --accent:#d97706;--accent-lt:#fffbeb;--accent-bd:#fde68a;--accent-dk:#92400e;
+  --green:#16a34a;--green-lt:#f0fdf4;--green-bd:#bbf7d0;--green-dk:#14532d;
+  --amber:#d97706;--amber-lt:#fffbeb;--amber-bd:#fde68a;--amber-dk:#92400e;
+  --red:#dc2626;--red-lt:#fef2f2;--red-bd:#fecaca;--red-dk:#7f1d1d;
+  --blue:#2563eb;--blue-lt:#eff6ff;--blue-bd:#bfdbfe;--blue-dk:#1e40af;
+  --radius:8px;
+}
+/* Mobile frame */
+body{
+  background:#e5e7eb;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:100vh;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-size:14px;
+}
+.phone{
+  width:375px;height:812px;background:var(--bg);border-radius:36px;overflow:hidden;
+  position:relative;display:flex;flex-direction:column;
+  box-shadow:0 24px 80px rgba(0,0,0,.25);
+}
+/* Status bar */
+.statusbar{height:44px;background:var(--surface);display:flex;align-items:center;justify-content:space-between;padding:14px 20px 0;flex-shrink:0}
+.statusbar-time{font-size:15px;font-weight:700}
+.statusbar-icons{display:flex;gap:5px;align-items:center}
+/* Mobile topbar */
+.mob-topbar{height:48px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:10px;background:var(--surface);flex-shrink:0}
+.back-btn{display:flex;align-items:center;gap:4px;color:var(--accent);font-size:14px;font-weight:600;background:none;border:none;cursor:pointer;padding:0}
+.mob-title{font-size:16px;font-weight:700;margin:0 auto}
+/* List (behind the sheet) */
+.mob-list{flex:1;overflow-y:auto;padding:12px 0;filter:brightness(.97)}
+.mob-row{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.mob-row.active{background:var(--amber-lt)}
+.mob-row-main{flex:1}
+.mob-row-num{font-size:13px;font-weight:700}
+.mob-row-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600}
+.badge-amber{background:var(--amber-lt);color:var(--amber-dk);border:1px solid var(--amber-bd)}
+.badge-green{background:var(--green-lt);color:var(--green-dk);border:1px solid var(--green-bd)}
+.mob-row-amount{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+/* Bottom sheet overlay */
+.sheet-overlay{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.35);height:100%;display:flex;align-items:flex-end}
+.sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-height:82%;overflow-y:auto;display:flex;flex-direction:column}
+/* Sheet handle */
+.sheet-handle{display:flex;justify-content:center;padding:12px 0 4px;flex-shrink:0}
+.handle-bar{width:36px;height:4px;background:var(--border);border-radius:2px}
+/* Sheet header */
+.sheet-header{padding:0 20px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+.sheet-title-row{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.sheet-num{font-size:20px;font-weight:800;letter-spacing:-.5px}
+.sheet-meta{font-size:12px;color:var(--text2)}
+/* Sheet body */
+.sheet-body{padding:16px 20px;overflow-y:auto}
+.section-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--surface2)}
+.info-row:last-child{border-bottom:none}
+.info-key{font-size:12px;color:var(--text2)}
+.info-val{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}
+/* Item list */
+.item-line{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--surface2)}
+.item-line:last-child{border-bottom:none}
+.item-desc{font-size:12px;font-weight:500}
+.item-qty{font-size:11px;color:var(--text2)}
+.item-amt{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+.total-line{display:flex;justify-content:space-between;padding:10px 0 0;border-top:1.5px solid var(--border);margin-top:4px}
+.total-label{font-size:13px;font-weight:700}
+.total-val{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+/* Chain */
+.chain{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.chain-step{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:1px solid var(--border)}
+.chain-step.cs-done{background:var(--green-lt);border-color:var(--green-bd)}
+.chain-step.cs-active{background:var(--amber-lt);border-color:var(--amber-bd)}
+.ap-dot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:700;flex-shrink:0}
+.ap-done{background:var(--green-lt);color:var(--green-dk);border:1.5px solid var(--green-bd)}
+.ap-wait{background:var(--amber-lt);color:var(--amber-dk);border:1.5px solid var(--amber-bd)}
+.chain-info-name{font-size:12px;font-weight:600}
+.chain-info-role{font-size:10px;color:var(--text2)}
+.chain-status{margin-left:auto;font-size:10px;font-weight:700}
+.cs-done .chain-status{color:var(--green-dk)}
+.cs-active .chain-status{color:var(--amber-dk)}
+/* Sheet footer */
+.sheet-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:10px;flex-shrink:0}
+.btn-approve{flex:1;height:48px;background:var(--green);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-reject{width:48px;height:48px;background:var(--red-lt);border:1px solid var(--red-bd);border-radius:12px;cursor:pointer;display:grid;place-items:center;color:var(--red);flex-shrink:0}
+/* Safe area */
+.safe-bottom{height:env(safe-area-inset-bottom, 16px);background:var(--surface);flex-shrink:0}
+</style>
+</helmet>
+
+<div class="phone">
+  <!-- Status bar -->
+  <div class="statusbar">
+    <div class="statusbar-time">9:41</div>
+    <div class="statusbar-icons">
+      <svg width="16" height="12" fill="currentColor" viewBox="0 0 16 12"><rect x="0" y="3" width="3" height="9" rx="1"/><rect x="4.5" y="2" width="3" height="10" rx="1"/><rect x="9" y="0" width="3" height="12" rx="1"/><rect x="13.5" y="0" width="2.5" height="12" rx="1" opacity=".3"/></svg>
+      <svg width="16" height="12" fill="currentColor" viewBox="0 0 24 12"><path d="M1 4.5h2v3H1zM4.5 3h2v6h-2zM8 1.5h2v9H8zM11.5 0h2v12h-2z" opacity=".3"/><path d="M1 4.5h2v3H1zM4.5 3h2v6h-2zM8 1.5h2v9H8z"/><rect x="16" y="3" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" fill="none"/><rect x="22" y="4.5" width="2" height="3" rx=".5" fill="currentColor"/><rect x="17" y="4" width="4" height="4" rx=".5" fill="currentColor"/></svg>
+    </div>
+  </div>
+
+  <!-- Topbar -->
+  <div class="mob-topbar">
+    <button class="back-btn">
+      <svg width="8" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 8 14"><path d="M7 1L1 7l6 6"/></svg>
+      Pedidos
+    </button>
+    <div class="mob-title" style="position:absolute;left:50%;transform:translateX(-50%)">Pedidos</div>
+  </div>
+
+  <!-- Background list (dimmed by overlay) -->
+  <div class="mob-list">
+    <div class="mob-row">
+      <div class="mob-row-main">
+        <div class="mob-row-num">#8 · Ed. Maré</div>
+        <div class="mob-row-sub">Beatriz Lima · <span class="badge badge-green">Aprovado</span></div>
+      </div>
+      <div class="mob-row-amount">R$&nbsp;47.200</div>
+    </div>
+    <!-- Active row -->
+    <div class="mob-row active">
+      <div class="mob-row-main">
+        <div class="mob-row-num">#9 · Torre das Artes</div>
+        <div class="mob-row-sub">Beatriz Lima · <span class="badge badge-amber">Aguardando você</span></div>
+      </div>
+      <div class="mob-row-amount" style="color:var(--amber-dk)">R$&nbsp;12.500</div>
+    </div>
+    <div class="mob-row">
+      <div class="mob-row-main">
+        <div class="mob-row-num">#10 · Res. Pinheiro</div>
+        <div class="mob-row-sub">João Ribeiro · <span class="badge badge-amber">Em análise</span></div>
+      </div>
+      <div class="mob-row-amount">R$&nbsp;68.000</div>
+    </div>
+    <div class="mob-row">
+      <div class="mob-row-main">
+        <div class="mob-row-num">#11 · Ed. Maré</div>
+        <div class="mob-row-sub">Beatriz Lima · <span class="badge badge-amber">Aguardando você</span></div>
+      </div>
+      <div class="mob-row-amount">R$&nbsp;31.000</div>
+    </div>
+  </div>
+
+  <!-- Bottom sheet overlay -->
+  <div class="sheet-overlay">
+    <div class="sheet">
+      <div class="sheet-handle"><div class="handle-bar"></div></div>
+
+      <div class="sheet-header">
+        <div class="sheet-title-row">
+          <div class="sheet-num">#9</div>
+          <span class="badge badge-amber">Aguardando você</span>
+        </div>
+        <div class="sheet-meta">Torre das Artes · Beatriz Lima · 15/10/2026</div>
+      </div>
+
+      <div class="sheet-body">
+        <!-- Info -->
+        <div class="section-label" style="margin-top:4px">Detalhes</div>
+        <div class="info-row"><span class="info-key">Obra</span><span class="info-val">Torre das Artes</span></div>
+        <div class="info-row"><span class="info-key">Entrega</span><span class="info-val">28/10/2026</span></div>
+
+        <!-- Items -->
+        <div class="section-label" style="margin-top:14px">Itens</div>
+        <div class="item-line">
+          <div><div class="item-desc">Vergalhão CA-50 (ø 10mm)</div><div class="item-qty">30 barras × R$&nbsp;180,00</div></div>
+          <div class="item-amt">R$&nbsp;5.400</div>
+        </div>
+        <div class="item-line">
+          <div><div class="item-desc">Argamassa ACIII 20 kg</div><div class="item-qty">60 sacos × R$&nbsp;52,00</div></div>
+          <div class="item-amt">R$&nbsp;3.120</div>
+        </div>
+        <div class="item-line">
+          <div><div class="item-desc">Areia média lavada</div><div class="item-qty">15 m³ × R$&nbsp;265,00</div></div>
+          <div class="item-amt">R$&nbsp;3.975</div>
+        </div>
+        <div class="total-line">
+          <div class="total-label">Total</div>
+          <div class="total-val">R$&nbsp;12.495,00</div>
+        </div>
+
+        <!-- Chain -->
+        <div class="section-label" style="margin-top:14px">Cadeia de aprovação · Faixa 2</div>
+        <div class="chain">
+          <div class="chain-step cs-done">
+            <div class="ap-dot ap-done">JR</div>
+            <div><div class="chain-info-name">João Ribeiro</div><div class="chain-info-role">Engenheiro · 1ª etapa</div></div>
+            <div class="chain-status">✓ Aprovado</div>
+          </div>
+          <div class="chain-step cs-active">
+            <div class="ap-dot ap-wait">AC</div>
+            <div><div class="chain-info-name">Amanda Costa <span style="font-size:9px;font-weight:400;color:var(--muted)">(você)</span></div><div class="chain-info-role">Ger. Suprimentos · 2ª etapa</div></div>
+            <div class="chain-status">Sua vez</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="sheet-footer">
+        <button class="btn-approve">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          Aprovar pedido
+        </button>
+        <button class="btn-reject" title="Rejeitar">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="safe-bottom"></div>
+    </div>
+  </div>
+</div>
+</x-dc>

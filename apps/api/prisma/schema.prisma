@@ -1,0 +1,188 @@
+// Modelo de dados do Dokimos — pedidos de compra com aprovação por alçada.
+// Decisões detalhadas em docs/api-contract.md ("Modelo da alçada").
+
+generator client {
+  provider            = "prisma-client"
+  output              = "./generated"
+  // Explícito para a geração não depender do ambiente: sem isso o Prisma deduz pela tsconfig e,
+  // no Docker (gerado antes de copiar a tsconfig), os imports saíam com extensão .ts.
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrderStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum StepStatus {
+  WAITING // etapa futura
+  PENDING // etapa atual, aguardando decisão
+  APPROVED
+  REJECTED
+  SKIPPED // não chegou a acontecer: o pedido foi rejeitado antes
+}
+
+enum Unit {
+  un
+  kg
+  m
+  m2
+  m3
+  h
+  sc
+  l
+}
+
+enum HistoryType {
+  CREATED
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  jobTitle  String
+  createdAt DateTime @default(now())
+
+  ruleApprovals ApprovalRuleApprover[]
+  requests      PurchaseOrder[]
+  approvalSteps ApprovalStep[]
+  events        PurchaseOrderEvent[]
+}
+
+model Project {
+  id        Int      @id @default(autoincrement())
+  name      String
+  city      String?
+  createdAt DateTime @default(now())
+
+  approvalRules ApprovalRule[]
+  orders        PurchaseOrder[]
+}
+
+model Supplier {
+  id        Int      @id @default(autoincrement())
+  name      String
+  taxId     String?  @unique // CNPJ
+  createdAt DateTime @default(now())
+
+  orders PurchaseOrder[]
+}
+
+// Uma faixa de alçada. Guarda só o limite superior: o início é o limite da faixa anterior + R$ 0,01
+// (a primeira começa em R$ 0,00). Assim não existem buracos nem sobreposições entre faixas.
+// maxAmount null = "sem limite". O índice único abaixo recebe NULLS NOT DISTINCT na migration,
+// para que uma obra também não tenha duas faixas "sem limite".
+model ApprovalRule {
+  id        Int      @id @default(autoincrement())
+  projectId Int
+  maxAmount Decimal? @db.Decimal(14, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project   Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  approvers ApprovalRuleApprover[]
+  orders    PurchaseOrder[]
+
+  @@unique([projectId, maxAmount])
+}
+
+// Cadeia ordenada de aprovadores de uma faixa.
+model ApprovalRuleApprover {
+  id       Int @id @default(autoincrement())
+  ruleId   Int
+  userId   Int
+  position Int // 1 = primeiro a aprovar
+
+  rule ApprovalRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([ruleId, position])
+  @@unique([ruleId, userId])
+}
+
+model PurchaseOrder {
+  id          Int         @id @default(autoincrement())
+  projectId   Int
+  supplierId  Int
+  requesterId Int
+  orderDate   DateTime    @db.Date
+  notes       String?
+  totalAmount Decimal     @db.Decimal(14, 2) // calculado pelo backend
+  status      OrderStatus @default(PENDING)
+  currentStep Int? // posição da etapa atual; null quando o fluxo terminou
+
+  // Cópia da faixa aplicada no momento da criação: editar/remover a faixa não altera o pedido.
+  ruleId         Int?
+  ruleFromAmount Decimal  @db.Decimal(14, 2)
+  ruleMaxAmount  Decimal? @db.Decimal(14, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project   Project              @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  supplier  Supplier             @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  requester User                 @relation(fields: [requesterId], references: [id], onDelete: Restrict)
+  rule      ApprovalRule?        @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  items     PurchaseOrderItem[]
+  steps     ApprovalStep[]
+  events    PurchaseOrderEvent[]
+
+  @@index([status, createdAt])
+  @@index([projectId])
+}
+
+model PurchaseOrderItem {
+  id          Int     @id @default(autoincrement())
+  orderId     Int
+  position    Int
+  description String
+  quantity    Decimal @db.Decimal(12, 3)
+  unit        Unit
+  unitPrice   Decimal @db.Decimal(14, 2)
+  total       Decimal @db.Decimal(14, 2) // quantity × unitPrice, calculado pelo backend
+
+  order PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, position])
+}
+
+// Etapas de aprovação do pedido: cópia da cadeia da faixa no momento da criação.
+model ApprovalStep {
+  id         Int        @id @default(autoincrement())
+  orderId    Int
+  position   Int
+  approverId Int
+  status     StepStatus
+  decidedAt  DateTime?
+
+  order    PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  approver User          @relation(fields: [approverId], references: [id], onDelete: Restrict)
+
+  @@unique([orderId, position])
+  @@index([approverId, status]) // filtro "aguardando minha decisão"
+}
+
+// Histórico do pedido (trilha auditável). Append-only: só recebe inserts.
+model PurchaseOrderEvent {
+  id           Int         @id @default(autoincrement())
+  orderId      Int
+  type         HistoryType
+  actorId      Int
+  stepPosition Int?
+  reason       String? // obrigatório quando type = REJECTED
+  createdAt    DateTime    @default(now())
+
+  order PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  actor User          @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([orderId, createdAt])
+}
