@@ -24,6 +24,18 @@ Sistema de aprovação de pedidos de compra para obras, com aprovação definida
 
 ## Como rodar
 
+### Antes de tudo: a branch certa
+
+O código da solução fica na branch `desafio/guilherme-barbosa`. A `main` tem só o enunciado do desafio, então rode os comandos abaixo nessa branch:
+
+```bash
+git clone https://github.com/guilhermebarbosa03/obraflow-case.git
+cd obraflow-case
+git checkout desafio/guilherme-barbosa
+```
+
+Se você já tem o repositório clonado, basta o `git checkout` (com um `git fetch` antes, se a branch ainda não aparecer).
+
 ### Opção 1: tudo no Docker (recomendado)
 
 **Pré-requisito:** Docker.
