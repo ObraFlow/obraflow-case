@@ -22,6 +22,11 @@ export type RegraDto = {
   maxCents: number | null;
   /** Texto pronto: "R$ 0,00 a R$ 10.000,00" ou "acima de R$ 10.000,00". */
   descricao: string;
+  /**
+   * Pedidos ainda pendentes criados nesta faixa. Eles mantêm a cadeia que copiaram
+   * (snapshot), então editar ou remover a faixa não os altera; a tela só avisa.
+   */
+  pedidosPendentes: number;
   niveis: NivelDto[];
 };
 
@@ -95,6 +100,57 @@ export type PaginaDePedidos = {
   pagina: number;
   porPagina: number;
   totalPaginas: number;
+};
+
+// --- Acompanhamento ------------------------------------------------------------
+
+/** Quantidade e soma de uma situação dentro de uma obra. */
+export type ContagemDto = { quantidade: number; totalCents: number };
+
+export type ResumoObraDto = {
+  obraId: number;
+  obraNome: string;
+  pendentes: ContagemDto;
+  aprovados: ContagemDto;
+  rejeitados: ContagemDto;
+  /** Soma das três situações. */
+  totalCents: number;
+};
+
+/** Quanto está parado com uma pessoa agora. */
+export type FilaAprovadorDto = {
+  aprovadorId: number;
+  aprovadorNome: string;
+  quantidade: number;
+  totalCents: number;
+  /** O pedido que está há mais tempo na mesa dela; `desde` em ISO 8601. */
+  maisAntigo: { pedidoId: number; desde: string };
+};
+
+export type TempoAprovadorDto = {
+  aprovadorId: number;
+  aprovadorNome: string;
+  decisoes: number;
+  /** Média da chegada na mesa até a decisão. */
+  mediaMs: number;
+};
+
+export type TempoObraDto = {
+  obraId: number;
+  obraNome: string;
+  pedidosEncerrados: number;
+  /** Média da criação ao encerramento. */
+  mediaMs: number;
+};
+
+/** Tela de acompanhamento e GET /api/acompanhamento. */
+export type AcompanhamentoDto = {
+  /** Instante em que foi calculado (ISO 8601): referência para "há N dias". */
+  geradoEm: string;
+  porObra: ResumoObraDto[];
+  fila: FilaAprovadorDto[];
+  temposPorAprovador: TempoAprovadorDto[];
+  temposPorObra: TempoObraDto[];
 };
 
 /** Pedido completo para a tela de detalhe e para a API. */

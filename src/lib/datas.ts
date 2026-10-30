@@ -40,3 +40,33 @@ export function formatarDataHora(iso: string): string {
 export function formatarHora(iso: string): string {
   return formatadorHora.format(new Date(iso));
 }
+
+const HORA_MS = 3_600_000;
+const DIA_MS = 24 * HORA_MS;
+
+const formatadorDias = new Intl.NumberFormat("pt-BR", {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 1,
+});
+
+/**
+ * Há quanto tempo algo espera: "hoje", "há 1 dia", "há 6 dias". Dias inteiros entre os
+ * dois instantes; `agora` vem por parâmetro para server e client calcularem o mesmo texto.
+ */
+export function descreverIdade(desdeIso: string, agoraIso: string): string {
+  const dias = Math.floor((new Date(agoraIso).getTime() - new Date(desdeIso).getTime()) / DIA_MS);
+  if (dias <= 0) return "hoje";
+  if (dias === 1) return "há 1 dia";
+  return `há ${dias} dias`;
+}
+
+/** Duração em ms → "menos de 1 hora", "5 horas", "1 dia", "2,5 dias". */
+export function formatarDuracao(ms: number): string {
+  if (ms < HORA_MS) return "menos de 1 hora";
+  if (ms < DIA_MS) {
+    const horas = Math.round(ms / HORA_MS);
+    return horas === 1 ? "1 hora" : `${horas} horas`;
+  }
+  const dias = formatadorDias.format(ms / DIA_MS);
+  return dias === "1" ? "1 dia" : `${dias} dias`;
+}

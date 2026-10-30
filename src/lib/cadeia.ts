@@ -2,9 +2,10 @@
 // A primeira parte é a cadeia acumulada de uma faixa (preview e tela de regras); a segunda
 // traduz o snapshot de um pedido para os estados que a tela desenha (lista e timeline).
 
+import { chegouNaMesa } from "@/domain/acompanhamento/chegouNaMesa";
 import { niveisAcumulados } from "@/domain/alcada/montarCadeia";
 import type { FaixaAlcada, StatusPedido } from "@/domain/alcada/tipos";
-import type { AprovacaoDto, NivelDto, RegraDto } from "@/lib/dto";
+import type { AprovacaoDto, NivelDto, PedidoResumo, RegraDto } from "@/lib/dto";
 
 /** DTO → tipo do domínio (sem nomes, só ids e ordem). */
 export function paraFaixaAlcada(regra: RegraDto): FaixaAlcada {
@@ -88,6 +89,33 @@ export function niveisDoPedido(pedido: {
     nome: aprovacao.aprovadorNome,
     estado: estadoDoNivel(aprovacao, pedido),
   }));
+}
+
+/**
+ * Desde quando o pedido pendente espera o aprovador da vez (ISO 8601), pela mesma regra do
+ * acompanhamento (`chegouNaMesa`): criação no primeiro nível, decisão anterior nos demais.
+ * null para pedido já encerrado.
+ */
+export function aguardandoDesde(pedido: PedidoResumo): string | null {
+  if (pedido.status !== "PENDENTE") return null;
+  const instante = chegouNaMesa(
+    {
+      id: pedido.id,
+      obraId: pedido.obraId,
+      totalCents: pedido.totalCents,
+      status: pedido.status,
+      stepAtual: pedido.stepAtual,
+      criadoEm: new Date(pedido.criadoEm).getTime(),
+      aprovacoes: pedido.aprovacoes.map((aprovacao) => ({
+        ordem: aprovacao.ordem,
+        aprovadorId: aprovacao.aprovadorId,
+        status: aprovacao.status,
+        decididoEm: aprovacao.decididoEm ? new Date(aprovacao.decididoEm).getTime() : null,
+      })),
+    },
+    pedido.stepAtual,
+  );
+  return new Date(instante).toISOString();
 }
 
 export function estadoDoNivel(

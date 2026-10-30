@@ -90,6 +90,7 @@ export default async function AprovacoesPage({
         pedidos={semUsuarioNaAbaMinhas ? [] : itens}
         usuarioAtualId={usuarioId}
         valores={valores}
+        agora={new Date().toISOString()}
       />
 
       {!semUsuarioNaAbaMinhas && <Paginacao pagina={pagina} valores={valores} />}

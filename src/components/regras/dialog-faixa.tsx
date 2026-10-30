@@ -175,6 +175,15 @@ export function DialogFaixa({ obraId, usuarios, faixas, faixa, sugestao, aoFecha
             </DialogDescription>
           </DialogHeader>
 
+          {faixa && faixa.pedidosPendentes > 0 && (
+            <p className="rounded-sm bg-muted px-3 py-2 text-sm">
+              {faixa.pedidosPendentes === 1
+                ? "1 pedido pendente usa esta faixa e mantém a cadeia que copiou; "
+                : `${faixa.pedidosPendentes} pedidos pendentes usam esta faixa e mantêm a cadeia que copiaram; `}
+              a mudança vale só para pedidos novos.
+            </p>
+          )}
+
           <div className="grid gap-4 sm:grid-cols-2">
             <Field data-invalid={!!erros.minimo || undefined}>
               <FieldLabel htmlFor="faixa-minimo">Valor mínimo (R$)</FieldLabel>

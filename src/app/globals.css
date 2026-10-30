@@ -49,8 +49,9 @@
   --color-rejeitado-texto-escuro: var(--rejeitado-texto-escuro);
   --color-linha: var(--linha);
   --color-cancelado: var(--cancelado);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  /* Raio 2px em tudo (docs/design.md): sm e md não encolhem como no shadcn padrão. */
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
   --radius-2xl: calc(var(--radius) * 1.8);

@@ -5,8 +5,8 @@ import { DialogDecisao } from "@/components/aprovacoes/dialog-decisao";
 import { temFiltroAtivo, type FiltrosDaLista } from "@/components/aprovacoes/url-da-lista";
 import { LinhaPedido } from "@/components/aprovacoes/linha-pedido";
 import { CadeiaAlcada } from "@/components/alcada/cadeia-alcada";
-import { ehSuaVez, niveisDoPedido } from "@/lib/cadeia";
-import { formatarData } from "@/lib/datas";
+import { aguardandoDesde, ehSuaVez, niveisDoPedido } from "@/lib/cadeia";
+import { descreverIdade, formatarData } from "@/lib/datas";
 import type { PedidoResumo } from "@/lib/dto";
 import { formatarCentavos } from "@/lib/money";
 
@@ -98,11 +98,19 @@ export function TabelaPedidos({
   pedidos,
   usuarioAtualId,
   valores,
+  agora,
 }: {
   pedidos: PedidoResumo[];
   usuarioAtualId: number | null;
   valores: FiltrosDaLista;
+  /** Instante de referência (ISO) para "há N dias": vem do server para bater na hidratação. */
+  agora: string;
 }) {
+  // Pendente: há quanto tempo espera o aprovador da vez. Encerrado: nada.
+  const idade = (pedido: PedidoResumo) => {
+    const desde = aguardandoDesde(pedido);
+    return desde === null ? null : descreverIdade(desde, agora);
+  };
   if (pedidos.length === 0) {
     const comFiltro = temFiltroAtivo(valores);
     return (
@@ -131,7 +139,12 @@ export function TabelaPedidos({
               <div className="flex flex-wrap items-center gap-2">
                 <LinkDoPedido pedido={pedido} />
                 {suaVez && <EtiquetaSuaVez />}
-                <BadgeSituacao status={pedido.status} className="ml-auto" />
+                <span className="ml-auto flex items-center gap-2">
+                  {idade(pedido) && (
+                    <span className="text-xs text-muted-foreground">aguarda {idade(pedido)}</span>
+                  )}
+                  <BadgeSituacao status={pedido.status} />
+                </span>
               </div>
               <p className="font-medium">{pedido.obraNome}</p>
               <p className="text-muted-foreground">{pedido.fornecedorNome}</p>
@@ -227,7 +240,13 @@ export function TabelaPedidos({
                     {formatarCentavos(pedido.totalCents)}
                   </td>
                   <td className="px-3 py-3">
-                    <BadgeSituacao status={pedido.status} />
+                    {/* Idade na mesma linha do badge: a tabela mantém as 46px em toda linha. */}
+                    <span className="inline-flex items-center gap-2 whitespace-nowrap">
+                      <BadgeSituacao status={pedido.status} />
+                      {idade(pedido) && (
+                        <span className="text-xs text-muted-foreground">{idade(pedido)}</span>
+                      )}
+                    </span>
                   </td>
                   <td className="px-3 py-3">
                     {/* Entre md e xl a cadeia quebra linha em vez de forçar rolagem. */}

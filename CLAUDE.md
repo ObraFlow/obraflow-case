@@ -24,6 +24,7 @@ src/
   domain/                 NÚCLEO. Zero imports de next/prisma/fs. Testado no Vitest.
     alcada/               tipos, resolverRegra, montarCadeia, aplicarDecisao, validarFaixas (+ *.test.ts)
     pedido/               calcularTotais (centavos)
+    acompanhamento/       tipos, chegouNaMesa, filaPorAprovador, tempoDeDecisao (+ *.test.ts)
     erros.ts              ErroDominio + subclasses com `codigo` (SemFaixaAplicavel, FaixaSobreposta, FaixaInvalida,
                           DecisaoForaDeOrdem, ConflitoDeDecisao, MotivoObrigatorio, QuantidadeInvalida, PrecoInvalido, ValorExcedeLimite, NaoEncontrado)
   lib/                    COMPARTILHADO client/server. Sem Prisma.
@@ -39,9 +40,9 @@ src/
     actions/              next-safe-action. client.ts = actionClient (handleServerError) + actionComUsuario
   app/
     api/**/route.ts       REST fino: parse Zod → service → Response.json. _http.ts mapeia ErroDominio → status.
-    (telas)/              layout (header com <Suspense> no "Agindo como"), aprovacoes, pedidos/novo, regras.
+    (telas)/              layout (header com <Suspense> no "Agindo como"), aprovacoes, pedidos/novo, regras, acompanhamento.
                           loading.tsx + error.tsx em cada rota.
-  components/             ui/ (shadcn) + layout/ alcada/ (CadeiaAlcada, compartilhado) aprovacoes/ pedidos/ regras/
+  components/             ui/ (shadcn) + layout/ alcada/ (CadeiaAlcada, compartilhado) aprovacoes/ pedidos/ regras/ acompanhamento/
 prisma/schema.prisma, prisma/seed.ts
 ```
 
@@ -127,6 +128,7 @@ Atualizado ao fim de cada fase (`/fim-de-fase`). Fases detalhadas em `docs/GUIA.
 - [x] Fase 5 — Tela de regras: `app/(telas)/regras/page.tsx` (obra na URL, `connection()` antes de `listarRegras`), `components/regras/{seletor-obra,tabela-faixas,acoes-faixa,botao-nova-faixa,dialog-faixa,dialog-remover-faixa,simulador-alcada}.tsx`, `components/alcada/cadeia-alcada.tsx` (5 estados), `domain/alcada/encontrarLacunas.ts` (+8 testes), `lib/schemas/regra.ts` (`faixaFormSchema` + `paraSalvarFaixaInput`). Form: `useForm` + `useAction` com conversão explícita texto → centavos. Decisão 1 revista: cadeia acumulada (`niveisAcumulados`, `lib/cadeia.ts`, herdados em cinza na tabela).
 - [x] Fase 6 — Tela de novo pedido: `app/(telas)/pedidos/novo/page.tsx`, `components/pedidos/{formulario-pedido,itens-pedido,preview-alcada}.tsx` + `use-preview-alcada.ts`, `lib/schemas/pedido.ts` (`pedidoFormSchema` + `paraCriarPedidoInput`), `lib/totais.ts` (totais de exibição via domínio). Preview da cadeia acumulada por ky; botão desabilitado com a frase do que falta; redirect para `/aprovacoes` com toast.
 - [x] Fase 7 — Tela de aprovações: `app/(telas)/aprovacoes/{page,loading}.tsx` (abas por URL `?filtro=minhas`, uma consulta, recorte em memória) e `aprovacoes/[id]/{page,loading,error,not-found}.tsx` (`params` assíncrono, `NaoEncontrado` → `notFound()`); `components/aprovacoes/{abas-filtro,tabela-pedidos,linha-pedido,badge-situacao,botoes-decisao,dialog-rejeitar,faixa-decisao,cabecalho-pedido,tabela-itens,timeline-alcada}.tsx`; `components/alcada/{estado-nivel,use-transicao-nivel,bloco-nivel,marcador-nivel}` (animações só na mudança de estado); `lib/{datas,cadeia}.ts` (`niveisDoPedido`); `PedidoResumo` ganhou `totalItens` e `aprovacoes`; `motivoRejeicaoSchema` compartilhado; `Navegacao` dentro de `<Suspense>` (usePathname em rota dinâmica). Redirect do novo pedido vai para o detalhe. Revisão de 28/10 (pedido do João): filtros e paginação na URL (`paginarPedidos`, `components/aprovacoes/{filtros-pedidos,paginacao,url-da-lista}`), botão "Decidir" na linha abrindo `dialog-decisao.tsx` (itens por ky), sino de pendências no header (`components/layout/sino-pendencias.tsx`, polling de 30 s + toast + Notification API; shadcn `popover` adicionado).
-- [ ] Fase 8 — Estados, responsividade e revisão. **Próxima.**
-- [ ] Fase 9 — README, screenshots e deploy.
+- [x] Fase 8 — Estados, responsividade e revisão (29/10): passada de UI/UX com três agentes (inventário, trace de fluxos, `critico-visual`) e correções: `tabela-itens` só Descrição + Total abaixo de `md`; `tabela-pedidos` esconde Data/Itens até `lg` e Fornecedor até `xl`; header em duas linhas até `lg`; `itens-pedido` em duas colunas no celular (`minmax(0,1fr)`) com rodapé `sticky`; `dialog-faixa` com `mode: "all"` + botão desabilitado + frase; `money.ts` lê "1.500" como milhar e os campos reescrevem ao sair (`textoDeCentavos`); `lib/quantidade.ts`; `dialog-decisao` só aprova com itens carregados e tem retry; `layout/marcador-pendente.tsx` (`useLinkStatus` + `has-[[data-pendente]]`) nas abas e paginação, `useTransition` + `replace` nos filtros e no seletor de obra; `regras/linha-faixa.tsx` (destaque da faixa salva) e `linha-entra-a/b` no `globals.css` (item novo); `faixa-decisao` dona do `useRegistrarDecisao` (`aria-busy` enquanto envia); herdado com borda tracejada; dialog/popover sem sombra, toast `theme="light"`; `scope="col"`, `aria-label` com contexto, `role="status"` nos skeletons. `docs/design.md` e README (decisões 35–37) atualizados.
+- [x] Extra (30/10) — Tela `/acompanhamento`: `domain/acompanhamento/{tipos,chegouNaMesa,filaPorAprovador,tempoDeDecisao}.ts` (+15 testes), `server/services/acompanhamento.ts` (groupBy por obra/status + cadeia inteira para fila e tempos), `app/api/acompanhamento/route.ts`, `app/(telas)/acompanhamento/{page,loading,error}.tsx`, `components/acompanhamento/{barra,resumo-por-obra,fila-aprovadores,tempos-decisao}.tsx` (barras em CSS, amarelo só na fila do usuário atual). `lib/datas.ts` ganhou `descreverIdade`/`formatarDuracao`; `lib/cadeia.ts` ganhou `aguardandoDesde` (idade "há N dias" na lista). `RegraDto.pedidosPendentes` (`_count` filtrado em `includeRegra`) alimenta o aviso nos dialogs de editar/remover faixa. Seed com `criadoEm` fixo e coerente com as decisões. README decisões 38–39.
+- [ ] Fase 9 — README, screenshots e deploy. **Próxima.**
 - [ ] Fase 10 — PR e ensaio de entrevista.

@@ -55,6 +55,8 @@ export function paraFornecedorDto(fornecedor: {
 
 export const includeRegra = {
   niveis: { orderBy: { ordem: "asc" }, include: { usuario: { select: { nome: true } } } },
+  // Quantos pedidos pendentes ainda apontam para a faixa: a tela avisa antes de editar/remover.
+  _count: { select: { pedidos: { where: { status: "PENDENTE" } } } },
 } satisfies Prisma.RegraAlcadaInclude;
 
 type RegraCarregada = Prisma.RegraAlcadaGetPayload<{ include: typeof includeRegra }>;
@@ -66,6 +68,7 @@ export function paraRegraDto(regra: RegraCarregada): RegraDto {
     minCents: regra.minCents,
     maxCents: regra.maxCents,
     descricao: formatarFaixa(regra.minCents, regra.maxCents),
+    pedidosPendentes: regra._count.pedidos,
     niveis: regra.niveis.map((nivel) => ({
       ordem: nivel.ordem,
       usuarioId: nivel.usuarioId,
