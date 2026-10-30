@@ -2,7 +2,7 @@
 
 # ObraFlow · Dokimos
 
-Plataforma full-stack para cadastro de pedidos de compra e aprovação por alçada. As Fases 0 e 1 entregam a fundação local, os cadastros de referência e as regras de alçada; a Fase 2 permite cadastrar pedidos com itens e persiste a cadeia inicial de aprovação; a Fase 3 permite analisar pedidos, decidir na ordem da cadeia e consultar o histórico.
+Plataforma full-stack para cadastro de pedidos de compra e aprovação por alçada. As Fases 0 e 1 entregam a fundação local, os cadastros de referência e as regras de alçada; a Fase 2 permite cadastrar pedidos com itens e persiste a cadeia inicial de aprovação; a Fase 3 permite analisar pedidos, decidir na ordem da cadeia e consultar o histórico; a Fase 4 fornece dados reproduzíveis para demonstrar os fluxos.
 
 As instruções originais do processo seletivo estão em [DESAFIO-INSTRUCOES.md](DESAFIO-INSTRUCOES.md).
 
@@ -33,6 +33,18 @@ A primeira execução constrói as imagens do backend e do frontend, inicia o Po
 - Saúde operacional: <http://localhost:8080/actuator/health>
 
 A aplicação exibe o estado de conexão da API e do banco e oferece o cadastro de pedidos e a configuração das regras de alçada.
+
+### Popular dados de demonstração
+
+Com os serviços iniciados, carregue os dados de demonstração no PostgreSQL local:
+
+```bash
+docker compose run --rm backend --spring.profiles.active=demo-data
+```
+
+A carga é opt-in e pode ser executada novamente: obras, usuários e fornecedores usam identificadores naturais estáveis, e os pedidos de demonstração são reconhecidos por marcadores próprios nas observações. Ela não apaga nem altera pedidos existentes. São criadas duas obras com faixas de até R$ 10.000,00 e acima desse valor, quatro aprovadores e três fornecedores. Os quatro pedidos incluem itens múltiplos: um pendente no primeiro nível, um pendente no segundo nível após a primeira aprovação, um totalmente aprovado e um rejeitado com motivo registrado.
+
+Para começar de novo, remova o volume do PostgreSQL local com `docker compose down -v`, suba os serviços novamente com `docker compose up --build` e execute a carga acima. Esse procedimento remove os dados do banco local mantido pelo Compose.
 
 Para encerrar os serviços, use `Ctrl+C` ou, em outro terminal:
 
@@ -80,7 +92,7 @@ Backend:
 ./mvnw -f backend/pom.xml test
 ```
 
-Os testes de integração do backend usam Testcontainers para iniciar PostgreSQL descartável. Eles verificam cadastro e consulta dos dados de referência, persistência e substituição das regras por obra, além das garantias transacionais de pedidos. Mantenha o Docker Engine em execução ao rodar a suíte completa.
+Os testes de integração do backend usam Testcontainers para iniciar PostgreSQL descartável. Eles verificam cadastro e consulta dos dados de referência, persistência e substituição das regras por obra, garantias transacionais de pedidos e a idempotência da carga de demonstração. Mantenha o Docker Engine em execução ao rodar a suíte completa.
 
 Frontend:
 
