@@ -1,0 +1,67 @@
+spring:
+  application:
+    name: obraflow-backend
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:obraflow}
+    username: ${DB_USER:obraflow}
+    password: ${DB_PASS:obraflow}
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 10000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  jackson:
+    default-property-inclusion: non_null
+
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always
+
+app:
+  jwt:
+    # Em producao: variavel de ambiente / secret manager (>= 256 bits).
+    secret: ${OBRAFLOW_JWT_SECRET:obraflow-local-dev-secret-change-me-please-32bytes-min}
+    issuer: obraflow
+    expiration: PT8H
+  demo:
+    enabled: ${OBRAFLOW_DEMO_ENABLED:true}
+    senha-padrao: ${OBRAFLOW_DEMO_SENHA:obraflow123}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+logging:
+  level:
+    com.br.obraflow: INFO
+    org.hibernate.SQL: WARN

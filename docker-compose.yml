@@ -1,0 +1,55 @@
+name: obraflow
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: obraflow-db
+    environment:
+      POSTGRES_DB: obraflow
+      POSTGRES_USER: obraflow
+      POSTGRES_PASSWORD: obraflow
+      TZ: America/Sao_Paulo
+    ports:
+      - "5432:5432"
+    volumes:
+      - obraflow-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U obraflow -d obraflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: obraflow-backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: obraflow
+      DB_USER: obraflow
+      DB_PASS: obraflow
+      OBRAFLOW_JWT_SECRET: obraflow-local-dev-secret-change-me-please-32bytes-min
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: obraflow-frontend
+    depends_on:
+      - backend
+    environment:
+      BACKEND_URL: http://backend:8080
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: obraflow-local-dev-secret-change-me-please-32bytes-min
+    ports:
+      - "3000:3000"
+
+volumes:
+  obraflow-db-data:

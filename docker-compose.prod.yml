@@ -1,0 +1,91 @@
+name: obraflow-prod
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: obraflow-db-prod
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-obraflow}
+      POSTGRES_USER: ${POSTGRES_USER:-obraflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      TZ: America/Sao_Paulo
+    volumes:
+      - obraflow-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-obraflow} -d ${POSTGRES_DB:-obraflow}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: obraflow-backend-prod
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: ${POSTGRES_DB:-obraflow}
+      DB_USER: ${POSTGRES_USER:-obraflow}
+      DB_PASS: ${POSTGRES_PASSWORD}
+      OBRAFLOW_JWT_SECRET: ${OBRAFLOW_JWT_SECRET}
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: "8080"
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: obraflow-frontend-prod
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      BACKEND_URL: http://backend:8080
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  obraflow-db-data:

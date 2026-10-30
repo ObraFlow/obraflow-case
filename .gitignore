@@ -1,0 +1,42 @@
+# ===== Build =====
+target/
+*.jar
+*.war
+
+# ===== IDE =====
+.idea/
+*.iml
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+.sts4-cache
+.springBeans
+
+# ===== Node / Frontend =====
+node_modules/
+dist/
+build/
+.vite/
+*.tsbuildinfo
+
+# ===== Infra / ambiente =====
+.env
+.env.local
+docker/data/
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Logs =====
+*.log
+*.log~
+
+# ===== Artefatos de teste / automacao =====
+.playwright-mcp/
+test-results/
+playwright-report/
+coverage/

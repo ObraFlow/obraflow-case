@@ -1,0 +1,148 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '20'
+  BACKEND_URL: http://localhost:8080
+
+jobs:
+  lint:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run TypeScript type check
+        run: npm run typecheck
+
+      - name: Check formatting
+        run: npm run format:check
+
+  test:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test
+
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Build application
+        run: npm run build
+
+      - name: Start backend (docker)
+        run: |
+          cd ..
+          docker-compose up -d db backend
+          sleep 30
+
+      - name: Start frontend
+        run: |
+          npm run dev &
+          sleep 15
+
+      - name: Run E2E tests
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: false
+          tags: obraflow-frontend:latest
+          load: true
+
+      - name: Build backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: false
+          tags: obraflow-backend:latest
+          load: true
+
+      - name: Test docker compose
+        run: |
+          docker-compose up -d
+          sleep 30
+          curl -f http://localhost:3000 || exit 1
+          curl -f http://localhost:8080/actuator/health || exit 1
+          docker-compose down
+
+  deploy:
+    name: Deploy Preview
+    runs-on: ubuntu-latest
+    needs: [lint, test, e2e, docker]
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Deploy to preview
+        run: echo "Deploy to preview environment"
+        # Add your deployment steps here
+        # e.g., Vercel, Netlify, AWS, etc.

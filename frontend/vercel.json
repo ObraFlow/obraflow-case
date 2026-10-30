@@ -1,0 +1,55 @@
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm ci",
+  "framework": "nextjs",
+  "regions": ["iad1", "gru1"],
+  "functions": {
+    "src/app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-DNS-Prefetch-Control",
+          "value": "on"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
+      ]
+    },
+    "rewrites": [
+      {
+        "source": "/api/backend/:path*",
+        "destination": "https://obraflow-backend.onrender.com/api/v1/:path*"
+      }
+    ],
+    "env": {
+      "BACKEND_URL": "@backend-url",
+      "NEXTAUTH_URL": "@nextauth-url",
+      "NEXTAUTH_SECRET": "@nextauth-secret",
+      "NEXT_PUBLIC_APP_URL": "@next-public-app-url"
+    }
+  }
+}

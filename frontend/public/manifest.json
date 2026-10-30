@@ -1,0 +1,17 @@
+{
+  "name": "ObraFlow",
+  "short_name": "ObraFlow",
+  "description": "Sistema de gestão de pedidos e alçadas de aprovação",
+  "start_url": "/pedidos",
+  "display": "standalone",
+  "background_color": "#FAFAFA",
+  "theme_color": "#2563EB",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
