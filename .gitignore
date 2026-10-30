@@ -11,11 +11,6 @@ build/
 coverage/
 .nyc_output/
 
-# Environment and secrets
-.env
-.env.*
-!.env.example
-
 # Logs
 logs/
 *.log
