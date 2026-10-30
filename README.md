@@ -112,7 +112,7 @@ npm run build
 
 O backend inicia na porta `8080`, o frontend na `5173` e o PostgreSQL na `5432` por padrão. As portas e credenciais de desenvolvimento podem ser configuradas no `.env`, criado a partir de `.env.example`. Os valores incluídos são locais e fictícios; não são necessários serviços pagos ou credenciais externas.
 
-O Vue consulta `GET /api/health` para exibir o estado dos serviços. A API verifica a conexão ao PostgreSQL e responde com o estado da aplicação e do banco. Flyway aplica as migrações versionadas na inicialização. Os dados de demonstração serão adicionados na Fase 4.
+O Vue consulta `GET /api/health` para exibir o estado dos serviços. A API verifica a conexão ao PostgreSQL e responde com o estado da aplicação e do banco. Flyway aplica as migrações versionadas na inicialização. Os dados de demonstração são carregados somente quando o perfil `demo-data` é ativado explicitamente.
 
 ## Informações da entrega
 
@@ -177,4 +177,8 @@ O desafio não inclui autenticação. Para permitir avaliar o fluxo localmente, 
 
 Erros da API usam o formato Problem Details (`title`, `status` e `detail`). Dados inválidos retornam `400`, recursos inexistentes retornam `404`, e violações de unicidade retornam `409`; erros internos não expõem detalhes técnicos.
 
-As capturas das telas, a modelagem e o cálculo das regras de alçada, os fluxos completos da API, os dados de demonstração, as garantias de integridade do domínio e as considerações de produção serão documentados conforme forem implementados nas próximas fases.
+As capturas finais das telas e as considerações de produção serão consolidadas na revisão de entrega da Fase 6.
+
+### Estados e acessibilidade (Fase 5)
+
+As listas e consultas assíncronas exibem carregamento; quando não há registros, a interface apresenta uma orientação para continuar. Falhas de rede ou da API mostram uma mensagem compreensível e uma ação para tentar novamente, inclusive ao consultar detalhes ou trocar a obra das regras. Campos inválidos são identificados junto ao controle correspondente, e a rejeição sem motivo é bloqueada antes do envio. A navegação e os controles podem ser usados por teclado, com foco visível, e os formulários reorganizam os campos em telas estreitas.

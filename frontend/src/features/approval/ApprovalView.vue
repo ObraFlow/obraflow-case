@@ -16,6 +16,7 @@ const saving = ref(false)
 const error = ref('')
 const detailError = ref('')
 const reason = ref('')
+const reasonMissing = ref(false)
 const actionError = ref('')
 const currentApprover = computed(() => selectedOrder.value?.approvers.find(
   approver => approver.position === selectedOrder.value?.currentApproverPosition,
@@ -45,6 +46,7 @@ async function openOrder(id: number) {
   selectedId.value = id
   selectedOrder.value = null
   reason.value = ''
+  reasonMissing.value = false
   detailLoading.value = true
   detailError.value = ''
   actionError.value = ''
@@ -61,9 +63,11 @@ async function decide(outcome: 'APPROVED' | 'REJECTED') {
   const order = selectedOrder.value
   if (!order || !currentApprover.value || saving.value) return
   if (outcome === 'REJECTED' && !reason.value.trim()) {
+    reasonMissing.value = true
     actionError.value = 'Informe o motivo da rejeição.'
     return
   }
+  reasonMissing.value = false
   saving.value = true
   actionError.value = ''
   try {
@@ -77,6 +81,13 @@ async function decide(outcome: 'APPROVED' | 'REJECTED') {
     actionError.value = cause instanceof ApiError ? cause.message : 'Não foi possível registrar a decisão.'
   } finally {
     saving.value = false
+  }
+}
+
+function clearReasonError() {
+  if (reasonMissing.value) {
+    reasonMissing.value = false
+    actionError.value = ''
   }
 }
 
@@ -160,9 +171,9 @@ onMounted(loadOrders)
             <h4>Decisão de {{ currentApprover.name }}</h4>
             <p>Esta é a etapa atual. A próxima etapa será liberada após a aprovação.</p>
             <label>Motivo da rejeição <span>(obrigatório para rejeitar)</span>
-              <textarea v-model="reason" maxlength="1000" rows="3" placeholder="Explique por que o pedido deve ser rejeitado"></textarea>
+              <textarea v-model="reason" maxlength="1000" rows="3" placeholder="Explique por que o pedido deve ser rejeitado" :aria-invalid="reasonMissing ? 'true' : undefined" :aria-describedby="reasonMissing ? 'decision-error' : undefined" @input="clearReasonError"></textarea>
             </label>
-            <small v-if="actionError" class="field-error" role="alert">{{ actionError }}</small>
+            <small v-if="actionError" id="decision-error" class="field-error" role="alert">{{ actionError }}</small>
             <div class="decision-actions">
               <button class="reject-button" type="button" :disabled="saving" @click="decide('REJECTED')">{{ saving ? 'Salvando…' : 'Rejeitar pedido' }}</button>
               <button class="primary-button" type="button" :disabled="saving" @click="decide('APPROVED')">{{ saving ? 'Salvando…' : 'Aprovar pedido' }}</button>
