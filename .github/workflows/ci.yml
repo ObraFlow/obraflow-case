@@ -1,6 +1,7 @@
 # Roda a mesma verificação do `npm run check` local a cada push e pull request:
-# lint, Prettier, tsc e Vitest. O `next build` fica fora: ele prerenderiza páginas com
-# "use cache" e precisaria de banco; quem faz esse build é a Vercel, a cada push na main.
+# `next typegen` (gera os tipos globais PageProps/LayoutProps que o tsc precisa num clone
+# limpo), lint, Prettier, tsc e Vitest. O `next build` fica fora: ele prerenderiza páginas
+# com "use cache" e precisaria de banco; quem faz esse build é a Vercel, a cada push na main.
 name: CI
 
 on:

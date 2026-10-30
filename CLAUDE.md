@@ -103,7 +103,7 @@ Regra: UI nunca importa Prisma. Domain nunca importa nada. Services são o únic
 - Antes de usar API do Next, leia o doc local indicado pela skill `next16`. Antes de criar tela, leia a skill `ui-obraflow` (ou use `/nova-tela`).
 - Ao terminar uma tela, rode o agente `critico-visual` na rota. Ao fechar uma fase, use `/fim-de-fase`.
 - Identidade visual definida em `docs/design.md` ("Canteiro", 28/10/2026) e implementada como tokens em `src/app/globals.css` (Archivo via `next/font`, raio 2px, classes `bg-sinalizacao`, `text-aprovado`, `bg-rejeitado-fundo`...). Amarelo **só** onde o usuário atual precisa agir. Animação só em resposta a ação, com os keyframes já definidos no `globals.css`. Sem modo escuro.
-- Atualize `README.md > ## Decisões técnicas` quando uma decisão nova for tomada.
+- Decisões técnicas: o `README.md > ## Decisões técnicas` tem **no máximo 10 itens curtos** (1–2 linhas, cada um com link para o código). A versão longa e as decisões novas vão em `docs/decisoes.md` (local, fora do git). Não voltar a inchar o README.
 
 ## Checklist de validações exigidas (DESAFIO.md)
 

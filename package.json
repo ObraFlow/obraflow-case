@@ -14,7 +14,7 @@
     "db:studio": "prisma studio",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "npm run lint && prettier --check . && tsc --noEmit && vitest run",
+    "check": "next typegen && npm run lint && prettier --check . && tsc --noEmit && vitest run",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky"
