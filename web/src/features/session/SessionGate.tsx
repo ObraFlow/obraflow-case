@@ -77,8 +77,7 @@ function UserPicker() {
         <LogoMark className="mx-auto size-12" />
         <h1 className="text-2xl font-semibold tracking-tight">Quem está usando o ObraFlow?</h1>
         <p className="text-sm text-muted-foreground">
-          Escolha um usuário para continuar. Não há senha: a escolha só identifica quem cria e
-          aprova os pedidos, e pode ser trocada a qualquer momento.
+          Escolha um usuário para continuar.
         </p>
       </div>
 
