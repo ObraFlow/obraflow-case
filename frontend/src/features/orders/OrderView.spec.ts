@@ -59,4 +59,60 @@ describe('order creation form', () => {
     expect(wrapper.text()).toContain('Nenhuma obra cadastrada')
     expect(wrapper.find('form').exists()).toBe(false)
   })
+
+  it('shows loading, explains a failed reference-data request, and retries successfully', async () => {
+    let failWorks = true
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const path = String(input)
+      if (path.endsWith('/api/works') && failWorks) return response({ detail: 'Serviço indisponível.' }, 500)
+      if (path.endsWith('/api/works')) return response([{ id: 1, name: 'Obra Centro', code: 'OC-1' }])
+      return response([{ id: 2, name: 'Fornecedor', taxId: '123', active: true }])
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const wrapper = mount(OrderView)
+    expect(wrapper.get('[role="status"]').text()).toContain('Carregando obras e fornecedores')
+    await flushPromises()
+    expect(wrapper.get('[role="alert"]').text()).toContain('Serviço indisponível.')
+
+    failWorks = false
+    await wrapper.get('.load-error button').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('form.order-form').exists()).toBe(true)
+    expect(wrapper.text()).not.toContain('Serviço indisponível.')
+  })
+
+  it('shows field-level errors and blocks invalid required and numeric values', async () => {
+    vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => String(input).endsWith('/api/works')
+      ? response([{ id: 1, name: 'Obra Centro', code: 'OC-1' }])
+      : response([{ id: 2, name: 'Fornecedor', taxId: '123', active: true }])))
+
+    const wrapper = mount(OrderView)
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Selecione um fornecedor.')
+    expect(wrapper.text()).toContain('Informe a descrição do item.')
+    expect(wrapper.text()).toContain('Informe uma quantidade numérica maior que zero')
+    expect(wrapper.text()).toContain('Informe um preço não negativo')
+
+    await wrapper.get('select[aria-label="Obra"]').setValue('')
+    await wrapper.get('select[aria-label="Fornecedor"]').setValue('')
+    await wrapper.get('input[type="date"]').setValue('')
+    await wrapper.get('input[placeholder="Ex.: Cimento CP-II 50 kg"]').setValue('Areia')
+    await wrapper.get('input[placeholder="0,000"]').setValue('-1')
+    await wrapper.get('input[placeholder="0,00"]').setValue('-2')
+
+    expect(wrapper.text()).toContain('Selecione uma obra.')
+    expect(wrapper.text()).toContain('Selecione um fornecedor.')
+    expect(wrapper.text()).toContain('Informe a data do pedido.')
+    expect(wrapper.text()).toContain('Informe uma quantidade numérica maior que zero')
+    expect(wrapper.text()).toContain('Informe um preço não negativo')
+    expect(wrapper.get('button[type="submit"]').attributes('disabled')).toBeDefined()
+
+    await wrapper.get('input[placeholder="0,000"]').setValue('1,0001')
+    await wrapper.get('input[placeholder="0,00"]').setValue('1,001')
+    expect(wrapper.text()).toContain('até 3 casas decimais')
+    expect(wrapper.text()).toContain('até 2 casas decimais')
+  })
 })

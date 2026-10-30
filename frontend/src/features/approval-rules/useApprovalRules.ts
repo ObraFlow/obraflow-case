@@ -9,6 +9,7 @@ export function useApprovalRules() {
   const bands = ref<Band[]>([])
   const workId = ref<number | null>(null)
   const loading = ref(true)
+  const bandsLoading = ref(false)
   const saving = ref(false)
   const creatingWork = ref(false)
   const creatingUser = ref(false)
@@ -19,14 +20,25 @@ export function useApprovalRules() {
   const userName = ref('')
   const userEmail = ref('')
   const selectedWork = computed(() => works.value.find(work => work.id === workId.value))
+  let bandsRequestId = 0
 
   async function loadBands() {
-    if (!workId.value) {
-      bands.value = []
+    const requestedWorkId = workId.value
+    const requestId = ++bandsRequestId
+    bands.value = []
+    if (!requestedWorkId) {
+      bandsLoading.value = false
       return
     }
-    const saved = await apiRequest<BandResponse[]>(`/api/works/${workId.value}/approval-bands`)
-    bands.value = saved.map(toEditableBand)
+    bandsLoading.value = true
+    try {
+      const saved = await apiRequest<BandResponse[]>(`/api/works/${requestedWorkId}/approval-bands`)
+      if (requestId === bandsRequestId && requestedWorkId === workId.value) {
+        bands.value = saved.map(toEditableBand)
+      }
+    } finally {
+      if (requestId === bandsRequestId) bandsLoading.value = false
+    }
   }
 
   async function load() {
@@ -49,12 +61,15 @@ export function useApprovalRules() {
   }
 
   async function selectWork() {
+    const selectedId = workId.value
     error.value = ''
     notice.value = ''
     try {
       await loadBands()
     } catch (cause) {
-      error.value = cause instanceof Error ? cause.message : 'Falha ao carregar regras.'
+      if (workId.value === selectedId) {
+        error.value = cause instanceof Error ? cause.message : 'Falha ao carregar regras.'
+      }
     }
   }
 
@@ -144,7 +159,7 @@ export function useApprovalRules() {
   onMounted(load)
 
   return {
-    works, users, bands, workId, loading, saving, creatingWork, creatingUser, error, notice,
+    works, users, bands, workId, loading, bandsLoading, saving, creatingWork, creatingUser, error, notice,
     workName, workCode, userName, userEmail, selectedWork,
     load, selectWork, addBand, removeBand, moveApprover, toggleApprover, money, save, createWork, createUser,
   }

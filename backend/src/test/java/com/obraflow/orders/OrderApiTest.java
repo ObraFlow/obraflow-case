@@ -18,8 +18,11 @@ import java.time.LocalDate;
 
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -80,5 +83,17 @@ class OrderApiTest {
         verify(service).decide(org.mockito.ArgumentMatchers.eq(7L), request.capture());
         assertEquals(4L, request.getValue().approverId());
         assertEquals(OrderApprovalFlow.Outcome.APPROVED, request.getValue().outcome());
+    }
+
+    @Test
+    void hidesUnexpectedServerExceptionDetailsFromTheResponse() throws Exception {
+        when(service.list()).thenThrow(new IllegalStateException("database password leaked"));
+
+        String responseBody = mvc.perform(get("/api/orders"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.detail").value("Ocorreu um erro interno. Tente novamente."))
+                .andReturn().getResponse().getContentAsString();
+
+        assertFalse(responseBody.contains("database password leaked"));
     }
 }
