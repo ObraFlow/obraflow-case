@@ -12,6 +12,8 @@ const archivo = Archivo({
 });
 
 export const metadata: Metadata = {
+  // URL pública do deploy: transforma o caminho da imagem Open Graph em URL absoluta.
+  metadataBase: new URL("https://obraflow-theta.vercel.app"),
   title: "ObraFlow",
   description: "Pedidos de compra com aprovação por alçada.",
   openGraph: {

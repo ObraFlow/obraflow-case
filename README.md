@@ -1,5 +1,7 @@
 # ObraFlow — Dokimos (pedidos de compra com aprovação por alçada)
 
+**Demo publicada:** https://obraflow-theta.vercel.app (Vercel + Postgres na Neon, com os dados de demonstração do seed; escolha quem você é em "Agindo como").
+
 > Em construção. Seções de screenshots, modelagem da alçada e API serão preenchidas ao longo do desafio.
 
 ## Como rodar
@@ -18,6 +20,21 @@ npm run dev          # http://localhost:3000
 Outros scripts: `npm run check` (lint + prettier + tsc + testes), `npm run format`, `npm test`, `npm run db:studio`, `npm run db:down`.
 
 A cada commit, um hook `pre-commit` (husky) roda `lint-staged`: ESLint com `--fix` e Prettier só nos arquivos em stage. Se o lint falhar, o commit não acontece.
+
+### Deploy (Vercel + Neon)
+
+A demo em https://obraflow-theta.vercel.app roda na Vercel, ligada ao branch `main` deste repositório (cada push publica), com o Postgres na Neon (região `sa-east-1`, funções da Vercel em `gru1`). A única diferença para o ambiente local é a variável `DATABASE_URL`. Para reproduzir:
+
+1. Crie um banco Postgres (Neon, Supabase, RDS) e copie a connection string.
+2. Na Vercel, importe o repositório, defina `DATABASE_URL` e o comando de build `prisma generate && next build` (o client do Prisma é gerado no build porque `src/generated/prisma` não vai para o git).
+3. Aplique as migrations e o seed no banco remoto a partir da sua máquina, apontando a variável só para esses comandos:
+
+```bash
+DATABASE_URL="postgresql://..." npx prisma migrate deploy
+DATABASE_URL="postgresql://..." npx prisma db seed
+```
+
+Não há secret além da `DATABASE_URL`: sem autenticação, o "Agindo como" é um cookie.
 
 ## Tecnologias e motivos
 
@@ -83,7 +100,8 @@ Sem autenticação por escopo do desafio: o usuário atual é simulado por um se
 37. **Toda ação tem retorno antes do servidor responder.** Abas e paginação usam `useLinkStatus` (Next 16) por um filho escondido que marca `data-pendente`, e o próprio link se apaga com a variante `has-[[data-pendente]]:` do Tailwind; selects de filtro e de obra navegam dentro de `useTransition` e ficam desabilitados até a lista nova chegar. Filtros usam `router.replace`: refinar a mesma lista não deve empilhar histórico, e o botão Voltar sai da lista em vez de desfazer filtro por filtro. Item adicionado e faixa salva entram com um destaque curto (`linha-entra`), pelo mesmo padrão das outras animações: só linhas que não existiam quando a tela montou, nunca no carregamento.
 38. **Uma quarta tela, Acompanhamento: fila por pessoa e tempo até decidir.** As três telas pedidas respondem "o que preciso decidir?". Um serviço de aprovações é, na prática, uma fila por pessoa, e a pergunta de quem gerencia é "onde o dinheiro está parado e com quem?". `/acompanhamento` mostra, por obra, quanto está pendente, aprovado e rejeitado; por aprovador, quanto está parado na mesa dele agora, desde quando e qual é o pedido mais antigo; e a média de cada um entre o pedido chegar na mesa e a decisão. "Chegar na mesa" é a criação do pedido no primeiro nível e a decisão anterior nos demais (`chegouNaMesa`): até lá a pessoa nem sabia que ia decidir. As contas são funções puras em `src/domain/acompanhamento` com testes; o service só carrega, converte `Date` para ms e dá nomes. Sem biblioteca de gráfico: barras de 8px em CSS cuja largura codifica o valor, sempre com o número ao lado, e o amarelo só na fila do usuário atual. O mesmo DTO sai em `GET /api/acompanhamento`. Em produção, com volume, as leituras virariam consulta agregada ou view; o domínio não mudaria.
 39. **Idade do pedido na lista e aviso de impacto nas regras.** Todo pedido pendente mostra "há N dias" ao lado da situação, contado desde que chegou na mesa do aprovador da vez (mesma regra do acompanhamento). Ao editar ou remover uma faixa, o dialog diz quantos pedidos pendentes foram criados nela e lembra que eles mantêm a cadeia que copiaram: é a decisão 11 (snapshot) dita na própria tela, antes de a pessoa mexer.
-40. **Sino de pendências com polling, sem servidor de eventos.** Um client component no header consulta `GET /api/pedidos?pendentesPara=` ao montar, a cada 30 segundos, quando a aba volta ao foco e quando uma decisão é registrada na própria tela (evento DOM `obraflow:pendencias-mudaram`). Pedido que não estava na lista anterior vira toast com link e, se a pessoa permitiu, notificação do navegador quando a aba está em segundo plano; a primeira carga nunca avisa. O sino remonta a cada troca do "Agindo como" (`key`), para a lista de um usuário não virar "novidade" do seguinte. Em produção isso seria push (SSE ou WebSocket) ou fila com e-mail; o polling é o que cabe sem infraestrutura extra e já deixa o contrato pronto: quem avisa é o mesmo endpoint da lista.
+40. **Deploy na Vercel com Postgres na Neon, sem mudar uma linha de código.** `DATABASE_URL` é a única diferença entre local e produção: o adapter `pg` fala com a Neon pelo pooler, as migrations vão por `prisma migrate deploy` e o seed é o mesmo da demo local. O client do Prisma é gerado no build (`prisma generate && next build`) porque fica fora do git. Funções na região de São Paulo (`gru1`), ao lado do banco (`sa-east-1`), para a consulta não cruzar o continente a cada request. A proteção de autenticação da Vercel ficou só nos previews: a produção é pública porque o avaliador precisa abrir sem conta.
+41. **Sino de pendências com polling, sem servidor de eventos.** Um client component no header consulta `GET /api/pedidos?pendentesPara=` ao montar, a cada 30 segundos, quando a aba volta ao foco e quando uma decisão é registrada na própria tela (evento DOM `obraflow:pendencias-mudaram`). Pedido que não estava na lista anterior vira toast com link e, se a pessoa permitiu, notificação do navegador quando a aba está em segundo plano; a primeira carga nunca avisa. O sino remonta a cada troca do "Agindo como" (`key`), para a lista de um usuário não virar "novidade" do seguinte. Em produção isso seria push (SSE ou WebSocket) ou fila com e-mail; o polling é o que cabe sem infraestrutura extra e já deixa o contrato pronto: quem avisa é o mesmo endpoint da lista.
 
 ## API REST
 
