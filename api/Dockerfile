@@ -8,7 +8,8 @@ WORKDIR /app
 
 # Dependencies first, so code changes do not reinstall them.
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+# --ignore-scripts: postinstall runs prisma generate, but the schema is copied below.
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 COPY . .
 RUN pnpm prisma generate && pnpm build
