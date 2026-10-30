@@ -4,6 +4,9 @@ import {
   resolveChain,
   selectRange,
   type RuleRange,
+  ApprovalError,
+  decide,
+  type OrderState
 } from './approval-engine.js';
 
 const ranges: RuleRange[] = [
@@ -42,5 +45,46 @@ describe('resolveChain', () => {
 
   it('lança erro quando não há faixa', () => {
     expect(() => resolveChain([], 500)).toThrow(NoMatchingRangeError);
+  });
+});
+
+const base: OrderState = {
+  status: 'PENDING',
+  currentStep: 0,
+  chain: [
+    { position: 0, userId: 'joao',   decision: 'PENDING' },
+    { position: 1, userId: 'amanda', decision: 'PENDING' },
+  ],
+};
+
+describe('decide', () => {
+  it('aprovar 1º nível avança e mantém PENDING', () => {
+    expect(decide(base, 'joao', 'APPROVE')).toEqual({
+      stepPosition: 0, stepDecision: 'APPROVED', newStatus: 'PENDING', newCurrentStep: 1,
+    });
+  });
+
+  it('aprovar último nível conclui (APPROVED)', () => {
+    const last = { ...base, currentStep: 1 };
+    expect(decide(last, 'amanda', 'APPROVE').newStatus).toBe('APPROVED');
+  });
+
+  it('rejeitar interrompe e exige motivo', () => {
+    expect(decide(base, 'joao', 'REJECT', 'fora do orçamento').newStatus).toBe('REJECTED');
+  });
+
+  it('rejeitar sem motivo → REASON_REQUIRED', () => {
+    expect(() => decide(base, 'joao', 'REJECT', '  ')).toThrow(ApprovalError);
+  });
+
+  it('não é a vez dele → NOT_CURRENT_APPROVER', () => {
+    try { decide(base, 'amanda', 'APPROVE'); }
+    catch (e) { expect((e as ApprovalError).code).toBe('NOT_CURRENT_APPROVER'); }
+  });
+
+  it('pedido já concluído → ORDER_NOT_PENDING', () => {
+    const done = { ...base, status: 'APPROVED' as const, currentStep: 2 };
+    try { decide(done, 'amanda', 'APPROVE'); }
+    catch (e) { expect((e as ApprovalError).code).toBe('ORDER_NOT_PENDING'); }
   });
 });
