@@ -1,0 +1,53 @@
+# docker compose up --build  ->  app at http://localhost:8080 (WEB_PORT=3001 to change)
+# Only the database is needed for local development (pnpm dev); `docker compose up db`.
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: obraflow
+      POSTGRES_PASSWORD: obraflow
+      POSTGRES_DB: obraflow
+    # Published only on this machine (127.0.0.1): "5433:5432" would listen on
+    # every network interface, and the obraflow user is a superuser with a
+    # password that is in this file. Host port 5433 avoids a local Postgres.
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - db_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U obraflow -d obraflow"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: postgresql://obraflow:obraflow@db:5432/obraflow?schema=public
+      COOKIE_SECRET: docker-local-secret-change-me
+      # NODE_ENV is left unset on purpose: "production" marks the session cookie
+      # Secure, which needs HTTPS outside localhost.
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+      start_period: 10s
+
+  web:
+    build: ./web
+    environment:
+      APP_URL: http://localhost:${WEB_PORT:-8080}
+    # Only this machine: the app has no login, so it must not be reachable
+    # from the local network or a VPN.
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  db_data:
