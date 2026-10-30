@@ -174,34 +174,34 @@ export function TabelaPedidos({
             {/* Entre md e xl o espaço é curto: Fornecedor só em xl, Data e Itens só a partir de lg
                 (os blocos do celular mostram tudo). */}
             <tr className="border-b-2 border-foreground text-left text-xs font-semibold text-muted-foreground">
-              <th scope="col" className="px-3 py-2.5 whitespace-nowrap">
+              <th scope="col" className="px-2.5 py-2.5 whitespace-nowrap">
                 Pedido
               </th>
-              <th scope="col" className="px-3 py-2.5">
+              <th scope="col" className="px-2.5 py-2.5">
                 Obra
               </th>
-              <th scope="col" className="hidden px-3 py-2.5 xl:table-cell">
+              <th scope="col" className="hidden px-2.5 py-2.5 xl:table-cell">
                 Fornecedor
               </th>
-              <th scope="col" className="hidden px-3 py-2.5 whitespace-nowrap lg:table-cell">
+              <th scope="col" className="hidden px-2.5 py-2.5 whitespace-nowrap lg:table-cell">
                 Data
               </th>
               <th
                 scope="col"
-                className="hidden px-3 py-2.5 text-right whitespace-nowrap lg:table-cell"
+                className="hidden px-2.5 py-2.5 text-right whitespace-nowrap lg:table-cell"
               >
                 Itens
               </th>
-              <th scope="col" className="px-3 py-2.5 text-right whitespace-nowrap">
+              <th scope="col" className="px-2.5 py-2.5 text-right whitespace-nowrap">
                 Total
               </th>
-              <th scope="col" className="px-3 py-2.5 whitespace-nowrap">
+              <th scope="col" className="px-2.5 py-2.5 whitespace-nowrap">
                 Situação
               </th>
-              <th scope="col" className="px-3 py-2.5 whitespace-nowrap">
+              <th scope="col" className="px-2.5 py-2.5 whitespace-nowrap">
                 Alçada
               </th>
-              <th scope="col" className="w-0 px-3 py-2.5" aria-label="Ações" />
+              <th scope="col" className="w-0 px-2.5 py-2.5" aria-label="Ações" />
             </tr>
           </thead>
           <tbody>
@@ -219,32 +219,33 @@ export function TabelaPedidos({
                     !suaVez && "hover:bg-muted",
                   )}
                 >
-                  {/* py-3: linha de 46px (docs/design.md > Forma), igual ao skeleton. */}
-                  <td className="px-3 py-3 whitespace-nowrap">
+                  {/* py-3: linha de 46px (docs/design.md > Forma), igual ao skeleton. px-2.5 nas
+                      células: com a idade ao lado do badge, 1134px só cabem sem rolar assim. */}
+                  <td className="px-2.5 py-3 whitespace-nowrap">
                     <span className="flex items-center gap-2">
                       <LinkDoPedido pedido={pedido} />
                       {suaVez && <EtiquetaSuaVez />}
                     </span>
                   </td>
-                  <td className="max-w-36 truncate px-3 py-3 lg:max-w-48" title={pedido.obraNome}>
+                  <td className="max-w-36 truncate px-2.5 py-3 lg:max-w-44" title={pedido.obraNome}>
                     {pedido.obraNome}
                   </td>
                   <td
-                    className="hidden max-w-40 truncate px-3 py-3 text-muted-foreground xl:table-cell"
+                    className="hidden max-w-40 truncate px-2.5 py-3 text-muted-foreground xl:table-cell"
                     title={pedido.fornecedorNome}
                   >
                     {pedido.fornecedorNome}
                   </td>
-                  <td className="hidden px-3 py-3 whitespace-nowrap tabular-nums lg:table-cell">
+                  <td className="hidden px-2.5 py-3 whitespace-nowrap tabular-nums lg:table-cell">
                     {formatarData(pedido.dataPedido)}
                   </td>
-                  <td className="hidden px-3 py-3 text-right tabular-nums lg:table-cell">
+                  <td className="hidden px-2.5 py-3 text-right tabular-nums lg:table-cell">
                     {pedido.totalItens}
                   </td>
-                  <td className="px-3 py-3 text-right font-semibold whitespace-nowrap tabular-nums">
+                  <td className="px-2.5 py-3 text-right font-semibold whitespace-nowrap tabular-nums">
                     {formatarCentavos(pedido.totalCents)}
                   </td>
-                  <td className="px-3 py-3">
+                  <td className="px-2.5 py-3">
                     {/* Idade na mesma linha do badge: a tabela mantém as 46px em toda linha. */}
                     <span className="inline-flex items-center gap-2 whitespace-nowrap">
                       <BadgeSituacao status={pedido.status} />
@@ -253,11 +254,11 @@ export function TabelaPedidos({
                       )}
                     </span>
                   </td>
-                  <td className="px-3 py-3">
+                  <td className="px-2.5 py-3">
                     {/* Entre md e xl a cadeia quebra linha em vez de forçar rolagem. */}
                     <CadeiaAlcada niveis={niveisDoPedido(pedido)} className="xl:flex-nowrap" />
                   </td>
-                  <td className="w-0 px-3 py-1 text-right whitespace-nowrap">
+                  <td className="w-0 px-2.5 py-1 text-right whitespace-nowrap">
                     {suaVez && (
                       <span className="relative inline-flex">
                         <DialogDecisao pedido={pedido} />

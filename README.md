@@ -1,8 +1,20 @@
 # ObraFlow — Dokimos (pedidos de compra com aprovação por alçada)
 
+[![CI](https://github.com/jphillipe/obraflow-case/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jphillipe/obraflow-case/actions/workflows/ci.yml)
+
 **Demo publicada:** https://obraflow-theta.vercel.app (Vercel + Postgres na Neon, com os dados de demonstração do seed; escolha quem você é em "Agindo como").
 
-> Em construção. Seções de screenshots, modelagem da alçada e API serão preenchidas ao longo do desafio.
+## Telas
+
+Capturas da demo publicada, agindo como João Mendes (aprovador do pedido #1). O amarelo aparece só onde ele precisa agir.
+
+| Aprovações: lista com filtros, a linha "Sua vez" e a cadeia de cada pedido            | Detalhe do pedido: faixa de decisão, itens e timeline da alçada                                                       |
+| ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| ![Lista de aprovações](.github/screenshots/aprovacoes-1280.png)                       | ![Detalhe do pedido](.github/screenshots/pedido-1280.png)                                                             |
+| **Novo pedido**: itens em tabela, total e cadeia que será aplicada antes de cadastrar | **Regras de alçada**: faixas por obra, aprovadores herdados e simulador                                               |
+| ![Novo pedido](.github/screenshots/novo-pedido-1280.png)                              | ![Regras de alçada](.github/screenshots/regras-1280.png)                                                              |
+| **Acompanhamento**: por obra, fila por aprovador e tempo até decidir                  | **Celular (375px)**: lista em blocos e detalhe com itens compactos                                                    |
+| ![Acompanhamento](.github/screenshots/acompanhamento-1280.png)                        | ![Lista no celular](.github/screenshots/aprovacoes-375.png) ![Detalhe no celular](.github/screenshots/pedido-375.png) |
 
 ## Como rodar
 
@@ -36,6 +48,8 @@ DATABASE_URL="postgresql://..." npx prisma db seed
 
 Não há secret além da `DATABASE_URL`: sem autenticação, o "Agindo como" é um cookie.
 
+A cada push, o GitHub Actions (`.github/workflows/ci.yml`) roda o mesmo `npm run check` do pre-commit: lint, Prettier, `tsc` e os testes do domínio. O `next build` fica com a Vercel, porque ele prerenderiza páginas com `"use cache"` e precisa de banco.
+
 ## Tecnologias e motivos
 
 | Dependência                                                                                                                               | Por quê                                                                                                                                                                                                                                                     |
@@ -58,6 +72,95 @@ Não há secret além da `DATABASE_URL`: sem autenticação, o "Agindo como" é 
 | husky + lint-staged                                                                                                                       | Hook `pre-commit` que lint-a e formata apenas os arquivos em stage. Garante que nada entra no histórico fora do padrão.                                                                                                                                     |
 
 Sem autenticação por escopo do desafio: o usuário atual é simulado por um seletor "Agindo como" no header, persistido em cookie.
+
+## Design
+
+A identidade visual "Canteiro" está documentada em tokens (paleta, tipografia, raio, estados da cadeia de alçada) e também em um arquivo Figma gerado **a partir do app**, não o contrário:
+
+**[Figma: ObraFlow — Dokimos](https://www.figma.com/design/P8bpSTcaDVS25sia62cPqN)**
+
+- **Tokens:** paleta com as 14 cores como variáveis da coleção "Canteiro", escala tipográfica (Archivo), forma (raio 2px, bordas, botões de 38px, linhas de tabela de 46px) e os seis estados do bloco da cadeia de alçada, badges de situação e as três faixas de decisão.
+- **Telas 1280 e Telas 375:** as cinco telas mais o detalhe de um pedido rejeitado, em cada largura, importadas do DOM renderizado do app (agindo como João Mendes, com o seed) pelo conector MCP do Figma; textos, cores e layout são os do produto.
+- O que ficou diferente do browser está anotado na página Tokens: a Archivo do Figma não tem o eixo de largura (wordmark e títulos aparecem na largura normal), o campo de data vira texto e o rodapé fixo do formulário no celular aparece no fluxo.
+
+As regras que o Figma documenta valem para o código: amarelo só onde o usuário atual precisa agir, status sempre com texto, sem sombra e sem decoração, movimento só em resposta a uma ação.
+
+## Como a alçada é modelada, calculada e persistida
+
+**Modelada.** Uma regra de alçada é uma faixa de valor de uma obra (`RegraAlcada`: `minCents` inclusivo, `maxCents` nulo = sem teto) com níveis ordenados (`NivelRegra`: posição e aprovador). Faixas da mesma obra não se sobrepõem e uma pessoa não aparece em duas faixas da mesma obra (`validarFaixas`, no domínio, antes de gravar).
+
+**Calculada.** Na criação do pedido, o total dos itens (centavos, calculado no server) escolhe a faixa aplicável da obra (`resolverRegra`); sem faixa, o pedido é recusado com a obra e o valor na mensagem. A cadeia é acumulada (`montarCadeia`): aprovadores das faixas com mínimo abaixo da aplicável, em ordem crescente de valor, e por fim os da própria faixa. Tudo em `src/domain`, sem banco, com testes.
+
+**Persistida.** A cadeia é copiada para o pedido (`AprovacaoPedido`, uma linha por aprovador, `status` e `decididoEm`), e `Pedido.stepAtual` aponta para a próxima posição pendente. Editar ou apagar a regra depois não muda pedidos existentes: o histórico é o snapshot. Cada decisão roda em uma transação que recarrega o pedido, aplica a regra (`aplicarDecisao`) e grava com `updateMany ... where status = PENDENTE`; se nenhuma linha mudou, outra pessoa decidiu antes e a resposta é 409.
+
+```mermaid
+erDiagram
+    Obra ||--o{ RegraAlcada : "tem faixas"
+    Obra ||--o{ Pedido : "recebe"
+    RegraAlcada ||--|{ NivelRegra : "ordena"
+    Usuario ||--o{ NivelRegra : "aprova em"
+    RegraAlcada o|--o{ Pedido : "faixa aplicada (informativo)"
+    Fornecedor ||--o{ Pedido : "fornece"
+    Usuario ||--o{ Pedido : "cria"
+    Pedido ||--|{ ItemPedido : "contém"
+    Pedido ||--|{ AprovacaoPedido : "cadeia copiada"
+    Usuario ||--o{ AprovacaoPedido : "decide"
+
+    RegraAlcada {
+        int minCents
+        int maxCents "nulo = sem teto"
+    }
+    NivelRegra {
+        int ordem
+    }
+    Pedido {
+        int totalCents
+        enum status "PENDENTE | APROVADO | REJEITADO"
+        int stepAtual
+    }
+    ItemPedido {
+        decimal quantidade "12,3"
+        int precoUnitarioCents
+        int totalCents
+    }
+    AprovacaoPedido {
+        int ordem
+        enum status "PENDENTE | APROVADA | REJEITADA | CANCELADA"
+        string motivo
+        datetime decididoEm
+    }
+```
+
+```mermaid
+sequenceDiagram
+    actor A as Aprovador da vez
+    participant UI as FaixaDecisao (client)
+    participant SA as registrarDecisaoAction (next-safe-action)
+    participant S as registrarDecisao (service)
+    participant D as aplicarDecisao (domínio)
+    participant DB as Postgres
+
+    A->>UI: clica Aprovar (ou Rejeitar com motivo)
+    UI->>SA: { pedidoId, tipo, motivo? } validado por Zod
+    SA->>SA: usuário do cookie "agindo-como"
+    SA->>S: registrarDecisao(pedidoId, usuarioId, decisão)
+    S->>DB: BEGIN
+    S->>DB: SELECT pedido + aprovações (estado atual)
+    S->>D: aplicarDecisao(estado, usuarioId, decisão)
+    D-->>S: próximo estado ou ErroDominio (fora de ordem, usuário errado, motivo ausente)
+    S->>DB: UPDATE AprovacaoPedido SET status, decididoEm WHERE pedido, ordem AND status = PENDENTE
+    alt count = 0 (outra decisão chegou antes)
+        S-->>SA: ConflitoDeDecisao
+        SA-->>UI: mensagem "Este passo já foi decidido" + recarrega
+    else count = 1
+        S->>DB: UPDATE Pedido SET stepAtual / status (+ CANCELADA nos níveis seguintes se rejeitou)
+        S->>DB: COMMIT
+        S-->>SA: PedidoDetalhe (DTO)
+        SA->>SA: revalidatePath(/aprovacoes, /aprovacoes/[id])
+        SA-->>UI: sucesso
+        UI->>UI: faixa recolhe, bloco da cadeia preenche, próximo acende
+    end
+```
 
 ## Decisões técnicas
 
@@ -102,6 +205,7 @@ Sem autenticação por escopo do desafio: o usuário atual é simulado por um se
 39. **Idade do pedido na lista e aviso de impacto nas regras.** Todo pedido pendente mostra "há N dias" ao lado da situação, contado desde que chegou na mesa do aprovador da vez (mesma regra do acompanhamento). Ao editar ou remover uma faixa, o dialog diz quantos pedidos pendentes foram criados nela e lembra que eles mantêm a cadeia que copiaram: é a decisão 11 (snapshot) dita na própria tela, antes de a pessoa mexer.
 40. **Deploy na Vercel com Postgres na Neon, sem mudar uma linha de código.** `DATABASE_URL` é a única diferença entre local e produção: o adapter `pg` fala com a Neon pelo pooler, as migrations vão por `prisma migrate deploy` e o seed é o mesmo da demo local. O client do Prisma é gerado no build (`prisma generate && next build`) porque fica fora do git. Funções na região de São Paulo (`gru1`), ao lado do banco (`sa-east-1`), para a consulta não cruzar o continente a cada request. A proteção de autenticação da Vercel ficou só nos previews: a produção é pública porque o avaliador precisa abrir sem conta.
 41. **Sino de pendências com polling, sem servidor de eventos.** Um client component no header consulta `GET /api/pedidos?pendentesPara=` ao montar, a cada 30 segundos, quando a aba volta ao foco e quando uma decisão é registrada na própria tela (evento DOM `obraflow:pendencias-mudaram`). Pedido que não estava na lista anterior vira toast com link e, se a pessoa permitiu, notificação do navegador quando a aba está em segundo plano; a primeira carga nunca avisa. O sino remonta a cada troca do "Agindo como" (`key`), para a lista de um usuário não virar "novidade" do seguinte. Em produção isso seria push (SSE ou WebSocket) ou fila com e-mail; o polling é o que cabe sem infraestrutura extra e já deixa o contrato pronto: quem avisa é o mesmo endpoint da lista.
+42. **Figma gerado do app, como documentação, e não o inverso.** O enunciado não entrega Figma e o layout é parte da avaliação, então o desenho nasceu em código e em tokens (`docs/design.md`). Para quem prefere ler design em Figma, o arquivo foi gerado depois, importando o DOM renderizado de cada tela pelo conector MCP do Figma e montando a página de tokens por script a partir dos mesmos valores. Assim o Figma nunca diverge do produto: se a tela mudar, ele é regenerado. As diferenças inevitáveis (fonte sem eixo de largura, campo de data, rodapé fixo) estão anotadas no próprio arquivo.
 
 ## API REST
 

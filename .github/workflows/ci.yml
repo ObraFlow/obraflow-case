@@ -1,0 +1,25 @@
+# Roda a mesma verificação do `npm run check` local a cada push e pull request:
+# lint, Prettier, tsc e Vitest. O `next build` fica fora: ele prerenderiza páginas com
+# "use cache" e precisaria de banco; quem faz esse build é a Vercel, a cada push na main.
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      # `prisma.config.ts` exige a variável para carregar; o generate e os testes não conectam.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run check
