@@ -10,7 +10,7 @@ datasource db {
 /// Obra (exibida como "Obra" na UI).
 model Project {
   id        String   @id @default(uuid())
-  name      String
+  name      String   @unique
   createdAt DateTime @default(now())
 
   approvalRanges ApprovalRange[]
@@ -35,7 +35,7 @@ model Supplier {
   id   String @id @default(uuid())
   name String
 
-  document  String?
+  document  String?  @unique
   createdAt DateTime @default(now())
 
   purchaseOrders PurchaseOrder[]
