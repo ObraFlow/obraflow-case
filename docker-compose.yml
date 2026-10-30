@@ -7,8 +7,11 @@ services:
       POSTGRES_USER: obraflow
       POSTGRES_PASSWORD: obraflow
       POSTGRES_DB: obraflow
+    # Published only on this machine (127.0.0.1): "5433:5432" would listen on
+    # every network interface, and the obraflow user is a superuser with a
+    # password that is in this file. Host port 5433 avoids a local Postgres.
     ports:
-      - "5433:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
       - db_data:/var/lib/postgresql
     healthcheck:
@@ -38,8 +41,10 @@ services:
     build: ./web
     environment:
       APP_URL: http://localhost:${WEB_PORT:-8080}
+    # Only this machine: the app has no login, so it must not be reachable
+    # from the local network or a VPN.
     ports:
-      - "${WEB_PORT:-8080}:80"
+      - "127.0.0.1:${WEB_PORT:-8080}:80"
     depends_on:
       api:
         condition: service_healthy
