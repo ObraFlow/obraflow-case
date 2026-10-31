@@ -67,7 +67,7 @@ function atualizarTotais() {
         item.querySelector(".total-item").textContent =
             formatarCentavos(totalItem);
         soma += totalItem;
-        }
+    }
 
     totalPedido.textContent = formatarCentavos(soma);
 

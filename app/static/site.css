@@ -617,3 +617,50 @@ td {
     background: white;
     color: #b42358;
 }
+.site-header-conteudo {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.site-header-conteudo nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.site-header-conteudo nav a {
+    padding: 8px 10px;
+    border-radius: 8px;
+    color: #e9edf6;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.site-header-conteudo nav a:hover,
+.site-header-conteudo nav a:focus-visible {
+    background: #303d59;
+}
+
+@media (max-width: 640px) {
+    .site-header-conteudo nav {
+        width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .site-header-conteudo nav {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+    }
+
+    .site-header-conteudo nav a {
+        text-align: center;
+    }
+}

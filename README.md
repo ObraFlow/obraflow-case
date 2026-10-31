@@ -2,10 +2,11 @@
 
 Implementação do desafio técnico da ObraFlow.
 
-A aplicação possui uma página inicial e uma API para cadastrar fornecedores,
-obras, usuários e pedidos de compra. O backend calcula os totais, escolhe a
-regra de alçada da obra e registra aprovações e rejeições em sequência, com
-persistência em SQLite e testes automatizados.
+A aplicação oferece três telas: cadastro de pedidos, acompanhamento das
+aprovações e configuração das alçadas por obra. Uma API em FastAPI sustenta
+essas telas e permite cadastrar fornecedores, obras e usuários. O backend
+calcula os totais, escolhe a regra aplicável e registra cada decisão em
+sequência, com persistência em SQLite e testes automatizados.
 
 O enunciado original está em [DESAFIO.md](DESAFIO.md).
 
@@ -14,7 +15,8 @@ O enunciado original está em [DESAFIO.md](DESAFIO.md).
 - Python 3.12+
 - FastAPI e Uvicorn
 - SQLAlchemy e SQLite
-- Jinja2 e HTML
+- Jinja2 para renderizar os templates HTML
+- CSS e JavaScript sem framework para a interface
 - pytest, HTTPX e Ruff
 
 ## Como executar
@@ -27,14 +29,7 @@ Na raiz do projeto, instale as dependências:
 uv sync
 ```
 
-Crie as tabelas:
-
-```bash
-uv run python -c 'from app.database import engine; from app.models import Base; Base.metadata.create_all(engine)'
-```
-
-Para criar as tabelas e carregar dados de demonstração em um banco vazio,
-execute:
+Crie as tabelas e carregue os dados de demonstração:
 
 ```bash
 uv run python -m scripts.seed_demo
@@ -42,7 +37,8 @@ uv run python -m scripts.seed_demo
 
 O script cria duas obras, um fornecedor, dois usuários, regras de alçada e
 pedidos pendente, aprovado e rejeitado. Uma segunda execução não duplica os
-dados de demonstração.
+dados de demonstração. Para criar somente as tabelas, sem dados, use
+`uv run python -c 'from app.database import engine; from app.models import Base; Base.metadata.create_all(engine)'`.
 
 Inicie o servidor:
 
@@ -51,11 +47,37 @@ uv run uvicorn app.main:app --reload
 ```
 
 - Página inicial: http://127.0.0.1:8000
+- Novo pedido: http://127.0.0.1:8000/pedidos/novo
+- Lista de pedidos: http://127.0.0.1:8000/pedidos
+- Configuração de alçadas: http://127.0.0.1:8000/alcadas
 - Documentação interativa da API: http://127.0.0.1:8000/docs
 
 O banco é armazenado no arquivo local `obraflow.db`.
 A configuração pode ser alterada pela variável `DATABASE_URL`,
 conforme o arquivo `.env.example`.
+
+## Fluxo pela interface
+
+Na tela **Novo pedido**, selecione obra e fornecedor, informe a data e adicione
+um ou mais itens. O total é mostrado enquanto os valores são preenchidos e
+recalculado pelo servidor ao cadastrar. Quantidade aceita até três casas
+decimais; preço unitário, até duas.
+
+Em **Pedidos**, cada cartão mostra o estado e a cadeia de aprovadores. Abra um
+pedido pendente para aprovar a etapa atual ou rejeitá-la com um motivo. A tela
+de detalhes também mostra os itens e o histórico de decisões. Em **Alçadas**,
+selecione uma obra para criar, alterar ou remover faixas de valor e definir os
+aprovadores na ordem desejada.
+
+## Capturas de tela
+
+| Novo pedido | Pedidos |
+|---|---|
+| ![Formulário de pedido com item e total](docs/screenshots/novo-pedido.png) | ![Lista de pedidos com diferentes estados](docs/screenshots/pedidos.png) |
+
+| Detalhes do pedido | Alçadas de aprovação |
+|---|---|
+| ![Itens e histórico de aprovação de um pedido](docs/screenshots/pedido-detalhe.png) | ![Configuração das faixas e dos aprovadores](docs/screenshots/alcadas.png) |
 
 ## API disponível
 
@@ -70,7 +92,7 @@ conforme o arquivo `.env.example`.
 | GET | `/api/obras/{id_obra}/alcadas` | Consultar faixas e aprovadores da obra |
 | PUT | `/api/obras/{id_obra}/alcadas` | Substituir a configuração de alçadas da obra |
 | POST | `/api/pedidos` | Criar pedido com itens e calcular o total |
-| GET | `/api/pedidos` | Listar pedidos e o aprovador atual |
+| GET | `/api/pedidos` | Listar pedidos, quantidade de itens e etapas de aprovação |
 | GET | `/api/pedidos/{id_pedido}` | Consultar itens e histórico de aprovação |
 | POST | `/api/pedidos/{id_pedido}/decisoes` | Aprovar ou rejeitar a etapa atual |
 
@@ -140,7 +162,7 @@ O backend calcula e salva o total em centavos, identifica a faixa aplicável
 ao valor completo do pedido e copia seus aprovadores para as etapas do pedido.
 Uma obra sem faixa aplicável impede a criação com resposta 422. O GET de
 detalhes mostra itens, etapas, decisões e motivo de rejeição; a listagem
-mostra o aprovador atual dos pedidos pendentes.
+mostra toda a cadeia, incluindo o aprovador atual dos pedidos pendentes.
 
 Para decidir uma etapa, envie, por exemplo,
 `{"id_usuario": 1, "acao": "APROVAR"}` para
@@ -171,7 +193,9 @@ uv run ruff format --check app tests scripts
 - SQLite simplifica a execução local, dispensando um servidor de banco.
 - Rotas, serviços e repositórios separam a comunicação HTTP,
   as regras de negócio e o acesso aos dados.
-- Jinja2 renderiza páginas HTML no servidor.
+- Jinja2 renderiza as páginas e um cabeçalho compartilhado no servidor;
+  JavaScript usa `fetch` para consultar e enviar JSON à API sem recarregar
+  as telas de cadastro, listagem e configuração.
 - A validação dos dados ocorre nos schemas; o banco também impõe
   restrições de formato e unicidade do CNPJ.
 - Faixas de alçada pertencem a uma obra e têm limites crescentes em centavos.
@@ -187,13 +211,22 @@ uv run ruff format --check app tests scripts
 - A criação inicial das tabelas usa `create_all`, que não substitui
   migrations para alterações futuras de estrutura.
 
-## Próximas etapas
+## O que mudaria em produção
 
-Construir as telas de cadastro de pedidos, acompanhamento das decisões e
-configuração das alçadas, com estados de carregamento, validação e layout
-responsivo.
+- Telas para cadastrar e gerenciar obras, fornecedores e usuários, que hoje
+  são cadastrados pela API.
+- Busca, filtros e paginação na lista de pedidos, além de melhorias de
+  acessibilidade e mensagens mais claras nos formulários.
+- O usuário autenticado definiria quem está decidindo. A escolha de um ID na
+  tela serve apenas para demonstrar o fluxo e não comprova a identidade.
+- Migrações versionadas substituiriam `create_all` para evoluir o esquema.
+- Um banco com suporte a múltiplos processos, como PostgreSQL, substituiria
+  o arquivo SQLite se houvesse uso simultâneo em produção.
 
 ## Reaproveitamento
 
-A base foi adaptada da branch `feat/api-fastapi` do projeto
-[licitacoes-db-lab](https://github.com/Iagooreis/licitacoes-db-lab).
+A estrutura inicial de FastAPI e SQLAlchemy e o cadastro de fornecedores foram
+adaptados da branch `feat/api-fastapi` do projeto
+[licitacoes-db-lab](https://github.com/Iagooreis/licitacoes-db-lab). As regras
+de alçada, os pedidos, o fluxo de aprovação e as telas foram desenvolvidos
+para este desafio.

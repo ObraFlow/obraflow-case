@@ -94,9 +94,9 @@ async function carregarPedidos() {
             lista.append(cartao);
         }
     } catch {
-    estado.hidden = false;
-    estado.textContent = "Não foi possível carregar os pedidos.";
-    tentarLista.hidden = false;
+        estado.hidden = false;
+        estado.textContent = "Não foi possível carregar os pedidos.";
+        tentarLista.hidden = false;
     }
 }
 

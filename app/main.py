@@ -115,6 +115,7 @@ def pagina_detalhe_pedido(
         },
     )
 
+
 @app.get("/alcadas", response_class=HTMLResponse)
 def pagina_alcadas(request: Request, session: SessionDep):
     return templates.TemplateResponse(
