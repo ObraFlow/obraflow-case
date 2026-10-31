@@ -4,6 +4,7 @@
 
 import { z } from "zod";
 import { ErroDominio, type CodigoErro } from "@/domain/erros";
+import { idSchema } from "@/lib/schemas/comum";
 
 /** Formato de erro da API, documentado no README. */
 export type ErroApi = {
@@ -58,9 +59,12 @@ export function lerQuery<S extends z.ZodType>(request: Request, schema: S): z.in
   return schema.parse(params);
 }
 
-/** Id numérico do segmento de rota (`/api/pedidos/[id]`). Lança ZodError. */
+/**
+ * Id numérico do segmento de rota (`/api/pedidos/[id]`). Lança ZodError (400). Usa o mesmo
+ * `idSchema` dos corpos, com o teto do Int do banco: acima dele o Prisma lançaria erro (500).
+ */
 export function lerId(valor: string): number {
-  return z.coerce.number().int().positive().parse(valor);
+  return idSchema.parse(valor);
 }
 
 class CorpoInvalido extends Error {

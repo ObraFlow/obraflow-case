@@ -128,7 +128,12 @@ export async function paginarPedidos(
   const { porPagina } = paginacao;
 
   if (filtro.pendentesPara) {
-    const todos = await listarPedidos(filtro);
+    // Sem outros filtros é a mesma consulta do contador do header e do número da aba:
+    // `listarPendentesPara` (com `cache`) roda uma vez por request para os três.
+    const soPendentes = !filtro.obraId && !filtro.status && !filtro.busca;
+    const todos = soPendentes
+      ? await listarPendentesPara(filtro.pendentesPara)
+      : await listarPedidos(filtro);
     const totalPaginas = Math.max(1, Math.ceil(todos.length / porPagina));
     const pagina = Math.min(paginacao.pagina, totalPaginas);
     return {

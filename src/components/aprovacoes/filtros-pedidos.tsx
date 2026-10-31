@@ -30,8 +30,19 @@ export function FiltrosPedidos({ obras, valores }: { obras: ObraDto[]; valores: 
   const [busca, setBusca] = useState(valores.busca);
   const [navegando, iniciarNavegacao] = useTransition();
 
+  // A URL é a fonte da verdade: quando ela muda por fora (Voltar, "Limpar filtros" do estado
+  // vazio, troca de aba), o campo acompanha. Ajustar estado durante a renderização é o
+  // padrão do React para reagir a mudança de prop sem useEffect.
+  const [buscaDaUrl, setBuscaDaUrl] = useState(valores.busca);
+  if (valores.busca !== buscaDaUrl) {
+    setBuscaDaUrl(valores.busca);
+    setBusca(valores.busca);
+  }
+
+  // Trocar obra/situação leva só a busca já aplicada (a da URL); o texto ainda não enviado
+  // continua no campo até a pessoa apertar Enter ou "Buscar".
   const navegar = (mudanca: Partial<FiltrosDaLista>) =>
-    iniciarNavegacao(() => router.replace(urlDaLista({ ...valores, busca, ...mudanca })));
+    iniciarNavegacao(() => router.replace(urlDaLista({ ...valores, ...mudanca })));
 
   const temFiltro = temFiltroAtivo(valores);
 

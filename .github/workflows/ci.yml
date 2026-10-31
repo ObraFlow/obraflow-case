@@ -4,9 +4,11 @@
 # com "use cache" e precisaria de banco; quem faz esse build é a Vercel, a cada push na main.
 name: CI
 
+# `push` só na main; os outros branches são cobertos pelo evento de pull request, senão
+# cada push em um branch com PR aberto rodaria o mesmo workflow duas vezes.
 on:
   push:
-    branches: ["**"]
+    branches: [main]
   pull_request:
 
 jobs:

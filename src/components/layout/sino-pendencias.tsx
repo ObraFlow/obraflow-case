@@ -62,7 +62,10 @@ export function SinoPendencias({ usuarioAtualId }: { usuarioAtualId: number }) {
         if (conhecidos.current !== null) {
           const novos = lista.filter((pedido) => !conhecidos.current?.has(pedido.id));
           for (const pedido of novos) avisar(pedido, router.push);
-          if (novos.length > 0) router.refresh();
+          // Entrou ou saiu pedido: o contador da navegação e o número da aba são do server,
+          // então a página precisa ser recarregada para não ficar com o número velho.
+          const mudou = novos.length > 0 || lista.length !== conhecidos.current.size;
+          if (mudou) router.refresh();
         }
         conhecidos.current = new Set(lista.map((pedido) => pedido.id));
       } catch {

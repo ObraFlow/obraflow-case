@@ -19,6 +19,7 @@ export function formatarCentavos(cents: number): string {
  *   "1.234,56" → 123456   "1234,56" → 123456   "R$ 1.234,56" → 123456   "1234" → 123400
  *   "1.500"    → 150000   (ponto seguido de exatamente 3 dígitos é milhar)
  *   "1.5"      → 150      "1234.56" → 123456  (ponto com 1 ou 2 dígitos é decimal)
+ *   "0.500"    → 50       (grupo inicial zero não é milhar: é meio real)
  *
  * O campo reescreve o valor ao perder o foco (`textoDeCentavos`), então o que foi entendido
  * fica visível antes de enviar.
@@ -31,8 +32,8 @@ export function centavosDeTexto(texto: string): number | null {
   if (limpo.includes(",")) {
     // Com vírgula, ela é o separador decimal e os pontos são de milhar.
     normalizado = limpo.replace(/\./g, "").replace(",", ".");
-  } else if (/^-?\d{1,3}(\.\d{3})+$/.test(limpo)) {
-    // Só pontos, cada um seguido de 3 dígitos: milhares ("1.500", "1.500.000").
+  } else if (/^-?[1-9]\d{0,2}(\.\d{3})+$/.test(limpo)) {
+    // Só pontos, cada um seguido de 3 dígitos, começando sem zero: milhares ("1.500", "1.500.000").
     normalizado = limpo.replace(/\./g, "");
   } else {
     // Sem vírgula e sem agrupamento de milhar: um ponto, se houver, é o decimal.

@@ -6,6 +6,7 @@ import { TabelaItens } from "@/components/aprovacoes/tabela-itens";
 import { TimelineAlcada } from "@/components/aprovacoes/timeline-alcada";
 import { NaoEncontrado } from "@/domain/erros";
 import type { PedidoDetalhe } from "@/lib/dto";
+import { idSchema } from "@/lib/schemas/comum";
 import { obterPedido } from "@/server/services/pedidos";
 import { usuarioAtualId } from "@/server/usuario-atual";
 
@@ -24,7 +25,8 @@ async function carregarPedido(id: number): Promise<PedidoDetalhe> {
 
 /**
  * Detalhe do pedido: cabeçalho, faixa de decisão, itens e timeline da alçada.
- * `params` é assíncrono no Next 16; id que não é inteiro positivo vira 404 sem ir ao banco.
+ * `params` é assíncrono no Next 16; id que não é um Int positivo (mesmo `idSchema` da API,
+ * com o teto de 32 bits do banco) vira 404 sem ir ao banco.
  */
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -33,8 +35,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function PedidoPage({ params }: { params: Promise<{ id: string }> }) {
   const [{ id }, usuarioId] = await Promise.all([params, usuarioAtualId()]);
-  const pedidoId = /^[1-9]\d*$/.test(id) ? Number(id) : null;
-  if (pedidoId === null) notFound();
+  const idLido = idSchema.safeParse(id);
+  if (!idLido.success) notFound();
+  const pedidoId = idLido.data;
 
   await connection();
   const pedido = await carregarPedido(pedidoId);
