@@ -31,9 +31,7 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # Ignorar arquivos de ambiente com credenciais
-.env
-.env*.local
-.env.local
+.env*
 
 # Exceção para manter o modelo de exemplo versionado
 !.env.example
@@ -54,5 +52,5 @@ next-env.d.ts
 AGENTS.md
 .windsurf/
 
-/app/generated/prisma
+skills-lock.json
 /generated/

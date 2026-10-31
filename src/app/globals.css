@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+/* Tokens extraídos da identidade ObraFlow (Tailwind v4) */
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --color-paper: #fafafa;
+  --color-ink: #2f3040;
+  --color-muted: #6b6d7b;
+  --color-line: #ececf0;
+  --color-plum: #6a1b3d;
+  --color-night: #170f1c;
+  --color-rose: #e8174f;
+  --color-rose-soft: #ffe8ee;
+  --color-ok: #17803d;
+}
+
+body { background: var(--color-paper); color: var(--color-ink); }
