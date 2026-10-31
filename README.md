@@ -29,7 +29,7 @@ npm run db:seed      # dados de demonstração
 npm run dev          # http://localhost:3000
 ```
 
-Outros scripts: `npm run check` (lint + prettier + tsc + testes), `npm run format`, `npm test`, `npm run db:studio`, `npm run db:down`.
+Outros scripts: `npm run check` (lint + prettier + tsc + testes; o `tsc` precisa do client que o `db:migrate` gera, então rode o `check` depois dele), `npm run format`, `npm test`, `npm run db:studio`, `npm run db:down`.
 
 A cada commit, um hook `pre-commit` (husky) roda `lint-staged`: ESLint com `--fix` e Prettier só nos arquivos em stage. Se o lint falhar, o commit não acontece.
 
