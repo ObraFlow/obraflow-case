@@ -39,10 +39,12 @@ A aplicação exibe o estado de conexão da API e do banco e oferece o cadastro 
 Com os serviços iniciados, carregue os dados de demonstração no PostgreSQL local:
 
 ```bash
-docker compose run --rm backend --spring.profiles.active=demo-data
+docker compose run --build --rm backend --spring.profiles.active=demo-data
 ```
 
-A carga é opt-in e pode ser executada novamente: obras, usuários e fornecedores usam identificadores naturais estáveis, e os pedidos de demonstração são reconhecidos por marcadores próprios nas observações. Ela não apaga nem altera pedidos existentes. São criadas duas obras com faixas de até R$ 10.000,00 e acima desse valor, quatro aprovadores e três fornecedores. Os quatro pedidos incluem itens múltiplos: um pendente no primeiro nível, um pendente no segundo nível após a primeira aprovação, um totalmente aprovado e um rejeitado com motivo registrado.
+A carga é opt-in e pode ser executada novamente: obras, usuários e fornecedores usam identificadores naturais estáveis, e os pedidos de demonstração são reconhecidos por marcadores próprios nas observações. Ela não apaga nem altera pedidos existentes. A amostra inclui cinco obras, dez usuários/aprovadores, sete fornecedores, treze faixas de alçada e quatorze pedidos com 28 itens. As três novas obras usam três níveis de valor e cadeias de até três aprovadores. Os pedidos cobrem total zero, valores exatamente nos limites das faixas, pendências em níveis diferentes, aprovações de uma e duas etapas e rejeições no primeiro, segundo e terceiro níveis.
+
+Se o volume já contiver a amostra anterior, execute o comando novamente: ele acrescenta os novos exemplos e preserva os dados existentes. O `--build` garante que o comando use a versão atual do backend.
 
 Para começar de novo, remova o volume do PostgreSQL local com `docker compose down -v`, suba os serviços novamente com `docker compose up --build` e execute a carga acima. Esse procedimento remove os dados do banco local mantido pelo Compose.
 
