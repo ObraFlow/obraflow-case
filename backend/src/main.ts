@@ -8,6 +8,10 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
 
   });
+  // Libera o frontend (origem configurável via CORS_ORIGIN; padrão: qualquer origem em dev).
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN?.split(',') ?? '*',
+  });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(new DecimalInterceptor());

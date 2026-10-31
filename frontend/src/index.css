@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 11.1% 98.2%;
+    --foreground: 228 8.2% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 228 8.2% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 228 8.2% 12%;
+    --surface-2: 240 16.7% 97.6%;
+    --sidebar: 240 10% 96.1%;
+    --primary: 234 56.3% 59.6%;
+    --primary-hover: 233 51.8% 55.3%;
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 231 70% 96.1%;
+    --primary-text: 234 49.4% 52.7%;
+    --secondary: 240 12% 95.1%;
+    --secondary-foreground: 228 8.2% 12%;
+    --muted: 240 12% 95.1%;
+    --muted-foreground: 231 6.5% 39.4%;
+    --subtle-foreground: 231 5.9% 56.7%;
+    --accent: 240 12% 95.1%;
+    --accent-foreground: 228 8.2% 12%;
+    --border: 240 11.1% 91.2%;
+    --border-strong: 233 10.3% 84.7%;
+    --input: 240 11.1% 91.2%;
+    --ring: 234 56.3% 59.6%;
+    --success: 163 93.5% 24.3%;
+    --success-muted: 150 50% 93.7%;
+    --success-icon: 160 84.1% 39.4%;
+    --warning: 26 90.5% 37.1%;
+    --warning-muted: 39 87.5% 93.7%;
+    --warning-icon: 38 92.1% 50.2%;
+    --danger: 345 82.7% 40.8%;
+    --danger-muted: 349 100% 96.7%;
+    --danger-icon: 350 89.2% 60.2%;
+    --destructive: 347 77.2% 49.8%;
+    --destructive-foreground: 0 0% 100%;
+    --skeleton: 240 12.5% 93.7%;
+    --radius: 0.5rem;
+    --shadow-xs: 0 1px 2px hsl(230 10% 8% / 0.04);
+    --shadow-overlay: 0 24px 48px -12px hsl(230 10% 8% / 0.18), 0 2px 6px hsl(230 10% 8% / 0.06);
+    --overlay: hsl(230 10% 8% / 0.28);
+  }
+
+  .dark {
+    --background: 220 10.3% 5.7%;
+    --foreground: 220 9.1% 93.5%;
+    --card: 225 8.3% 9.4%;
+    --card-foreground: 220 9.1% 93.5%;
+    --popover: 228 8.8% 11.2%;
+    --popover-foreground: 220 9.1% 93.5%;
+    --surface-2: 228 8.8% 11.2%;
+    --sidebar: 220 8.6% 6.9%;
+    --primary: 234 56.3% 59.6%;
+    --primary-hover: 234 60.9% 63.9%;
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 234 56.3% 59.6% / 0.16;
+    --primary-text: 234 71.7% 79.2%;
+    --secondary: 228 7.5% 13.1%;
+    --secondary-foreground: 220 9.1% 93.5%;
+    --muted: 228 7.5% 13.1%;
+    --muted-foreground: 230 6.9% 65.9%;
+    --subtle-foreground: 231 5.6% 45.7%;
+    --accent: 228 7.5% 13.1%;
+    --accent-foreground: 220 9.1% 93.5%;
+    --border: 230 7.5% 15.7%;
+    --border-strong: 232 7.1% 22%;
+    --input: 230 7.5% 15.7%;
+    --ring: 234 56.3% 59.6%;
+    --success: 158 64.4% 51.6%;
+    --success-muted: 160 84.1% 39.4% / 0.12;
+    --success-icon: 158 64.4% 51.6%;
+    --warning: 43 96.4% 56.3%;
+    --warning-muted: 38 92.1% 50.2% / 0.12;
+    --warning-icon: 43 96.4% 56.3%;
+    --danger: 351 94.5% 71.4%;
+    --danger-muted: 350 89.2% 60.2% / 0.12;
+    --danger-icon: 351 94.5% 71.4%;
+    --destructive: 347 77.2% 49.8%;
+    --destructive-foreground: 0 0% 100%;
+    --skeleton: 230 8.8% 13.3%;
+    --shadow-xs: none;
+    --shadow-overlay: 0 24px 48px -12px hsl(0 0% 0% / 0.6), 0 0 0 1px hsl(0 0% 100% / 0.03);
+    --overlay: hsl(0 0% 0% / 0.55);
+  }
+
+  * { @apply border-border; }
+  html { color-scheme: light; }
+  html.dark { color-scheme: dark; }
+  body {
+    @apply bg-background text-foreground text-sm antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+  .num { font-variant-numeric: tabular-nums; }
+}
