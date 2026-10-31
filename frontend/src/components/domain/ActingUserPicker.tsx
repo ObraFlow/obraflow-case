@@ -1,10 +1,14 @@
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useOrders } from '@/hooks/queries';
-import { currentApprover } from '@/lib/chain';
-import { cn, initials } from '@/lib/utils';
-import { useActingUser } from '@/providers/ActingUserProvider';
-import { Check, ChevronsUpDown } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useOrders } from "@/hooks/queries";
+import { currentApprover } from "@/lib/chain";
+import { cn, initials } from "@/lib/utils";
+import { useActingUser } from "@/providers/ActingUserProvider";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { useMemo, useState } from "react";
 
 export function ActingUserPicker({ className }: { className?: string }) {
   const { users, actingUser, actingUserId, setActingUserId } = useActingUser();
@@ -24,16 +28,20 @@ export function ActingUserPicker({ className }: { className?: string }) {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         className={cn(
-          'flex w-full items-center gap-2 rounded-lg border bg-card px-2 py-1.5 text-left shadow-xs transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:shadow-focus',
+          "flex w-full items-center gap-2 rounded-lg border bg-card px-2 py-1.5 text-left shadow-xs transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:shadow-focus",
           className,
         )}
       >
         <span className="grid size-6 shrink-0 place-items-center rounded-full bg-primary-soft text-2xs font-semibold text-primary-text">
-          {actingUser ? initials(actingUser.name) : '—'}
+          {actingUser ? initials(actingUser.name) : "—"}
         </span>
         <span className="min-w-0 flex-1 leading-tight">
-          <span className="block text-2xs text-subtle-foreground">Atuando como</span>
-          <span className="block truncate text-xs font-medium">{actingUser?.name ?? 'Selecionar…'}</span>
+          <span className="block text-2xs text-subtle-foreground">
+            Atuando como
+          </span>
+          <span className="block truncate text-xs font-medium">
+            {actingUser?.name ?? "Selecionar…"}
+          </span>
         </span>
         <ChevronsUpDown className="size-3.5 shrink-0 text-subtle-foreground" />
       </PopoverTrigger>
@@ -57,8 +65,14 @@ export function ActingUserPicker({ className }: { className?: string }) {
                 {initials(u.name)}
               </span>
               <span className="min-w-0 flex-1 leading-tight">
-                <span className="block truncate text-xs font-medium">{u.name}</span>
-                {u.role && <span className="block truncate text-2xs text-subtle-foreground">{u.role}</span>}
+                <span className="block truncate text-xs font-medium">
+                  {u.name}
+                </span>
+                {u.role && (
+                  <span className="block truncate text-2xs text-subtle-foreground">
+                    {u.role}
+                  </span>
+                )}
               </span>
               {count > 0 && (
                 <span className="num inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-warning-muted px-1 text-2xs font-medium text-warning">

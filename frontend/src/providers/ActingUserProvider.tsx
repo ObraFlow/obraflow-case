@@ -1,8 +1,8 @@
-import { useUsers } from '@/hooks/queries';
-import type { User } from '@/lib/types';
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { useUsers } from "@/hooks/queries";
+import type { User } from "@/lib/types";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-const STORAGE_KEY = 'obraflow.actingUserId';
+const STORAGE_KEY = "obraflow.actingUserId";
 
 interface ActingUserCtx {
   actingUserId: string | null;
@@ -12,9 +12,15 @@ interface ActingUserCtx {
 }
 const Ctx = createContext<ActingUserCtx | undefined>(undefined);
 
-export function ActingUserProvider({ children }: { children: React.ReactNode }) {
+export function ActingUserProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { data: users } = useUsers();
-  const [actingUserId, setActingUserIdState] = useState<string | null>(() => localStorage.getItem(STORAGE_KEY));
+  const [actingUserId, setActingUserIdState] = useState<string | null>(() =>
+    localStorage.getItem(STORAGE_KEY),
+  );
 
   useEffect(() => {
     if (actingUserId) localStorage.setItem(STORAGE_KEY, actingUserId);
@@ -23,7 +29,8 @@ export function ActingUserProvider({ children }: { children: React.ReactNode }) 
 
   // Default: primeiro usuário quando a lista carrega e ainda não há seleção.
   useEffect(() => {
-    if (!actingUserId && users && users.length) setActingUserIdState(users[0].id);
+    if (!actingUserId && users && users.length)
+      setActingUserIdState(users[0].id);
   }, [users, actingUserId]);
 
   const value = useMemo<ActingUserCtx>(
@@ -41,6 +48,7 @@ export function ActingUserProvider({ children }: { children: React.ReactNode }) 
 
 export function useActingUser() {
   const ctx = useContext(Ctx);
-  if (!ctx) throw new Error('useActingUser deve estar dentro de ActingUserProvider');
+  if (!ctx)
+    throw new Error("useActingUser deve estar dentro de ActingUserProvider");
   return ctx;
 }

@@ -1,23 +1,34 @@
-import { ActingUserPicker } from '@/components/domain/ActingUserPicker';
-import { useOrders } from '@/hooks/queries';
-import { currentApprover } from '@/lib/chain';
-import { cn } from '@/lib/utils';
-import { useActingUser } from '@/providers/ActingUserProvider';
-import { ClipboardCheck, HardHat, PlusCircle, SlidersHorizontal } from 'lucide-react';
-import { NavLink, Outlet } from 'react-router-dom';
-import { ThemeToggle } from './ThemeToggle';
+import { ActingUserPicker } from "@/components/domain/ActingUserPicker";
+import { useOrders } from "@/hooks/queries";
+import { currentApprover } from "@/lib/chain";
+import { cn } from "@/lib/utils";
+import { useActingUser } from "@/providers/ActingUserProvider";
+import {
+  ClipboardCheck,
+  HardHat,
+  PlusCircle,
+  SlidersHorizontal,
+} from "lucide-react";
+import { NavLink, Outlet } from "react-router-dom";
+import { ThemeToggle } from "./ThemeToggle";
 
 const nav = [
-  { to: '/aprovacoes', label: 'Aprovações', icon: ClipboardCheck, badge: true },
-  { to: '/pedidos/novo', label: 'Novo pedido', icon: PlusCircle, badge: false },
-  { to: '/regras', label: 'Regras de alçada', icon: SlidersHorizontal, badge: false },
+  { to: "/aprovacoes", label: "Aprovações", icon: ClipboardCheck, badge: true },
+  { to: "/pedidos/novo", label: "Novo pedido", icon: PlusCircle, badge: false },
+  {
+    to: "/regras",
+    label: "Regras de alçada",
+    icon: SlidersHorizontal,
+    badge: false,
+  },
 ];
 
 function useMyPendingCount() {
   const { actingUserId } = useActingUser();
   const { data: orders } = useOrders({});
   if (!actingUserId || !orders) return 0;
-  return orders.filter((o) => currentApprover(o)?.userId === actingUserId).length;
+  return orders.filter((o) => currentApprover(o)?.userId === actingUserId)
+    .length;
 }
 
 function Brand() {
@@ -28,7 +39,9 @@ function Brand() {
       </span>
       <span className="leading-tight">
         <span className="block text-sm font-semibold">ObraFlow</span>
-        <span className="block text-2xs text-subtle-foreground">Dokimos · Alçadas</span>
+        <span className="block text-2xs text-subtle-foreground">
+          Dokimos · Alçadas
+        </span>
       </span>
     </div>
   );
@@ -45,18 +58,18 @@ export function AppShell() {
         className={({ isActive }) =>
           cn(
             mobile
-              ? 'flex flex-1 flex-col items-center gap-0.5 py-1.5 text-2xs font-medium'
-              : 'flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors',
+              ? "flex flex-1 flex-col items-center gap-0.5 py-1.5 text-2xs font-medium"
+              : "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors",
             isActive
               ? mobile
-                ? 'text-primary'
-                : 'bg-primary-soft text-primary-text'
-              : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                ? "text-primary"
+                : "bg-primary-soft text-primary-text"
+              : "text-muted-foreground hover:bg-accent hover:text-foreground",
           )
         }
       >
         <span className="relative">
-          <Icon className={mobile ? 'size-5' : 'size-4'} />
+          <Icon className={mobile ? "size-5" : "size-4"} />
           {badge && pending > 0 && (
             <span className="num absolute -right-1.5 -top-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-warning px-1 text-2xs font-semibold text-warning-foreground">
               {pending}

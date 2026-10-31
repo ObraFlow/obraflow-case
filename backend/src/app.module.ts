@@ -9,7 +9,14 @@ import { ApprovalRulesModule } from './approval-rules/approval-rules.module.js';
 import { PurchaseOrdersModule } from './purchase-orders/purchase-orders.module.js';
 
 @Module({
-  imports: [PrismaModule, ProjectsModule, UsersModule, SuppliersModule, ApprovalRulesModule, PurchaseOrdersModule],
+  imports: [
+    PrismaModule,
+    ProjectsModule,
+    UsersModule,
+    SuppliersModule,
+    ApprovalRulesModule,
+    PurchaseOrdersModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

@@ -5,9 +5,7 @@ import { AllExceptionsFilter } from './common/all-exceptions.filter.js';
 import { DecimalInterceptor } from './common/decimal.interceptor.js';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-
-  });
+  const app = await NestFactory.create(AppModule, {});
   // Libera o frontend (origem configurável via CORS_ORIGIN; padrão: qualquer origem em dev).
   app.enableCors({
     origin: process.env.CORS_ORIGIN?.split(',') ?? '*',

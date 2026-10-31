@@ -6,12 +6,17 @@ import {
   type RuleRange,
   ApprovalError,
   decide,
-  type OrderState
+  type OrderState,
 } from './approval-engine.js';
 
 const ranges: RuleRange[] = [
   { id: 'r1', minValue: 0, maxValue: 10000, approverUserIds: ['joao'] },
-  { id: 'r2', minValue: 10000, maxValue: null, approverUserIds: ['joao', 'amanda'] },
+  {
+    id: 'r2',
+    minValue: 10000,
+    maxValue: null,
+    approverUserIds: ['joao', 'amanda'],
+  },
 ];
 
 describe('selectRange', () => {
@@ -52,7 +57,7 @@ const base: OrderState = {
   status: 'PENDING',
   currentStep: 0,
   chain: [
-    { position: 0, userId: 'joao',   decision: 'PENDING' },
+    { position: 0, userId: 'joao', decision: 'PENDING' },
     { position: 1, userId: 'amanda', decision: 'PENDING' },
   ],
 };
@@ -60,7 +65,10 @@ const base: OrderState = {
 describe('decide', () => {
   it('aprovar 1º nível avança e mantém PENDING', () => {
     expect(decide(base, 'joao', 'APPROVE')).toEqual({
-      stepPosition: 0, stepDecision: 'APPROVED', newStatus: 'PENDING', newCurrentStep: 1,
+      stepPosition: 0,
+      stepDecision: 'APPROVED',
+      newStatus: 'PENDING',
+      newCurrentStep: 1,
     });
   });
 
@@ -70,7 +78,9 @@ describe('decide', () => {
   });
 
   it('rejeitar interrompe e exige motivo', () => {
-    expect(decide(base, 'joao', 'REJECT', 'fora do orçamento').newStatus).toBe('REJECTED');
+    expect(decide(base, 'joao', 'REJECT', 'fora do orçamento').newStatus).toBe(
+      'REJECTED',
+    );
   });
 
   it('rejeitar sem motivo → REASON_REQUIRED', () => {
@@ -78,13 +88,19 @@ describe('decide', () => {
   });
 
   it('não é a vez dele → NOT_CURRENT_APPROVER', () => {
-    try { decide(base, 'amanda', 'APPROVE'); }
-    catch (e) { expect((e as ApprovalError).code).toBe('NOT_CURRENT_APPROVER'); }
+    try {
+      decide(base, 'amanda', 'APPROVE');
+    } catch (e) {
+      expect((e as ApprovalError).code).toBe('NOT_CURRENT_APPROVER');
+    }
   });
 
   it('pedido já concluído → ORDER_NOT_PENDING', () => {
     const done = { ...base, status: 'APPROVED' as const, currentStep: 2 };
-    try { decide(done, 'amanda', 'APPROVE'); }
-    catch (e) { expect((e as ApprovalError).code).toBe('ORDER_NOT_PENDING'); }
+    try {
+      decide(done, 'amanda', 'APPROVE');
+    } catch (e) {
+      expect((e as ApprovalError).code).toBe('ORDER_NOT_PENDING');
+    }
   });
 });

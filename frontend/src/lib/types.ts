@@ -1,5 +1,5 @@
-export type Decision = 'PENDING' | 'APPROVED' | 'REJECTED';
-export type OrderStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type Decision = "PENDING" | "APPROVED" | "REJECTED";
+export type OrderStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 export interface Project {
   id: string;

@@ -1,30 +1,31 @@
-import { ChainCompact } from '@/components/domain/ChainCompact';
-import { OrderDetailSheet } from '@/components/domain/OrderDetailSheet';
-import { StatusBadge } from '@/components/domain/StatusBadge';
-import { Card } from '@/components/ui/card';
-import { Segmented } from '@/components/ui/segmented';
-import { Skeleton } from '@/components/ui/skeleton';
-import { EmptyState, ErrorState } from '@/components/ui/states';
-import { Switch } from '@/components/ui/switch';
-import { useOrders } from '@/hooks/queries';
-import type { OrderStatus, PurchaseOrder } from '@/lib/types';
-import { cn, formatCurrency, formatDate, shortId } from '@/lib/utils';
-import { useActingUser } from '@/providers/ActingUserProvider';
-import { ClipboardCheck } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { ChainCompact } from "@/components/domain/ChainCompact";
+import { OrderDetailSheet } from "@/components/domain/OrderDetailSheet";
+import { StatusBadge } from "@/components/domain/StatusBadge";
+import { Card } from "@/components/ui/card";
+import { Segmented } from "@/components/ui/segmented";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState, ErrorState } from "@/components/ui/states";
+import { Switch } from "@/components/ui/switch";
+import { useOrders } from "@/hooks/queries";
+import type { OrderStatus, PurchaseOrder } from "@/lib/types";
+import { cn, formatCurrency, formatDate, shortId } from "@/lib/utils";
+import { useActingUser } from "@/providers/ActingUserProvider";
+import { ClipboardCheck } from "lucide-react";
+import { useMemo, useState } from "react";
 
-type StatusFilter = 'ALL' | OrderStatus;
-const COLS = 'grid grid-cols-[72px_minmax(0,1.5fr)_84px_44px_116px_104px_minmax(0,2.1fr)] gap-3 min-w-[940px]';
+type StatusFilter = "ALL" | OrderStatus;
+const COLS =
+  "grid grid-cols-[72px_minmax(0,1.5fr)_84px_44px_116px_104px_minmax(0,2.1fr)] gap-3 min-w-[940px]";
 
 export function AprovacoesPage() {
   const { actingUserId } = useActingUser();
-  const [status, setStatus] = useState<StatusFilter>('ALL');
+  const [status, setStatus] = useState<StatusFilter>("ALL");
   const [onlyMine, setOnlyMine] = useState(false);
   const [selected, setSelected] = useState<PurchaseOrder | null>(null);
 
   const filters = useMemo(
     () => ({
-      status: onlyMine ? undefined : status === 'ALL' ? undefined : status,
+      status: onlyMine ? undefined : status === "ALL" ? undefined : status,
       currentApproverId: onlyMine && actingUserId ? actingUserId : undefined,
     }),
     [status, onlyMine, actingUserId],
@@ -37,24 +38,30 @@ export function AprovacoesPage() {
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">Aprovações</h1>
-          <p className="text-sm text-muted-foreground">Pedidos de compra nas alçadas. Decida quando for a sua vez.</p>
+          <p className="text-sm text-muted-foreground">
+            Pedidos de compra nas alçadas. Decida quando for a sua vez.
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <Segmented<StatusFilter>
             value={status}
             onChange={(v) => {
               setStatus(v);
-              if (v !== 'ALL') setOnlyMine(false);
+              if (v !== "ALL") setOnlyMine(false);
             }}
             items={[
-              { value: 'ALL', label: 'Todas' },
-              { value: 'PENDING', label: 'Pendentes' },
-              { value: 'APPROVED', label: 'Aprovados' },
-              { value: 'REJECTED', label: 'Rejeitados' },
+              { value: "ALL", label: "Todas" },
+              { value: "PENDING", label: "Pendentes" },
+              { value: "APPROVED", label: "Aprovados" },
+              { value: "REJECTED", label: "Rejeitados" },
             ]}
           />
           <label className="flex cursor-pointer items-center gap-2 text-sm">
-            <Switch checked={onlyMine} disabled={!actingUserId} onCheckedChange={setOnlyMine} />
+            <Switch
+              checked={onlyMine}
+              disabled={!actingUserId}
+              onCheckedChange={setOnlyMine}
+            />
             Pendentes no meu nível
           </label>
         </div>
@@ -64,22 +71,34 @@ export function AprovacoesPage() {
         {orders.isLoading ? (
           <TableSkeleton />
         ) : orders.isError ? (
-          <ErrorState message={(orders.error as Error)?.message} onRetry={() => orders.refetch()} />
+          <ErrorState
+            message={(orders.error as Error)?.message}
+            onRetry={() => orders.refetch()}
+          />
         ) : !orders.data?.length ? (
           <EmptyState
             icon={ClipboardCheck}
-            title={onlyMine ? 'Nada pendente no seu nível' : 'Nenhum pedido encontrado'}
+            title={
+              onlyMine
+                ? "Nada pendente no seu nível"
+                : "Nenhum pedido encontrado"
+            }
             description={
               onlyMine
-                ? 'Quando um pedido chegar à sua alçada, ele aparece aqui.'
-                : 'Ajuste os filtros ou cadastre um novo pedido de compra.'
+                ? "Quando um pedido chegar à sua alçada, ele aparece aqui."
+                : "Ajuste os filtros ou cadastre um novo pedido de compra."
             }
           />
         ) : (
           <>
             {/* Tabela (desktop) */}
             <div className="hidden overflow-x-auto lg:block">
-              <div className={cn(COLS, 'h-[34px] items-center border-b px-4 text-xs font-medium text-subtle-foreground')}>
+              <div
+                className={cn(
+                  COLS,
+                  "h-[34px] items-center border-b px-4 text-xs font-medium text-subtle-foreground",
+                )}
+              >
                 <span>Pedido</span>
                 <span>Obra / Fornecedor</span>
                 <span>Data</span>
@@ -95,20 +114,35 @@ export function AprovacoesPage() {
                   tabIndex={0}
                   data-selected={selected?.id === o.id}
                   onClick={() => setSelected(o)}
-                  onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), setSelected(o))}
+                  onKeyDown={(e) =>
+                    (e.key === "Enter" || e.key === " ") &&
+                    (e.preventDefault(), setSelected(o))
+                  }
                   className={cn(
                     COLS,
-                    'min-h-13 cursor-pointer items-center border-t border-border/60 px-4 py-1.5 transition-colors hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 data-[selected=true]:bg-primary-soft',
+                    "min-h-13 cursor-pointer items-center border-t border-border/60 px-4 py-1.5 transition-colors hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 data-[selected=true]:bg-primary-soft",
                   )}
                 >
-                  <span className="num text-xs font-medium text-muted-foreground">{shortId(o.id)}</span>
-                  <span className="flex min-w-0 flex-col leading-tight">
-                    <span className="truncate font-medium">{o.project.name}</span>
-                    <span className="truncate text-xs text-muted-foreground">{o.supplier.name}</span>
+                  <span className="num text-xs font-medium text-muted-foreground">
+                    {shortId(o.id)}
                   </span>
-                  <span className="num whitespace-nowrap text-xs text-muted-foreground">{formatDate(o.orderDate)}</span>
-                  <span className="num text-center text-muted-foreground">{o.items.length}</span>
-                  <span className="num text-right font-medium">{formatCurrency(o.totalValue)}</span>
+                  <span className="flex min-w-0 flex-col leading-tight">
+                    <span className="truncate font-medium">
+                      {o.project.name}
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {o.supplier.name}
+                    </span>
+                  </span>
+                  <span className="num whitespace-nowrap text-xs text-muted-foreground">
+                    {formatDate(o.orderDate)}
+                  </span>
+                  <span className="num text-center text-muted-foreground">
+                    {o.items.length}
+                  </span>
+                  <span className="num text-right font-medium">
+                    {formatCurrency(o.totalValue)}
+                  </span>
                   <span>
                     <StatusBadge status={o.status} />
                   </span>
@@ -128,15 +162,23 @@ export function AprovacoesPage() {
                   className="flex w-full flex-col gap-2 px-4 py-3 text-left transition-colors hover:bg-surface-2 focus-visible:outline-none focus-visible:bg-surface-2"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="num text-xs font-medium text-muted-foreground">{shortId(o.id)}</span>
+                    <span className="num text-xs font-medium text-muted-foreground">
+                      {shortId(o.id)}
+                    </span>
                     <StatusBadge status={o.status} />
                   </div>
                   <div className="flex items-center justify-between gap-2">
                     <span className="min-w-0">
-                      <span className="block truncate font-medium">{o.project.name}</span>
-                      <span className="block truncate text-xs text-muted-foreground">{o.supplier.name}</span>
+                      <span className="block truncate font-medium">
+                        {o.project.name}
+                      </span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {o.supplier.name}
+                      </span>
                     </span>
-                    <span className="num shrink-0 font-semibold">{formatCurrency(o.totalValue)}</span>
+                    <span className="num shrink-0 font-semibold">
+                      {formatCurrency(o.totalValue)}
+                    </span>
                   </div>
                   <ChainCompact order={o} />
                 </button>

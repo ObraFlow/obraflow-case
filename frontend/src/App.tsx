@@ -1,8 +1,13 @@
-import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
-import { AppShell } from './components/layout/AppShell';
-import { AprovacoesPage } from './pages/AprovacoesPage';
-import { NovoPedidoPage } from './pages/NovoPedidoPage';
-import { RegrasPage } from './pages/RegrasPage';
+import {
+  Navigate,
+  Route,
+  BrowserRouter as Router,
+  Routes,
+} from "react-router-dom";
+import { AppShell } from "./components/layout/AppShell";
+import { AprovacoesPage } from "./pages/AprovacoesPage";
+import { NovoPedidoPage } from "./pages/NovoPedidoPage";
+import { RegrasPage } from "./pages/RegrasPage";
 
 export default function App() {
   return (
