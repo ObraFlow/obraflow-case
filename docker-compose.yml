@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: obraflow
+      POSTGRES_PASSWORD: obraflow
+      POSTGRES_DB: obraflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U obraflow -d obraflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql://obraflow:obraflow@db:5432/obraflow?schema=public
+      PORT: 3000
+      CORS_ORIGIN: http://localhost:5173
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # O navegador acessa o backend publicado no host.
+        VITE_API_URL: http://localhost:3000
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
