@@ -19,6 +19,8 @@ O enunciado original está em [DESAFIO.md](DESAFIO.md).
 - CSS e JavaScript sem framework para a interface
 - pytest, HTTPX e Ruff
 
+![Tela inicial com acesso aos três fluxos do sistema](docs/screenshots/tela-inicio.png)
+
 ## Como executar
 
 Pré-requisitos: Python 3.12 ou superior e uv instalado.
@@ -78,6 +80,10 @@ aprovadores na ordem desejada.
 | Detalhes do pedido | Alçadas de aprovação |
 |---|---|
 | ![Itens e histórico de aprovação de um pedido](docs/screenshots/pedido-detalhe.png) | ![Configuração das faixas e dos aprovadores](docs/screenshots/alcadas.png) |
+
+| Pedido pendente | Rejeição de pedido |
+|---|---|
+| ![Pedido aguardando a decisão da primeira aprovadora](docs/screenshots/pedido-pendente.png) | ![Formulário que exige motivo para rejeitar o pedido](docs/screenshots/pedido-rejeitar.png) |
 
 ## API disponível
 
