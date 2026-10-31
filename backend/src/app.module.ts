@@ -6,9 +6,10 @@ import { ProjectsModule } from './projects/projects.module.js';
 import { UsersModule } from './users/users.module.js';
 import { SuppliersModule } from './suppliers/suppliers.module.js';
 import { ApprovalRulesModule } from './approval-rules/approval-rules.module.js';
+import { PurchaseOrdersModule } from './purchase-orders/purchase-orders.module.js';
 
 @Module({
-  imports: [PrismaModule, ProjectsModule, UsersModule, SuppliersModule, ApprovalRulesModule],
+  imports: [PrismaModule, ProjectsModule, UsersModule, SuppliersModule, ApprovalRulesModule, PurchaseOrdersModule],
   controllers: [AppController],
   providers: [AppService],
 })
