@@ -48,7 +48,7 @@ DATABASE_URL="postgresql://..." npx prisma db seed
 
 Não há secret além da `DATABASE_URL`: sem autenticação, o "Agindo como" é um cookie.
 
-A cada push, o GitHub Actions (`.github/workflows/ci.yml`) roda o mesmo `npm run check` do dia a dia: `next typegen` (os tipos globais `PageProps`/`LayoutProps` que o `tsc` precisa em um clone limpo), lint, Prettier, `tsc` e os testes do domínio. O `next build` fica com a Vercel, porque ele prerenderiza páginas com `"use cache"` e precisa de banco.
+Em cada push na `main` e em cada pull request, o GitHub Actions (`.github/workflows/ci.yml`) roda o mesmo `npm run check` do dia a dia: `next typegen` (os tipos globais `PageProps`/`LayoutProps` que o `tsc` precisa em um clone limpo), lint, Prettier, `tsc` e os testes do domínio. O `next build` fica com a Vercel, porque ele prerenderiza páginas com `"use cache"` e precisa de banco.
 
 ## Tecnologias e motivos
 
