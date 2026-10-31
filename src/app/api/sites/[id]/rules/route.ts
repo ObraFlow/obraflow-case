@@ -4,6 +4,8 @@ import { listRules, replaceRules } from "@/server/services/rules";
 
 type Ctx = { params: Promise<{ id: string }> };
 
+export const dynamic = "force-dynamic";
+
 export const GET = handle(async (_req, { params }: Ctx) => json(await listRules(parseId((await params).id))));
 
 export const PUT = handle(async (req, { params }: Ctx) => {
