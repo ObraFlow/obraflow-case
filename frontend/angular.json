@@ -5,7 +5,8 @@
     "packageManager": "npm",
     "cache": {
       "enabled": false
-    }
+    },
+    "analytics": "c57fd748-6802-4900-b2a4-6828a4804820"
   },
   "newProjectRoot": "projects",
   "projects": {
