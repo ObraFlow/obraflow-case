@@ -25,8 +25,7 @@ Copy-Item .env.example .env
 # Edite .env e defina DATABASE_URL
 docker compose up -d
 npm install
-npx prisma migrate deploy
-npx prisma generate
+npm run setup
 npm run dev
 ```
 
@@ -39,14 +38,13 @@ cp .env.example .env
 # Edite .env e defina DATABASE_URL
 docker compose up -d
 npm install
-npx prisma migrate deploy
-npx prisma generate
+npm run setup
 npm run dev
 ```
 
 Abra <http://localhost:3000>.
 
-Não existe o script `npm run setup` neste `package.json`; os comandos equivalentes de preparação são `npx prisma migrate deploy` e `npx prisma generate`.
+O comando `npm run setup` aplica as migrações e popula o banco com os dados de demonstração.
 
 ### Testes
 
@@ -60,19 +58,19 @@ O comando executa o Vitest em modo não interativo.
 
 O seletor **Atuando como** fica no cabeçalho. Ele carrega os usuários retornados por `GET /api/users` e grava o ID selecionado no `localStorage`; esse ID é enviado no header `X-User-Id` nas requisições.
 
-Não há seed ou script de seed neste repositório. Portanto, uma instalação nova não cria usuários, obras, fornecedores, regras ou pedidos automaticamente. Cadastre esses dados por SQL ou pela aplicação antes de usar o fluxo.
+O seed é idempotente: limpa os dados relacionais existentes e recria usuários, obras, fornecedores, regras e pedidos de demonstração.
 
 ## Dados de demonstração
 
-Não há dados de demonstração criados pelo código atual.
+Os dados de demonstração são criados por `npm run db:seed` ou `npm run setup`.
 
 | Tipo | Dados |
 |---|---|
-| Obras | Nenhuma criada automaticamente |
-| Regras | Nenhuma criada automaticamente |
-| Usuários | Nenhum criado automaticamente |
-| Fornecedores | Nenhum criado automaticamente |
-| Pedidos | Nenhum criado automaticamente |
+| Obras | 2 |
+| Regras | 5 |
+| Usuários | 3 |
+| Fornecedores | 3 |
+| Pedidos | 5, cobrindo pendências, aprovação e rejeições |
 
 ## Screenshots
 
@@ -99,7 +97,7 @@ As imagens devem ser capturadas manualmente e salvas nos caminhos abaixo:
 - `resolveRule` ordena as faixas pelo limite e escolhe a primeira que comporta o total.
 - Ao criar um pedido, `createOrder` recalcula os totais no servidor, resolve a regra e grava uma cadeia em `OrderApproval`. O primeiro passo começa como `PENDING`; os demais começam como `WAITING`.
 - A cadeia gravada em `OrderApproval` é um snapshot. Alterar regras depois não altera pedidos existentes.
-- Cada criação, aprovação ou rejeição gera um registro em `OrderEvent`, que funciona como trilha de auditoria de inserção.
+- Aprovações e rejeições atualizam o estado do pedido e dos passos da cadeia em uma transação.
 - Se não houver regra aplicável, a API retorna `422` e a tela de novo pedido bloqueia o cadastro.
 
 ### Comunicação front/back
@@ -131,7 +129,7 @@ As imagens devem ser capturadas manualmente e salvas nos caminhos abaixo:
 
 ### Limitações conhecidas
 
-- Não há autenticação, autorização por papel ou seed incluídos.
+- Não há autenticação ou autorização por papel; o seed de demonstração está disponível em `prisma/seed.ts`.
 - O seletor de usuário é apenas uma simulação local.
 - A aplicação depende de um PostgreSQL acessível por `DATABASE_URL`.
 - Não há paginação nas listas.
@@ -150,9 +148,12 @@ Todos os erros tratados pelos Route Handlers usam o formato `{ "message": "..." 
 | POST | `/api/orders/[id]/approve` | —; exige `X-User-Id` | `{ id, status }` | `400` ID; `401` usuário ausente; `403` fora da vez; `404` inexistente; `409` fluxo encerrado/concorrência |
 | POST | `/api/orders/[id]/reject` | `{ reason }`; exige `X-User-Id` | `{ id, status }` | `400` ID, JSON ou motivo; `401` usuário ausente; `403` fora da vez; `404` inexistente; `409` fluxo encerrado/concorrência |
 | GET | `/api/sites` | — | `[{ id, name }]` | `500` |
+| POST | `/api/sites` | `{ name }` | `201 { id }` | `400` JSON/Zod; `500` |
 | GET | `/api/sites/[id]/rules` | — | `[{ upTo, approvers }]` | `400` ID; `404` não é lançado para lista vazia; `500` |
 | PUT | `/api/sites/[id]/rules` | `[{ upTo, approvers[] }]` | Regras salvas da obra | `400` ID/JSON/Zod; `404` obra; `422` aprovador inexistente; `500` |
 | GET | `/api/suppliers` | — | `[{ id, name }]` | `500` |
+| POST | `/api/suppliers` | `{ name, taxId }` | `201 { id }` | `400` JSON/Zod; `500` |
 | GET | `/api/users` | — | `[{ id, name }]` | `500` |
+| POST | `/api/users` | `{ name, email }` | `201 { id }` | `400` JSON/Zod; `500` |
 
 `orderDate` usa `YYYY-MM-DD`. Os valores monetários são enviados e retornados em centavos; na tela, são exibidos em reais.
