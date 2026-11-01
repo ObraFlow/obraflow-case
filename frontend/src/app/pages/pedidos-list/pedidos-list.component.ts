@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { SessionService } from '../../core/services/session.service';
 import {
@@ -424,11 +424,12 @@ export class PedidosListComponent implements OnInit {
   constructor(
     private readonly api: ApiService,
     readonly session: SessionService,
+    private readonly router: Router,
   ) {}
 
   ngOnInit() {
     this.carregarObras();
-    this.carregarPedidos();
+    this.carregarPedidos(true);
   }
 
   get podeDecidir(): boolean {
@@ -449,8 +450,10 @@ export class PedidosListComponent implements OnInit {
     });
   }
 
-  carregarPedidos() {
-    this.loading = true;
+  carregarPedidos(forcarLoadingCompleto: boolean = false) {
+    if (this.pedidos.length === 0 || forcarLoadingCompleto) {
+      this.loading = true;
+    }
     this.erro = null;
 
     this.api
@@ -512,7 +515,7 @@ export class PedidosListComponent implements OnInit {
         next: (atualizado) => {
           this.processandoDecisao = false;
           this.abrirDetalhes(this.pedidoDetalhes!.id);
-          this.carregarPedidos();
+          this.carregarPedidos(false);
         },
         error: (err) => {
           this.processandoDecisao = false;
@@ -548,7 +551,7 @@ export class PedidosListComponent implements OnInit {
           this.processandoDecisao = false;
           this.fecharModalRejeicao();
           this.abrirDetalhes(this.pedidoDetalhes!.id);
-          this.carregarPedidos();
+          this.carregarPedidos(false);
         },
         error: (err) => {
           this.processandoDecisao = false;
@@ -558,7 +561,7 @@ export class PedidosListComponent implements OnInit {
   }
 
   navegarNovoPedido() {
-    window.location.href = '/pedidos/novo';
+    this.router.navigate(['/pedidos/novo']);
   }
 }
 
