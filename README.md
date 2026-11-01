@@ -74,11 +74,16 @@ Os dados de demonstração são criados por `npm run db:seed` ou `npm run setup`
 
 ## Screenshots
 
-As imagens devem ser capturadas manualmente e salvas nos caminhos abaixo:
+Abaixo estão as demonstrações da interface com os dados populados pelo seed:
 
-- [pedido.png](./docs/screenshots/pedido.png)
-- [aprovacoes.png](./docs/screenshots/aprovacoes.png)
-- [regras.png](./docs/screenshots/regras.png)
+### Novo Pedido
+![Novo Pedido](./docs/screenshots/pedidoNovo.png)
+
+### Aprovações
+![Aprovações](<./docs/screenshots/Tela Aprovação.png>)
+
+### Regras de Alçada
+![Regras de Alçada](./docs/screenshots/TelaRegrasAlçada.png)
 
 ## Decisões técnicas
 
@@ -94,7 +99,7 @@ As imagens devem ser capturadas manualmente e salvas nos caminhos abaixo:
 ### Alçada: modelagem, cálculo e persistência
 
 - `ApprovalRule.upTo` guarda o limite em centavos. O limite é inclusivo: uma regra vale quando `totalCents <= upTo`; `NULL` representa uma faixa sem teto.
-- `resolveRule` ordena as faixas pelo limite e escolhe a primeira que comporta o total.
+- `resolveRule` ordena as faixas pelo limite e escolhe a primeira que comporta o total. A regra vitalícia centralizada (`src/shared/approval.ts`) garante coerência entre o client-side e o server-side.
 - Ao criar um pedido, `createOrder` recalcula os totais no servidor, resolve a regra e grava uma cadeia em `OrderApproval`. O primeiro passo começa como `PENDING`; os demais começam como `WAITING`.
 - A cadeia gravada em `OrderApproval` é um snapshot. Alterar regras depois não altera pedidos existentes.
 - Aprovações e rejeições atualizam o estado do pedido e dos passos da cadeia em uma transação.
@@ -103,21 +108,21 @@ As imagens devem ser capturadas manualmente e salvas nos caminhos abaixo:
 ### Comunicação front/back
 
 - A comunicação é REST por Route Handlers em `src/app/api`.
-- Erros são convertidos pelo helper `handle` para `{ "message": "..." }`.
+- Erros são convertidos pelo helper `handle` para `{ "message": "..." }`, devolvendo um mapa completo dos erros do Zod quando necessário.
 - `X-User-Id` simula a autenticação atual. Não é uma autenticação adequada para produção.
 
 ### Consistência e integridade
 
 - Criação de pedidos, decisões e substituição das regras usam transações Prisma.
-- A decisão usa `updateMany` condicionado a `status: "PENDING"`; uma segunda decisão concorrente recebe `409`.
+- A decisão usa `updateMany` condicionado a `status: "PENDING"`; uma segunda decisão concorrente recebe `409` (Guarda de concorrência).
 - O total do pedido é calculado no servidor a partir dos itens recebidos.
 - Zod valida os payloads nos Route Handlers; a interface também valida campos antes do envio.
 - O schema tem chaves únicas para nomes de obras, e-mails, identificadores fiscais, posições de aprovadores, aprovador por faixa, itens por posição e passos por pedido.
-- A migração atual não define `CHECK constraints` e não cria índice parcial para limitar a uma única faixa `upTo IS NULL`. A validação de regras duplicadas e de múltiplas faixas sem teto está em Zod.
+- **Para garantir integridade a nível de banco de dados, foi criada uma migration com instruções SQL brutas adicionando `CHECK constraints` (impedindo valores monetários e quantidades negativas) e um índice único parcial para garantir apenas uma regra sem teto (`upTo IS NULL`) por obra.**
 
 ### O que mudaria em produção
 
-- Substituir `X-User-Id` por autenticação real e RBAC.
+- Substituir `X-User-Id` por autenticação real e RBAC (controle de acesso baseado em papéis).
 - Avaliar `BigInt`/`Decimal` para valores e quantidades quando os limites de `Int` não forem suficientes.
 - Usar locking explícito ou estratégia equivalente para fluxos de aprovação com maior concorrência.
 - Adicionar notificações e filas para avisos de aprovação.
@@ -129,13 +134,10 @@ As imagens devem ser capturadas manualmente e salvas nos caminhos abaixo:
 
 ### Limitações conhecidas
 
-- Não há autenticação ou autorização por papel; o seed de demonstração está disponível em `prisma/seed.ts`.
-- O seletor de usuário é apenas uma simulação local.
+- Não há autenticação ou autorização por papel; o seed de demonstração está disponível em `prisma/seed.ts` e o seletor de usuário é apenas uma simulação local.
 - A aplicação depende de um PostgreSQL acessível por `DATABASE_URL`.
 - Não há paginação nas listas.
 - Não há notificações, filas ou observabilidade estruturada.
-- Não há `CHECK constraints` nem índice parcial para a faixa sem teto na migração atual.
-- As imagens de documentação ainda precisam ser capturadas.
 
 ## API
 
