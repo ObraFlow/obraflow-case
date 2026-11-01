@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedidos | ObraFlow</title>
+    <link rel="stylesheet" href="/static/site.css">
+    <script src="/static/pedidos.js" defer></script>
+</head>
+<body>
+
+        {% include "_header.html" %}
+
+
+    <main>
+        <h1>Pedidos de compra</h1>
+        <p>Acompanhe as solicitações e suas aprovações.</p>
+        <a href="/pedidos/novo">+ Novo pedido</a>
+
+        <div class="filtros-pedidos" role="group" aria-label="Filtrar pedidos por status">
+            <button type="button" data-filtro="TODOS" aria-pressed="true">Todos</button>
+            <button type="button" data-filtro="PENDENTE" aria-pressed="false">Pendentes</button>
+            <button type="button" data-filtro="APROVADO" aria-pressed="false">Aprovados</button>
+            <button type="button" data-filtro="REJEITADO" aria-pressed="false">Rejeitados</button>
+        </div>
+
+        <p id="estado-lista" role="status" aria-live="polite">
+            Carregando pedidos...
+        </p>
+        <button id="tentar-lista" type="button" hidden>Tentar novamente</button>
+        <section id="lista-pedidos" aria-label="Pedidos"></section>
+
+        <template id="modelo-pedido">
+            <article class="pedido-card">
+                <div class="pedido-topo">
+                    <span class="pedido-numero"></span>
+                    <span class="pedido-status"></span>
+                </div>
+
+                <h2 class="pedido-obra"></h2>
+                <p class="pedido-fornecedor"></p>
+
+                <dl class="pedido-resumo">
+                    <div><dt>Data</dt><dd class="pedido-data"></dd></div>
+                    <div><dt>Itens</dt><dd class="pedido-itens"></dd></div>
+                    <div><dt>Total</dt><dd class="pedido-total"></dd></div>
+                </dl>
+
+                <p class="pedido-aprovador"></p>
+                <ol class="pedido-etapas" aria-label="Etapas de aprovação"></ol>
+                <a class="pedido-link" href="#">Ver detalhes →</a>
+            </article>
+        </template>
+    </main>
+</body>
+</html>

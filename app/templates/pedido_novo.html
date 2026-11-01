@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novo pedido | ObraFlow</title>
+    <script src="/static/pedido_novo.js" defer></script>
+    <link rel="stylesheet" href="/static/site.css">
+</head>
+<body>
+
+        {% include "_header.html" %}
+
+    <main>
+        <h1>Novo pedido de compra</h1>
+        <p>Preencha os dados e adicione os itens da compra.</p>
+
+        <form id="pedido-form">
+            <h2>Dados gerais</h2>
+
+            <label for="id_obra">Obra</label>
+            <select id="id_obra" required>
+                <option value="">Selecione uma obra</option>
+                {% for obra in obras %}
+                <option value="{{ obra.id_obra }}">{{ obra.nome_obra }}</option>
+                {% endfor %}
+            </select>
+            {% if not obras %}
+            <p class="aviso-vazio">Nenhuma obra cadastrada. É preciso cadastrar uma obra antes de criar pedidos.</p>
+            {% endif %}
+
+            <label for="id_fornecedor">Fornecedor</label>
+            <select id="id_fornecedor" required>
+                <option value="">Selecione um fornecedor</option>
+                {% for fornecedor in fornecedores %}
+                <option value="{{ fornecedor.id_fornecedor }}">
+                    {{ fornecedor.nome_fornecedor }}
+                </option>
+                {% endfor %}
+            </select>
+            {% if not fornecedores %}
+            <p class="aviso-vazio">Nenhum fornecedor cadastrado. É preciso cadastrar um fornecedor antes de criar pedidos.</p>
+            {% endif %}
+
+            <label for="data_pedido">Data do pedido</label>
+            <input id="data_pedido" type="date" value="{{ data_hoje }}" required>
+
+            <label for="observacoes">Observações internas</label>
+            <textarea id="observacoes" maxlength="2000"></textarea>
+
+            <h2>Itens</h2>
+            <div id="itens">
+                <fieldset class="item">
+                    <legend>Item 1</legend>
+
+                    <label>Descrição
+                        <input class="descricao" type="text" required>
+                    </label>
+                    <label>Quantidade
+                        <input class="quantidade" type="text" inputmode="decimal"
+                                pattern="[0-9]+([,.][0-9]{1,3})?"
+                                placeholder="Ex.: 15 ou 1,5" required>
+                        <small class="erro-campo erro-quantidade"></small>
+                    </label>
+                    <label>Unidade
+                        <input class="unidade" type="text"
+                               maxlength="20" required>
+                    </label>
+                    <label>Preço unitário (R$)
+                        <input class="preco" type="text" inputmode="decimal"
+                                pattern="[0-9]+([,.][0-9]{1,2})?"
+                                placeholder="Ex.: 20,00" required>
+                        <small class="erro-campo erro-preco"></small>
+                    </label>
+
+                    <p>Total do item: <strong class="total-item">R$ 0,00</strong></p>
+                </fieldset>
+            </div>
+
+            <button id="adicionar-item" type="button">Adicionar item</button>
+            <p>Total do pedido: <strong id="total-pedido">R$ 0,00</strong></p>
+
+            <p id="mensagem" role="status" aria-live="polite"></p>
+            <button id="salvar-pedido" type="submit" disabled>
+                Cadastrar pedido
+            </button>
+        </form>
+    </main>
+</body>
+</html>

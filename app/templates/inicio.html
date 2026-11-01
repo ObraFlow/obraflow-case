@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ titulo }}</title>
+    <link rel="stylesheet" href="/static/site.css">
+</head>
+<body>
+
+        {% include "_header.html" %}
+
+
+    <main>
+        <h1>Pedidos de compra</h1>
+        <p>Cadastre pedidos, acompanhe aprovações e configure as regras de cada obra.</p>
+
+        <nav class="inicio-links" aria-label="Áreas do sistema">
+            <a class="inicio-card" href="/pedidos/novo">
+                <span>01</span>
+                <h2>Novo pedido</h2>
+                <p>Escolha a obra e o fornecedor, adicione itens e envie para aprovação.</p>
+            </a>
+
+            <a class="inicio-card" href="/pedidos">
+                <span>02</span>
+                <h2>Acompanhar pedidos</h2>
+                <p>Veja a situação de cada pedido e registre aprovações ou rejeições.</p>
+            </a>
+
+            <a class="inicio-card" href="/alcadas">
+                <span>03</span>
+                <h2>Regras de aprovação</h2>
+                <p>Defina os limites e a ordem dos aprovadores para cada obra.</p>
+            </a>
+        </nav>
+    </main>
+</body>
+</html>

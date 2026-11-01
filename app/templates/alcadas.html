@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alçadas | ObraFlow</title>
+    <link rel="stylesheet" href="/static/site.css">
+    <script src="/static/alcadas.js" defer></script>
+</head>
+<body>
+
+        {% include "_header.html" %}
+
+
+    <main>
+        <h1>Alçadas de aprovação</h1>
+        <p>Escolha uma obra para configurar quem aprova seus pedidos.</p>
+
+        <label for="obra">Obra</label>
+        <select id="obra" name="obra">
+            <option value="">Selecione uma obra</option>
+            {% for obra in obras %}
+                <option value="{{ obra.id_obra }}">{{ obra.nome_obra }}</option>
+            {% endfor %}
+        </select>
+        {% if not obras %}
+        <p class="aviso-vazio">Nenhuma obra cadastrada. As regras aparecerão aqui depois do cadastro de uma obra.</p>
+        {% endif %}
+
+        <section id="faixas" aria-label="Faixas de aprovação"></section>
+        <div class="acoes-alcadas">
+            <button id="adicionar-faixa" type="button" disabled>+ Adicionar faixa</button>
+            <button id="salvar-alcadas" type="button" disabled>Salvar alterações</button>
+        </div>
+        <p id="mensagem" role="status" aria-live="polite"></p>
+        <button id="tentar-alcadas" type="button" hidden>Tentar novamente</button>
+    </main>
+</body>
+</html>

@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+.env
+*.db
+*.db-*
+.coverage
+
+# Documentos pessoais de planejamento e estudo
+PLANEJAMENTO.md
+ESTUDO-ENTREVISTA.md

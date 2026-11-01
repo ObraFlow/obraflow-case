@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedido #{{ detalhe.pedido.id_pedido }} | ObraFlow</title>
+    <link rel="stylesheet" href="/static/site.css">
+    <script src="/static/pedido_detalhe.js" defer></script>
+</head>
+<body>
+    {% include "_header.html" %}
+
+    <main>
+        <a href="/pedidos">← Voltar aos pedidos</a>
+        <h1>Pedido #{{ detalhe.pedido.id_pedido }}</h1>
+        <p>{{ obra.nome_obra }} · {{ fornecedor.nome_fornecedor }}</p>
+
+        <section class="detalhe-bloco">
+            <span class="pedido-status status-{{ detalhe.pedido.status|lower }}">
+                {{ detalhe.pedido.status|capitalize }}
+            </span>
+            <p>Data: {{ detalhe.pedido.data_pedido.strftime("%d/%m/%Y") }}</p>
+            <p>Total: <strong>{{ detalhe.pedido.total_centavos|reais }}</strong></p>
+            <p>Observações: {{ detalhe.pedido.observacoes or "Nenhuma" }}</p>
+        </section>
+
+        <section class="detalhe-bloco">
+            <h2>Itens do pedido</h2>
+            <div class="tabela-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Descrição</th>
+                            <th>Quantidade</th>
+                            <th>Unidade</th>
+                            <th>Preço unitário</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in detalhe.itens %}
+                        <tr>
+                            <td>{{ item.descricao }}</td>
+                            <td>{{ item.quantidade_milesimos|quantidade }}</td>
+                            <td>{{ item.unidade }}</td>
+                            <td>{{ item.preco_unitario_centavos|reais }}</td>
+                            <td>{{ item.total_centavos|reais }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="detalhe-bloco">
+            <h2>Histórico de aprovação</h2>
+            <ol class="etapas">
+                {% for etapa in detalhe.etapas %}
+                <li>
+                    <strong>{{ etapa.nome_aprovador }}</strong>
+                    —
+                    {% if etapa.status == "PENDENTE" %}
+                        {% if detalhe.pedido.status != "PENDENTE" %}
+                            Não realizada
+                        {% elif etapa.ordem == detalhe.pedido.etapa_atual %}
+                            Aguardando decisão
+                        {% else %}
+                            Próxima etapa
+                        {% endif %}
+                    {% else %}
+                        {{ etapa.status|capitalize }}
+                    {% endif %}
+
+                    {% if etapa.decidido_em %}
+                    <small>
+                        {{ etapa.decidido_em.strftime("%d/%m/%Y %H:%M") }} UTC
+                    </small>
+                    {% endif %}
+                    {% if etapa.motivo_rejeicao %}
+                    <p>Motivo: {{ etapa.motivo_rejeicao }}</p>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ol>
+        </section>
+        <section class="detalhe-bloco"
+                id="decisao-pedido"
+                data-pedido="{{ detalhe.pedido.id_pedido }}">
+            <h2>Decisão</h2>
+
+            {% if detalhe.pedido.status == "PENDENTE" and aprovacao_atual %}
+                <p>
+                    Agora é a vez de
+                    <strong>{{ aprovacao_atual.nome_aprovador }}</strong>.
+                </p>
+                <p>Para testar o fluxo, selecione quem fará a decisão.</p>
+
+                <label for="usuario-decisao">Atuar como</label>
+                <select id="usuario-decisao">
+                    <option value="">Selecione um usuário</option>
+                    {% for usuario in usuarios %}
+                    <option value="{{ usuario.id_usuario }}">
+                        {{ usuario.nome_usuario }}
+                    </option>
+                    {% endfor %}
+                </select>
+
+                <div class="acoes-decisao">
+                    <button id="aprovar-pedido" type="button" disabled>Aprovar</button>
+                    <button id="abrir-rejeicao" type="button" disabled>Rejeitar</button>
+                </div>
+
+                <div id="area-rejeicao" hidden>
+                    <label for="motivo-rejeicao">Motivo da rejeição</label>
+                    <textarea id="motivo-rejeicao" maxlength="1000"></textarea>
+
+                    <button id="confirmar-rejeicao" type="button" disabled>
+                        Confirmar rejeição
+                    </button>
+                    <button id="cancelar-rejeicao" type="button">Cancelar</button>
+                </div>
+
+                <p id="mensagem-decisao" role="status" aria-live="polite"></p>
+            {% else %}
+                <p>Este pedido já foi finalizado. Não há decisão pendente.</p>
+                <div class="acoes-decisao">
+                    <button type="button" disabled>Aprovar</button>
+                    <button type="button" disabled>Rejeitar</button>
+                </div>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>

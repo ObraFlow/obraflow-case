@@ -1,189 +1,242 @@
-![Banner do desafio ObraFlow](assets/banner.png)
+# ObraFlow — Pedidos de compra
 
-# Desafio Full-stack — ObraFlow
+Implementação do desafio técnico da ObraFlow.
 
-Bem-vindo(a) ao nosso processo seletivo! Estamos buscando alguém com curiosidade técnica, autonomia e, acima de tudo, **visão de produto e criatividade** para transformar problemas reais em soluções.
-## Contexto
+A aplicação oferece três telas: cadastro de pedidos, acompanhamento das
+aprovações e configuração das alçadas por obra. Uma API em FastAPI sustenta
+essas telas e permite cadastrar fornecedores, obras e usuários. O backend
+calcula os totais, escolhe a regra aplicável e registra cada decisão em
+sequência, com persistência em SQLite e testes automatizados.
 
-O **ObraFlow** é uma plataforma para empresas do setor de construção civil, concebida como parte de um [ERP (*Enterprise Resource Planning*)](https://pt.wikipedia.org/wiki/Sistema_integrado_de_gest%C3%A3o_empresarial).
+O enunciado original está em [DESAFIO.md](DESAFIO.md).
 
-O **Dokimos** é o serviço de aprovações do ObraFlow. Ele gerencia **alçadas de aprovação**: regras que definem quem pode autorizar uma decisão e em qual ordem, de acordo com o contexto do pedido — neste caso, a obra e o valor da compra.
+## Tecnologias
 
-A gestão de alçadas é necessária para que a empresa mantenha controle financeiro e operacional. Compras de menor impacto podem ser decididas rapidamente por responsáveis próximos à obra; compras de maior valor exigem revisão adicional de pessoas com maior responsabilidade. Isso reduz o risco de gastos indevidos, evita que uma única pessoa aprove decisões além de sua responsabilidade e cria uma trilha auditável de quem aprovou ou rejeitou cada pedido.
+- Python 3.12+
+- FastAPI e Uvicorn
+- SQLAlchemy e SQLite
+- Jinja2 para renderizar os templates HTML
+- CSS e JavaScript sem framework para a interface
+- pytest, HTTPX e Ruff
 
-Também é importante que essas regras sejam configuráveis por obra: projetos diferentes podem ter orçamentos, portes e responsáveis distintos. Assim, o sistema deve identificar a regra aplicável no momento da criação do pedido, formar a cadeia de aprovadores e só avançar para a próxima pessoa depois da aprovação anterior. Em caso de rejeição, o fluxo é interrompido e o motivo fica registrado no histórico.
+![Tela inicial com acesso aos três fluxos do sistema](docs/screenshots/tela-inicio.png)
 
-Em produção, uma regra simples seria:
+## Como executar
 
-```text
-Obra 1 — valor até R$ 10.000,00
--> Aprovadores: João
-Obra 1 — valor acima de R$ 10.000 
--> Aprovadores: Amanda
+Pré-requisitos: Python 3.12 ou superior e uv instalado.
+
+Na raiz do projeto, instale as dependências:
+
+```bash
+uv sync
 ```
 
-*   Se um pedido na Obra 1 custar **R$ 8.000,00**, basta o clique da João para ser aprovado.
-*   Se custar **R$ 12.500,00**, João precisa aprovar primeiro. Só depois da aprovação dela é que o pedido fica liberado para o Amanda decidir. Se a João (ou o Amanda) rejeitar, o pedido é cancelado na hora e precisa ter um motivo registrado.
+Crie as tabelas e carregue os dados de demonstração:
 
-Neste desafio você vai construir a **versão simplificada** desse fluxo: as telas de um sistema de pedidos de compra com aprovação por alçada.
+```bash
+uv run python -m scripts.seed_demo
+```
 
----
+O script cria duas obras, um fornecedor, dois usuários, regras de alçada e
+pedidos pendente, aprovado e rejeitado. Uma segunda execução não duplica os
+dados de demonstração. Para criar somente as tabelas, sem dados, use
+`uv run python -c 'from app.database import engine; from app.models import Base; Base.metadata.create_all(engine)'`.
 
-# Backend e persistência
+Inicie o servidor:
 
-Você deve projetar e implementar a [API](https://pt.wikipedia.org/wiki/Interface_de_programa%C3%A7%C3%A3o_de_aplica%C3%A7%C3%B5es) (ou outro mecanismo de comunicação entre front-end e servidor) e a persistência necessários para suportar o desafio. O contrato, as rotas e o formato dos dados são livres, desde que atendam aos comportamentos abaixo:
+```bash
+uv run uvicorn app.main:app --reload
+```
 
-* cadastrar e listar obras, usuários, fornecedores, pedidos e regras de alçada;
-* criar pedidos com cabeçalho e **N itens**; calcular e persistir seus totais;
-* determinar a cadeia de aprovadores conforme a obra e o valor total do pedido;
-* registrar aprovações e rejeições, incluindo o motivo obrigatório de rejeição;
-* impedir decisões fora da ordem da alçada e preservar o histórico;
-* criar, editar, remover e consultar níveis e aprovadores das regras por obra;
-* garantir a consistência das leituras e escritas dos dados.
+- Página inicial: http://127.0.0.1:8000
+- Novo pedido: http://127.0.0.1:8000/pedidos/novo
+- Lista de pedidos: http://127.0.0.1:8000/pedidos
+- Configuração de alçadas: http://127.0.0.1:8000/alcadas
+- Documentação interativa da API: http://127.0.0.1:8000/docs
 
-Inclua dados de demonstração suficientes para avaliar o fluxo: ao menos 2 obras, usuários, regras e pedidos em diferentes estados.
+O banco é armazenado no arquivo local `obraflow.db`.
+A configuração pode ser alterada pela variável `DATABASE_URL`,
+conforme o arquivo `.env.example`.
 
-Documente no `README.md` como iniciar a aplicação, popular os dados (quando aplicável) e consumir a API. Se optar por expor uma API HTTP, documente também os principais endpoints e payloads.
+## Fluxo pela interface
 
----
+Na tela **Novo pedido**, selecione obra e fornecedor, informe a data e adicione
+um ou mais itens. O total é mostrado enquanto os valores são preenchidos e
+recalculado pelo servidor ao cadastrar. Quantidade aceita até três casas
+decimais; preço unitário, até duas.
 
-# Tecnologias
+Em **Pedidos**, cada cartão mostra o estado e a cadeia de aprovadores. Abra um
+pedido pendente para aprovar a etapa atual ou rejeitá-la com um motivo. A tela
+de detalhes também mostra os itens e o histórico de decisões. Em **Alçadas**,
+selecione uma obra para criar, alterar ou remover faixas de valor e definir os
+aprovadores na ordem desejada.
 
-A stack é **livre**. Escolha as tecnologias de front-end, back-end, banco de dados, ORM, biblioteca de estilos, testes e infraestrutura que considerar mais adequadas.
+## Capturas de tela
 
-A única exigência é que a aplicação possa ser executada localmente conforme as instruções do seu `README.md`, sem depender de serviços pagos ou de credenciais externas.
-
-Testes são desejáveis, mas não obrigatórios.
-
----
-
-# O que você vai construir
-
-Três telas. O layout é livre — **não entregamos Figma, API ou implementação de referência**. O desenho das telas e as decisões de produto são parte da avaliação.
-
-## 1. Cadastro de pedido de compra
-
-Um pedido de compra representa uma solicitação ao fornecedor e deve conter **um ou mais itens**. A alçada é determinada pelo **valor total do pedido**, e não pelo valor isolado de um item.
-
-
-### Dados gerais
-
-| Campo | Obrigatório | Comportamento esperado |
-|---|---:|---|
-| Obra | Sim | Lista as obras disponíveis para o pedido. |
-| Fornecedor | Sim | Identifica o fornecedor do pedido. |
-| Data do pedido | Sim | Data de emissão do pedido. |
-| Observações internas | Não | Campo livre para justificar ou complementar a solicitação. |
-
-Não é **obrigatório** criar uma tela de cadastro de fornecedor, obra ou usuário — se quiser, considere que esses dados já existem no sistema. A tela deve apenas permitir selecionar a obra e o fornecedor do pedido.
-
-### Itens do pedido
-
-A tela começa com um item em branco e deve permitir **adicionar, editar e remover N itens** antes do envio. Cada item deve ter, no mínimo:
-
-| Campo | Obrigatório | Comportamento esperado |
-|---|---:|---|
-| Descrição | Sim | Descreve claramente o material ou serviço. |
-| Quantidade | Sim | Número positivo; pode aceitar decimais. |
-| Unidade | Sim | Por exemplo: `un`, `kg`, `m`, `m²` ou `h`. |
-| Preço unitário | Sim | Valor monetário não negativo. |
-| Total do item | Calculado | `quantidade × preço unitário`; não deve ser editável diretamente. |
-
-O candidato pode definir a experiência de uso mais adequada — por exemplo, uma tabela expansível, um formulário por item ou um drawer — desde que a inclusão de vários itens permaneça clara.
-
-### Totalização e envio
-
-A interface deve exibir o **total do pedido**, calculado pela soma dos totais dos itens. Esse é o valor usado para selecionar a regra de alçada.
-
-O botão **Cadastrar pedido** só deve ficar disponível quando os dados gerais e todos os itens forem válidos. Ao criar o pedido, o back-end deve persistir cabeçalho, itens, total calculado e cadeia inicial de aprovação.
-## 2. Aprovação
-
-A tela deve listar pedidos e permitir abrir os detalhes de cada um. A lista pode ser em tabela, cartões ou outra composição clara, mas deve apresentar pelo menos:
-
-| Informação por pedido | Descrição |
+| Novo pedido | Pedidos |
 |---|---|
-| Identificador, obra e fornecedor | Contexto rápido do pedido. |
-| Data, quantidade de itens e valor total | Resumo financeiro e operacional. |
-| Situação | Pendente, aprovado ou rejeitado. |
-| Alçada atual | Aprovadores concluídos, aprovador atual e próximas etapas. |
-| Ações | Aprovar ou rejeitar quando houver uma decisão disponível. |
+| ![Formulário de pedido com item e total](docs/screenshots/novo-pedido.png) | ![Lista de pedidos com filtros e diferentes estados](docs/screenshots/pedido-mostrar.png) |
 
-Nos detalhes, apresente os itens — descrição, quantidade, unidade, preço unitário e total — além do histórico de decisões. A lista de pedidos **pendentes** deve refletir o nível atual da alçada, calculado e persistido pelo back-end. A rejeição exige motivo, interrompe o fluxo e fica registrada no histórico. Quando toda a cadeia for concluída, as ações de decisão devem estar desabilitadas com uma explicação.
+| Detalhes do pedido | Alçadas de aprovação |
+|---|---|
+| ![Itens e histórico de aprovação de um pedido](docs/screenshots/pedido-detalhe.png) | ![Configuração das faixas e dos aprovadores](docs/screenshots/alcadas.png) |
 
-## 3. Regras da alçada
+| Pedido pendente | Rejeição de pedido |
+|---|---|
+| ![Pedido aguardando a decisão da primeira aprovadora](docs/screenshots/pedido-pendente.png) | ![Formulário que exige motivo para rejeitar o pedido](docs/screenshots/pedido-rejeitar.png) |
 
-A tela deve permitir selecionar uma obra e configurar as faixas de valor que definem a cadeia de aprovação. Uma representação mínima pode ser uma tabela como esta:
+## API disponível
 
-| Faixa de valor | Aprovadores, na ordem do fluxo | Ações |
+| Método | Rota | Operação |
 |---|---|---|
-| Até R$ 10.000,00 | Amanda | Editar / remover |
-| Acima de R$ 10.000,00 | Amanda → João | Editar / remover |
+| POST | `/api/fornecedores` | Cadastrar fornecedor |
+| GET | `/api/fornecedores` | Listar fornecedores |
+| POST | `/api/obras` | Cadastrar obra |
+| GET | `/api/obras` | Listar obras |
+| POST | `/api/usuarios` | Cadastrar usuário |
+| GET | `/api/usuarios` | Listar usuários |
+| GET | `/api/obras/{id_obra}/alcadas` | Consultar faixas e aprovadores da obra |
+| PUT | `/api/obras/{id_obra}/alcadas` | Substituir a configuração de alçadas da obra |
+| POST | `/api/pedidos` | Criar pedido com itens e calcular o total |
+| GET | `/api/pedidos` | Listar pedidos, quantidade de itens e etapas de aprovação |
+| GET | `/api/pedidos/{id_pedido}` | Consultar itens e histórico de aprovação |
+| POST | `/api/pedidos/{id_pedido}/decisoes` | Aprovar ou rejeitar a etapa atual |
 
-A interface deve listar usuários disponíveis e permitir:
+Exemplo de corpo para cadastro de fornecedor:
 
-* criar, editar e remover níveis/faixas de alçada;
-* definir o limite de valor de cada faixa;
-* adicionar, remover e reordenar aprovadores em cada faixa;
-* listar as regras já salvas para a obra selecionada.
+```json
+{
+  "nome_fornecedor": "Materiais Exemplo",
+  "cnpj": "00000000000001",
+  "rua": "Rua Principal, 100",
+  "cidade": "Salvador"
+}
+```
 
-O comportamento para valores sem regra aplicável deve ser definido e documentado pelo candidato — por exemplo, impedir o envio do pedido com uma mensagem clara.
+O cadastro de fornecedor retorna 201 quando realizado, 422 para dados inválidos
+e 409 quando o CNPJ já está cadastrado.
 
----
+A validação do CNPJ verifica o formato de 14 dígitos,
+sem calcular os dígitos verificadores.
 
-# Validações e erros (exigidos)
+Para cadastrar uma obra, envie `{"nome_obra": "Residencial Horizonte"}`
+para `POST /api/obras`. O nome é obrigatório, tem até 200 caracteres
+e espaços nas extremidades são removidos.
 
-| Situação | Comportamento esperado |
-|---|---|
-| Quantidade ou preço unitário inválido, negativo ou não numérico | erro no item correspondente, mensagem compreensível, não envia |
-| Pedido sem itens | erro claro; não envia |
-| Campos obrigatórios vazios (obra, fornecedor, data ou descrição de item) | erro no campo correspondente; não envia |
-| Nenhuma obra cadastrada | empty state amigável, não tela branca |
-| API fora do ar / 500 | estado de erro com opção de tentar novamente |
-| Rejeitar sem motivo | validação antes do submit |
-| Cadeia de alçada já concluída | botão de decisão desabilitado + explicação |
+Para cadastrar um usuário, envie `{"nome_usuario": "Amanda"}`
+para `POST /api/usuarios`. O nome é obrigatório e tem até 150 caracteres.
 
-Loading state é obrigatório em toda lista.
+Para configurar as alçadas, envie um PUT para
+`/api/obras/{id_obra}/alcadas` com os IDs dos usuários cadastrados:
 
----
+```json
+{
+  "faixas": [
+    {"limite_superior_centavos": 1000000, "aprovadores": [1]},
+    {"limite_superior_centavos": null, "aprovadores": [1, 2]}
+  ]
+}
+```
 
-# 📦 Como entregar (Prazo: 01/11/2026 às 23:59)
-O repositório deve conter instruções claras para instalar dependências, configurar o ambiente e iniciar a solução completa (front-end, back-end e banco de dados, quando aplicável). O método de execução é livre; `docker compose` é aceito, mas não obrigatório.
+Nesse exemplo, pedidos até R$ 10.000,00 exigirão o usuário 1; acima desse
+valor, o usuário 1 aprovará antes do usuário 2. O limite `null` indica a
+última faixa, sem valor máximo. A ordem dos IDs define a ordem de aprovação.
+O PUT substitui todas as faixas anteriores da obra em uma transação;
+`{"faixas": []}` remove todas. O GET devolve a configuração salva.
+Obra inexistente retorna 404; limites repetidos, fora de ordem ou
+usuários inexistentes retornam 422.
 
-Repositório deve conter:
+Exemplo de criação de pedido:
 
-* código-fonte do front-e˝nd e do back-end;
-* dados de demonstração e instruções para criá-los ou carregá-los;
-* `README.md` com explicando:
-  * screenshots das telas;
-  * as tecnologias escolhidas e os motivos da escolha;
-  * como a regra de alçada é modelada, calculada e persistida;
-  * como o front-end se comunica com o back-end;
-  * como a consistência e a integridade dos dados são garantidas;
-  * o que mudaria em produção;
-1. Faça um **Fork** deste repositório (`https://github.com/ObraFlow/obraflow-case`).
-2. Abra um **Pull Request (PR)** para este repositório até **01/11/2026 às 23:59**.
-3. **Importante:** Na descrição do seu Pull Request, deixe seu **e-mail e telefone (WhatsApp)** para contato!
+```json
+{
+  "id_obra": 1,
+  "id_fornecedor": 1,
+  "data_pedido": "2026-10-27",
+  "itens": [
+    {
+      "descricao": "Tinta",
+      "quantidade": "1.5",
+      "unidade": "l",
+      "preco_unitario": "20.00"
+    }
+  ]
+}
+```
 
----
+O backend calcula e salva o total em centavos, identifica a faixa aplicável
+ao valor completo do pedido e copia seus aprovadores para as etapas do pedido.
+Uma obra sem faixa aplicável impede a criação com resposta 422. O GET de
+detalhes mostra itens, etapas, decisões e motivo de rejeição; a listagem
+mostra toda a cadeia, incluindo o aprovador atual dos pedidos pendentes.
 
-# Avaliação
+Para decidir uma etapa, envie, por exemplo,
+`{"id_usuario": 1, "acao": "APROVAR"}` para
+`POST /api/pedidos/{id_pedido}/decisoes`. Para rejeitar, use
+`"acao": "REJEITAR"` e informe `"motivo"`. O sistema exige que o ID
+informado corresponda ao aprovador da etapa atual, impede decisões fora de
+ordem e encerra o fluxo após rejeição ou aprovação da última etapa.
+Nesta versão de demonstração, o ID é informado pelo cliente; não há
+autenticação de usuários.
 
-| Critério | Peso |
-|---|---:|
-| Funcionamento completo: front-end, back-end e persistência | 25% |
-| Modelagem e implementação das regras de alçada | 20% |
-| Qualidade de código, organização e decisões técnicas | 15% |
-| **Desenho de UI: hierarquia, clareza, consistência** | 20% |
-| Estados (loading / empty / erro), responsividade e validações | 10% |
-| Documentação (`## Decisões técnicas`) | 10% |
+## Testes
 
-IA é permitida — mas você precisará explicar cada decisão na entrevista de 30 min.
+```bash
+uv run pytest
+```
 
----
+Os testes utilizam um banco temporário separado para cada cenário.
 
-## Contato
+Para verificar o código e sua formatação:
 
+```bash
+uv run ruff check app tests scripts
+uv run ruff format --check app tests scripts
+```
 
-**Jonathan Bispo**  
-WhatsApp: [+55 71 99204-4335](https://wa.me/5571992044335)  
-E-mail: [contrato@obraflow.io](mailto:contrato@obraflow.io)
+## Decisões técnicas
+
+- SQLite simplifica a execução local, dispensando um servidor de banco.
+- Rotas, serviços e repositórios separam a comunicação HTTP,
+  as regras de negócio e o acesso aos dados.
+- Jinja2 renderiza as páginas e um cabeçalho compartilhado no servidor;
+  JavaScript usa `fetch` para consultar e enviar JSON à API sem recarregar
+  as telas de cadastro, listagem e configuração.
+- A lista filtra pedidos por status no navegador, usando os dados já recebidos
+  da API. Assim, trocar de filtro não exige outra consulta. Para um volume
+  maior de pedidos, o filtro e a paginação passariam para a API.
+- A validação dos dados ocorre nos schemas; o banco também impõe
+  restrições de formato e unicidade do CNPJ.
+- Faixas de alçada pertencem a uma obra e têm limites crescentes em centavos.
+  Os aprovadores são vinculados por ID e sua posição define a ordem.
+- A configuração completa é substituída em uma transação SQLite iniciada
+  antes das leituras de validação, evitando alterações parciais ou misturadas.
+- Valores são calculados com `Decimal` e salvos em centavos. A criação do
+  pedido salva cabeçalho, itens e etapas na mesma transação.
+- Os aprovadores são copiados para o pedido no momento da criação; editar a
+  alçada da obra não altera a sequência dos pedidos já existentes.
+- Cada decisão atualiza a etapa e o pedido na mesma transação. O próximo
+  aprovador só pode decidir após a aprovação da etapa anterior.
+- A criação inicial das tabelas usa `create_all`, que não substitui
+  migrations para alterações futuras de estrutura.
+
+## O que mudaria em produção
+
+- Telas para cadastrar e gerenciar obras, fornecedores e usuários, que hoje
+  são cadastrados pela API.
+- Busca por texto, filtros por obra ou fornecedor e paginação na lista de
+  pedidos, além de melhorias de acessibilidade e mensagens mais claras nos
+  formulários.
+- O usuário autenticado definiria quem está decidindo. A escolha de um ID na
+  tela serve apenas para demonstrar o fluxo e não comprova a identidade.
+- Migrações versionadas substituiriam `create_all` para evoluir o esquema.
+- Um banco com suporte a múltiplos processos, como PostgreSQL, substituiria
+  o arquivo SQLite se houvesse uso simultâneo em produção.
+
+## Reaproveitamento
+
+A estrutura inicial de FastAPI e SQLAlchemy e o cadastro de fornecedores foram
+adaptados da branch `feat/api-fastapi` do projeto
+[licitacoes-db-lab](https://github.com/Iagooreis/licitacoes-db-lab). As regras
+de alçada, os pedidos, o fluxo de aprovação e as telas foram desenvolvidos
+para este desafio.
