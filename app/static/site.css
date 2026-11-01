@@ -664,3 +664,36 @@ td {
         text-align: center;
     }
 }
+
+.filtros-pedidos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.filtros-pedidos button {
+    border: 1px solid #b9c3d1;
+    background: white;
+    color: #334158;
+}
+
+.filtros-pedidos button[aria-pressed="true"] {
+    border-color: #192238;
+    background: #192238;
+    color: white;
+}
+.pedido-card[hidden] {
+    display: none;
+}
+
+@media (max-width: 640px) {
+    .filtros-pedidos {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .filtros-pedidos button {
+        width: 100%;
+    }
+}

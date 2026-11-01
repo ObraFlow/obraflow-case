@@ -75,7 +75,7 @@ aprovadores na ordem desejada.
 
 | Novo pedido | Pedidos |
 |---|---|
-| ![Formulário de pedido com item e total](docs/screenshots/novo-pedido.png) | ![Lista de pedidos com diferentes estados](docs/screenshots/pedidos.png) |
+| ![Formulário de pedido com item e total](docs/screenshots/novo-pedido.png) | ![Lista de pedidos com filtros e diferentes estados](docs/screenshots/pedido-mostrar.png) |
 
 | Detalhes do pedido | Alçadas de aprovação |
 |---|---|
@@ -202,6 +202,9 @@ uv run ruff format --check app tests scripts
 - Jinja2 renderiza as páginas e um cabeçalho compartilhado no servidor;
   JavaScript usa `fetch` para consultar e enviar JSON à API sem recarregar
   as telas de cadastro, listagem e configuração.
+- A lista filtra pedidos por status no navegador, usando os dados já recebidos
+  da API. Assim, trocar de filtro não exige outra consulta. Para um volume
+  maior de pedidos, o filtro e a paginação passariam para a API.
 - A validação dos dados ocorre nos schemas; o banco também impõe
   restrições de formato e unicidade do CNPJ.
 - Faixas de alçada pertencem a uma obra e têm limites crescentes em centavos.
@@ -221,8 +224,9 @@ uv run ruff format --check app tests scripts
 
 - Telas para cadastrar e gerenciar obras, fornecedores e usuários, que hoje
   são cadastrados pela API.
-- Busca, filtros e paginação na lista de pedidos, além de melhorias de
-  acessibilidade e mensagens mais claras nos formulários.
+- Busca por texto, filtros por obra ou fornecedor e paginação na lista de
+  pedidos, além de melhorias de acessibilidade e mensagens mais claras nos
+  formulários.
 - O usuário autenticado definiria quem está decidindo. A escolha de um ID na
   tela serve apenas para demonstrar o fluxo e não comprova a identidade.
 - Migrações versionadas substituiriam `create_all` para evoluir o esquema.

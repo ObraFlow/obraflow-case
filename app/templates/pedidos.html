@@ -17,6 +17,13 @@
         <p>Acompanhe as solicitações e suas aprovações.</p>
         <a href="/pedidos/novo">+ Novo pedido</a>
 
+        <div class="filtros-pedidos" role="group" aria-label="Filtrar pedidos por status">
+            <button type="button" data-filtro="TODOS" aria-pressed="true">Todos</button>
+            <button type="button" data-filtro="PENDENTE" aria-pressed="false">Pendentes</button>
+            <button type="button" data-filtro="APROVADO" aria-pressed="false">Aprovados</button>
+            <button type="button" data-filtro="REJEITADO" aria-pressed="false">Rejeitados</button>
+        </div>
+
         <p id="estado-lista" role="status" aria-live="polite">
             Carregando pedidos...
         </p>

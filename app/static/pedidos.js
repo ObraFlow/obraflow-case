@@ -2,6 +2,40 @@ const lista = document.querySelector("#lista-pedidos");
 const estado = document.querySelector("#estado-lista");
 const modelo = document.querySelector("#modelo-pedido");
 const tentarLista = document.querySelector("#tentar-lista");
+const botoesFiltro = document.querySelectorAll(".filtros-pedidos button");
+let filtroAtual = "TODOS";
+
+function aplicarFiltro() {
+    const cartoes = lista.querySelectorAll(".pedido-card");
+    if (cartoes.length === 0) return;
+
+    let visiveis = 0;
+
+    for (const cartao of cartoes) {
+        const mostrar = filtroAtual === "TODOS" ||
+            cartao.dataset.status === filtroAtual;
+
+        cartao.hidden = !mostrar;
+        if (mostrar) visiveis++;
+    }
+
+    estado.hidden = visiveis > 0;
+    if (visiveis === 0) {
+        estado.textContent = "Nenhum pedido neste filtro.";
+    }
+}
+
+for (const botao of botoesFiltro) {
+    botao.addEventListener("click", () => {
+        filtroAtual = botao.dataset.filtro;
+
+        for (const outro of botoesFiltro) {
+            outro.setAttribute("aria-pressed", String(outro === botao));
+        }
+
+        aplicarFiltro();
+    });
+}
 
 function formatarMoeda(centavos) {
     const valor = BigInt(centavos);
@@ -36,6 +70,7 @@ async function carregarPedidos() {
 
         for (const pedido of pedidos) {
             const cartao = modelo.content.firstElementChild.cloneNode(true);
+            cartao.dataset.status = pedido.status;
             const situacao = cartao.querySelector(".pedido-status");
 
             cartao.querySelector(".pedido-numero").textContent =
@@ -93,6 +128,8 @@ async function carregarPedidos() {
                 `/pedidos/${pedido.id_pedido}`;
             lista.append(cartao);
         }
+        aplicarFiltro();
+
     } catch {
         estado.hidden = false;
         estado.textContent = "Não foi possível carregar os pedidos.";
