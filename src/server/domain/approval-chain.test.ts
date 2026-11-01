@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DomainError } from "./errors";
-import { buildChain, nextState, resolveRule } from "./approval-chain";
+import { resolveRule } from "@/shared/approval";
+import { buildChain, nextState } from "./approval-chain";
 
 describe("resolveRule", () => {
   const rules = [

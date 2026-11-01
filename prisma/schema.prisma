@@ -21,12 +21,6 @@ enum StepStatus {
   SKIPPED
 }
 
-enum EventType {
-  CREATED
-  APPROVED
-  REJECTED
-}
-
 model Site {
   id        Int             @id @default(autoincrement())
   name      String          @unique
@@ -41,7 +35,6 @@ model User {
   email     String                 @unique
   approvers ApprovalRuleApprover[]
   steps     OrderApproval[]
-  events    OrderEvent[]
 }
 
 model Supplier {
@@ -92,7 +85,6 @@ model PurchaseOrder {
   rule        ApprovalRule?   @relation(fields: [ruleId], references: [id], onDelete: SetNull)
   items       OrderItem[]
   steps       OrderApproval[]
-  events      OrderEvent[]
 
   @@index([status, siteId])
 }
@@ -124,16 +116,4 @@ model OrderApproval {
   approver   User          @relation(fields: [approverId], references: [id])
 
   @@unique([orderId, stepOrder])
-}
-
-// Trilha de auditoria (somente inserção).
-model OrderEvent {
-  id        Int           @id @default(autoincrement())
-  orderId   Int
-  type      EventType
-  actorId   Int?
-  reason    String?
-  createdAt DateTime      @default(now())
-  order     PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  actor     User?         @relation(fields: [actorId], references: [id])
 }

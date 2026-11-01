@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { OrderInput } from "@/lib/schemas";
-import { buildChain, nextState, resolveRule, type Decision } from "@/server/domain/approval-chain";
+import { buildChain, nextState, type Decision } from "@/server/domain/approval-chain";
+import { resolveRule } from "@/shared/approval";
 import { DomainError } from "@/server/domain/errors";
 import { formatBRL, lineTotalCents } from "@/server/domain/money";
 
@@ -17,7 +18,7 @@ export function listOrders() {
 }
 
 /** Cria o pedido, calcula o total no servidor e grava o snapshot da cadeia de aprovação. */
-export async function createOrder(input: OrderInput, actorId: number | null) {
+export async function createOrder(input: OrderInput) {
   const items = input.items.map((i, idx) => ({
     position: idx + 1,
     description: i.description,
@@ -55,7 +56,6 @@ export async function createOrder(input: OrderInput, actorId: number | null) {
         currentStep: 1,
         items: { create: items },
         steps: { create: chain },
-        events: { create: { type: "CREATED", actorId } },
       },
     });
   });
@@ -92,10 +92,6 @@ export async function decideOrder(orderId: number, userId: number, decision: Dec
       await tx.orderApproval.updateMany({ where: { orderId, stepOrder: next.activate }, data: { status: "PENDING" } });
     }
     await tx.purchaseOrder.update({ where: { id: orderId }, data: { status: next.orderStatus, currentStep: next.currentStep } });
-    await tx.orderEvent.create({
-      data: { orderId, type: decision, actorId: userId, reason: decision === "REJECTED" ? reason!.trim() : null },
-    });
-
     return { id: orderId, status: next.orderStatus };
   });
 }

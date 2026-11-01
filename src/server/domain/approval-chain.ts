@@ -5,16 +5,6 @@ export type OrderStatus = "PENDING" | "APPROVED" | "REJECTED";
 export type Decision = "APPROVED" | "REJECTED";
 export type Step = { stepOrder: number; approverId: number; status: StepStatus };
 
-/**
- * Escolhe a faixa aplicável: a de menor limite que comporta o total.
- * `upTo` é inclusivo; `null` = sem teto (vale para qualquer valor acima das demais).
- */
-export function resolveRule<R extends { upTo: number | null }>(rules: R[], totalCents: number): R | undefined {
-  return [...rules]
-    .sort((a, b) => (a.upTo ?? Infinity) - (b.upTo ?? Infinity))
-    .find((r) => r.upTo === null || totalCents <= r.upTo);
-}
-
 /** Monta a cadeia inicial: o 1º aprovador fica PENDING, os demais WAITING. */
 export function buildChain(approverIds: number[]): Step[] {
   return approverIds.map((approverId, i) => ({

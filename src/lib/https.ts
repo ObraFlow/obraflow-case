@@ -32,14 +32,9 @@ export function parseId(raw: string): number {
   return id;
 }
 
-/** "Usuário logado" simulado pelo header X-User-Id (ver README: em produção seria JWT/SSO). */
-export function currentUserId(req: Request): number | null {
-  const n = Number(req.headers.get("x-user-id"));
-  return Number.isInteger(n) && n > 0 ? n : null;
-}
-
 export function requireUserId(req: Request): number {
-  const id = currentUserId(req);
+  const n = Number(req.headers.get("x-user-id"));
+  const id = Number.isInteger(n) && n > 0 ? n : null;
   if (!id) throw new DomainError(401, "Selecione o usuário em “Atuando como” antes de decidir.");
   return id;
 }
