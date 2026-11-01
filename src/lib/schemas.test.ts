@@ -30,6 +30,21 @@ describe("orderInput", () => {
       items: [{ ...validOrder.items[0], unitPriceCents: -1 }],
     }).success).toBe(false);
   });
+
+  it("rejeita datas que sofrem rollover", () => {
+    expect(orderInput.safeParse({ ...validOrder, orderDate: "2026-02-31" }).success).toBe(false);
+  });
+
+  it("rejeita valores monetários e quantidades fora do limite", () => {
+    expect(orderInput.safeParse({
+      ...validOrder,
+      items: [{ ...validOrder.items[0], quantity: 1_000_001 }],
+    }).success).toBe(false);
+    expect(orderInput.safeParse({
+      ...validOrder,
+      items: [{ ...validOrder.items[0], unitPriceCents: 2_000_000_001 }],
+    }).success).toBe(false);
+  });
 });
 
 describe("rejectInput", () => {
@@ -57,6 +72,12 @@ describe("rulesInput", () => {
   it("rejeita aprovador repetido na mesma faixa", () => {
     expect(rulesInput.safeParse([
       { upTo: null, approvers: [1, 1] },
+    ]).success).toBe(false);
+  });
+
+  it("rejeita limite acima do máximo monetário", () => {
+    expect(rulesInput.safeParse([
+      { upTo: 2_000_000_001, approvers: [1] },
     ]).success).toBe(false);
   });
 });
