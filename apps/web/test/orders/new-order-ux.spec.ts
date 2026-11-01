@@ -178,6 +178,35 @@ test("currency paste stays exact and over-precise prices remain invalid", async 
   await expect(page.getByText("Informe um preço válido.", { exact: true })).toBeVisible();
 });
 
+test("a non-numeric price keeps what was typed, is flagged and recovers when corrected", async ({ page }) => {
+  await fixture(page);
+  await page.goto("/purchase-orders/new");
+  const price = page.getByLabel("Preço unitário (R$)", { exact: true });
+  await price.pressSequentially("123d");
+  await expect(price).toHaveValue("123d,00");
+  await price.pressSequentially("4");
+  await expect(price).toHaveValue("123d4,00");
+  await price.blur();
+  await expect(price).toHaveAttribute("aria-invalid", "true");
+  await expect(page.getByText("Informe um preço válido.", { exact: true })).toBeVisible();
+
+  await price.focus();
+  await price.press("Home");
+  for (let step = 0; step < 5; step++) await price.press("ArrowRight");
+  await price.press("Backspace");
+  await price.press("Backspace");
+  await expect(price).toHaveValue("123,00");
+  await price.pressSequentially("4");
+  await expect(price).toHaveValue("1.234,00");
+  await price.blur();
+  await expect(price).not.toHaveAttribute("aria-invalid", "true");
+
+  await price.fill("-5");
+  await price.blur();
+  await expect(price).toHaveValue("-5");
+  await expect(price).toHaveAttribute("aria-invalid", "true");
+});
+
 test("currency separators survive deletion and regrouping preserves the caret", async ({ page }) => {
   await fixture(page);
   await page.goto("/purchase-orders/new");

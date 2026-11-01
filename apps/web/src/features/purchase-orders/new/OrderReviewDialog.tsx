@@ -70,7 +70,8 @@ export function OrderReviewDialog({
                 </p>
                 <div className={styles.reviewLine}>
                   <span>
-                    {item.quantity.replace(".", ",")} {item.unit} × {brl(item.unitPrice)}
+                    {item.quantity.replace(".", ",")} {item.unit} ×{" "}
+                    {preview.lines[index] !== null ? brl(item.unitPrice) : "—"}
                   </span>
                   <strong>Subtotal: {preview.lines[index] !== null ? brl(preview.lines[index]!) : "—"}</strong>
                 </div>

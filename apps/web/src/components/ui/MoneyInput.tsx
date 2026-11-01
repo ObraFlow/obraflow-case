@@ -63,7 +63,9 @@ export function MoneyInput({
   useImperativeHandle(ref, () => input.current!, []);
   const [part, setPart] = useState<CurrencyPart>(null);
   const [editVersion, setEditVersion] = useState(0);
-  const selection = useRef<{ fraction: true } | { digits: number; afterDecimal: boolean } | null>(null);
+  const selection = useRef<{ fraction: true } | { offset: number } | { digits: number; afterDecimal: boolean } | null>(
+    null,
+  );
   // Grouping changes string offsets. Restore the logical digit position after
   // React commits the formatted value, including edits that keep its value.
   useLayoutEffect(() => {
@@ -73,6 +75,7 @@ export function MoneyInput({
     if (!request || !node || document.activeElement !== node) return;
     const comma = node.value.lastIndexOf(",");
     if ("fraction" in request) node.setSelectionRange(comma + 1, node.value.length);
+    else if ("offset" in request) node.setSelectionRange(request.offset, request.offset);
     else {
       const position = Math.max(
         afterDigits(node.value, request.digits),
@@ -123,6 +126,14 @@ export function MoneyInput({
             const afterDecimal = comma >= 0 ? caret > comma : dot >= 0 && caret > dot;
             const next =
               /^,0*$/.test(text) && !afterDecimal ? "" : decimalText(text.startsWith(",") ? `0${text}` : text);
+            // Not a number: keep what was typed, so validation flags it and deleting the
+            // character gives the amount back, instead of normalizing it into something else.
+            if (!/^\d*(?:\.\d*)?$/.test(next)) {
+              selection.current = { offset: caret };
+              setEditVersion((version) => version + 1);
+              onValueChange(text);
+              return;
+            }
             const integer = next.split(".")[0],
               leadingZeros = integer.length - integer.replace(/^0+(?=\d)/, "").length;
             const digits = (text.slice(0, caret).match(/\d/g) ?? []).length;
