@@ -52,3 +52,7 @@ next-env.d.ts
 /.claude/settings.local.json
 /.claude/agent-memory-local/
 /skills-lock.json
+
+# playwright
+/playwright-report/
+/test-results/

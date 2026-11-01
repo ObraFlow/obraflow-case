@@ -5,3 +5,5 @@ prisma/migrations
 package-lock.json
 .claude
 AGENTS.md
+playwright-report
+test-results
