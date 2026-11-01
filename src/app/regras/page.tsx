@@ -92,7 +92,7 @@ export default function RulesPage() {
         </label>
       </div>
 
-      <Async loading={sites.loading || users.loading || (!!siteId && rules.loading && !rules.data)}
+      <Async loading={sites.loading || users.loading || (!!siteId && rules.loading)}
         error={sites.error || users.error || rules.error}
         onRetry={() => { sites.reload(); users.reload(); rules.reload(); }}>
         {!sites.data?.length ? (

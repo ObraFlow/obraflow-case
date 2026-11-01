@@ -1,11 +1,11 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 /* ---------- formatação ---------- */
 export const brl = (cents: number) =>
   (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-export const toCents = (v: string) => Math.round(parseFloat(v.replace(",", ".")) * 100);
+export const toCents = (v: string) => Math.round(parseFloat(v.replace(/\./g, "").replace(",", ".")) * 100);
 
 /* ---------- cliente da API ---------- */
 export async function api<T = unknown>(path: string, init?: RequestInit): Promise<T> {
@@ -28,16 +28,32 @@ export function useApi<T>(path: string | null) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const controllerRef = useRef<AbortController | null>(null);
   const load = useCallback(async () => {
-    if (!path) { setLoading(false); return; }
+    controllerRef.current?.abort();
+    if (!path) {
+      setData(null);
+      setLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    controllerRef.current = controller;
     setLoading(true);
     setError(null);
-    try { setData(await api<T>(path)); }
-    catch (e) { setError((e as Error).message); }
-    finally { setLoading(false); }
+    try { setData(await api<T>(path, { signal: controller.signal })); }
+    catch (e) {
+      if (!controller.signal.aborted) setError((e as Error).message);
+    }
+    finally {
+      if (!controller.signal.aborted) setLoading(false);
+    }
   }, [path]);
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setData(null);
+    load();
+    return () => controllerRef.current?.abort();
+  }, [load]);
   return { data, error, loading, reload: load };
 }
 

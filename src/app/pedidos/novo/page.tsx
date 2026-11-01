@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState, useEffect } from "react";
 import { api, brl, btn, card, inp, toCents, Async, Empty, Field, useApi } from "@/lib/ui";
+import { resolveRule } from "@/shared/approval";
 
 type Opt = { id: number; name: string };
 type Rule = { upTo: number | null; approvers: number[] };
@@ -37,13 +38,11 @@ export default function NewOrderPage() {
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDate(new Date().toISOString().slice(0, 10));
+    setDate(new Date().toLocaleDateString("sv-SE"));
   }, []);
 
   const rule = useMemo(
-    () => [...(rules.data ?? [])]
-      .sort((a, b) => (a.upTo ?? Infinity) - (b.upTo ?? Infinity))
-      .find((r) => r.upTo === null || total <= r.upTo),
+    () => resolveRule(rules.data ?? [], total),
     [rules.data, total],
   );
   const chain = (rule?.approvers ?? []).map((id) => users.data?.find((u) => u.id === id)?.name ?? `Usuário ${id}`);
