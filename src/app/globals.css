@@ -1,0 +1,420 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Rede de segurança: nenhuma decisão visual usa `dark:` (só tokens mudam, ver abaixo). Se
+   algum componente do shadcn ainda trouxer a variante, ela segue o mesmo critério dos tokens. */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *) {
+      @slot;
+    }
+  }
+}
+
+/* Tokens da identidade "Canteiro". Fonte da verdade: docs/design.md. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-archivo);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  /* Cores próprias do produto (classes bg-sinalizacao, text-aprovado, border-rejeitado...). */
+  --color-sinalizacao: var(--sinalizacao);
+  --color-sinalizacao-foreground: var(--sinalizacao-foreground);
+  --color-sinalizacao-fundo: var(--sinalizacao-fundo);
+  --color-sinalizacao-acao: var(--sinalizacao-acao);
+  --color-sinalizacao-acao-foreground: var(--sinalizacao-acao-foreground);
+  --color-skeleton: var(--skeleton);
+  --color-aprovado: var(--aprovado);
+  --color-aprovado-fundo: var(--aprovado-fundo);
+  --color-rejeitado: var(--rejeitado);
+  --color-rejeitado-fundo: var(--rejeitado-fundo);
+  --color-rejeitado-texto: var(--rejeitado-texto);
+  --color-linha: var(--linha);
+  --color-cancelado: var(--cancelado);
+  /* Texto sobre preenchimento (--foreground ou --rejeitado), header e backdrop do dialog. */
+  --color-on-color: var(--on-color);
+  --color-header: var(--header);
+  --color-header-foreground: var(--header-foreground);
+  --color-overlay: var(--overlay);
+  /* Raio 2px em tudo (docs/design.md): sm e md não encolhem como no shadcn padrão. */
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  color-scheme: light;
+  --background: #e9e7e2;
+  --foreground: #23211e;
+  --card: #ffffff;
+  --card-foreground: #23211e;
+  --popover: #ffffff;
+  --popover-foreground: #23211e;
+  --primary: #23211e;
+  --primary-foreground: #ffffff;
+  --secondary: #f4f2ee;
+  --secondary-foreground: #23211e;
+  --muted: #f4f2ee;
+  --muted-foreground: #625d55;
+  --accent: #f4f2ee;
+  --accent-foreground: #23211e;
+  --destructive: #a33a2a;
+  --border: #cfcac1;
+  --input: #cfcac1;
+  --ring: #f2b300;
+  --chart-1: #cfcac1;
+  --chart-2: #9a948a;
+  --chart-3: #625d55;
+  --chart-4: #3e3a34;
+  --chart-5: #23211e;
+  --radius: 0.125rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #23211e;
+  --sidebar-primary: #23211e;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f4f2ee;
+  --sidebar-accent-foreground: #23211e;
+  --sidebar-border: #cfcac1;
+  --sidebar-ring: #f2b300;
+
+  /* Só onde o usuário atual precisa agir. Nunca decoração. */
+  --sinalizacao: #f2b300;
+  /* Texto sobre o amarelo. Nunca --foreground: no tema escuro ele é claro. */
+  --sinalizacao-foreground: #23211e;
+  --sinalizacao-fundo: #fff3c4;
+  /* Botão primário sobre a faixa amarela: a tinta mais forte do tema e o texto sobre ela.
+     Não é --primary de propósito: no escuro --primary é claro e sumiria no amarelo. */
+  --sinalizacao-acao: #23211e;
+  --sinalizacao-acao-foreground: #ffffff;
+  /* Skeleton: igual a --muted no claro; no escuro --muted some sobre o card (1,1:1). */
+  --skeleton: #f4f2ee;
+  --aprovado: #2f6b3a;
+  --aprovado-fundo: #e3efe3;
+  --rejeitado: #a33a2a;
+  --rejeitado-fundo: #f7e6e2;
+  --rejeitado-texto: #6e2419;
+  /* Separador de linhas de tabela e texto de nível cancelado (4,6:1 sobre branco). */
+  --linha: #e3e0d9;
+  --cancelado: #7a746a;
+  /* Texto sobre preenchimento --foreground ou --rejeitado (bloco aprovou/rejeitou, botão). */
+  --on-color: #ffffff;
+  --header: #23211e;
+  --header-foreground: #ffffff;
+  --overlay: rgb(35 33 30 / 0.3);
+}
+
+/*
+ * Tema escuro: só tokens mudam. Regras, classes e keyframes são os mesmos (docs/design.md >
+ * Tema escuro). "Concreto à noite": fundos quase pretos e quentes, texto quase branco, o mesmo
+ * amarelo de sinalização. Contraste AA conferido em cada par texto/fundo.
+ *
+ * O bloco aparece duas vezes, idêntico, de propósito. CSS não tem como escrever em uma regra
+ * só "escuro se data-theme=dark OU (sistema escuro E sem data-theme=light)": a primeira cópia
+ * atende à preferência do sistema quando a pessoa não escolheu nada (e vale antes de qualquer
+ * JavaScript rodar); a segunda atende à escolha explícita no seletor do header. Qualquer
+ * mudança de token vale para as duas.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --background: #1c1b19;
+    --foreground: #ece9e3;
+    --card: #262523;
+    --card-foreground: #ece9e3;
+    --popover: #262523;
+    --popover-foreground: #ece9e3;
+    --primary: #ece9e3;
+    --primary-foreground: #1c1b19;
+    --secondary: #2f2d2a;
+    --secondary-foreground: #ece9e3;
+    --muted: #2f2d2a;
+    --muted-foreground: #a8a196;
+    --accent: #2f2d2a;
+    --accent-foreground: #ece9e3;
+    --destructive: #e8907e;
+    --border: #403d39;
+    --input: #403d39;
+    --ring: #f2b300;
+    --chart-1: #403d39;
+    --chart-2: #625d55;
+    --chart-3: #9a948a;
+    --chart-4: #cfcac1;
+    --chart-5: #ece9e3;
+    --sidebar: #262523;
+    --sidebar-foreground: #ece9e3;
+    --sidebar-primary: #ece9e3;
+    --sidebar-primary-foreground: #1c1b19;
+    --sidebar-accent: #2f2d2a;
+    --sidebar-accent-foreground: #ece9e3;
+    --sidebar-border: #403d39;
+    --sidebar-ring: #f2b300;
+
+    --sinalizacao: #f2b300;
+    --sinalizacao-foreground: #1c1b19;
+    --sinalizacao-fundo: #4a3a08;
+    --sinalizacao-acao: #1c1b19;
+    --sinalizacao-acao-foreground: #ece9e3;
+    --skeleton: #3a3733;
+    --aprovado: #8ccb97;
+    --aprovado-fundo: #1e3323;
+    --rejeitado: #e8907e;
+    --rejeitado-fundo: #3f1f19;
+    --rejeitado-texto: #f3b9ac;
+    --linha: #33312e;
+    --cancelado: #9a9388;
+    --on-color: #1c1b19;
+    --header: #121110;
+    --header-foreground: #ece9e3;
+    --overlay: rgb(0 0 0 / 0.6);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #1c1b19;
+  --foreground: #ece9e3;
+  --card: #262523;
+  --card-foreground: #ece9e3;
+  --popover: #262523;
+  --popover-foreground: #ece9e3;
+  --primary: #ece9e3;
+  --primary-foreground: #1c1b19;
+  --secondary: #2f2d2a;
+  --secondary-foreground: #ece9e3;
+  --muted: #2f2d2a;
+  --muted-foreground: #a8a196;
+  --accent: #2f2d2a;
+  --accent-foreground: #ece9e3;
+  --destructive: #e8907e;
+  --border: #403d39;
+  --input: #403d39;
+  --ring: #f2b300;
+  --chart-1: #403d39;
+  --chart-2: #625d55;
+  --chart-3: #9a948a;
+  --chart-4: #cfcac1;
+  --chart-5: #ece9e3;
+  --sidebar: #262523;
+  --sidebar-foreground: #ece9e3;
+  --sidebar-primary: #ece9e3;
+  --sidebar-primary-foreground: #1c1b19;
+  --sidebar-accent: #2f2d2a;
+  --sidebar-accent-foreground: #ece9e3;
+  --sidebar-border: #403d39;
+  --sidebar-ring: #f2b300;
+
+  --sinalizacao: #f2b300;
+  --sinalizacao-foreground: #1c1b19;
+  --sinalizacao-fundo: #4a3a08;
+  --sinalizacao-acao: #1c1b19;
+  --sinalizacao-acao-foreground: #ece9e3;
+  --skeleton: #3a3733;
+  --aprovado: #8ccb97;
+  --aprovado-fundo: #1e3323;
+  --rejeitado: #e8907e;
+  --rejeitado-fundo: #3f1f19;
+  --rejeitado-texto: #f3b9ac;
+  --linha: #33312e;
+  --cancelado: #9a9388;
+  --on-color: #1c1b19;
+  --header: #121110;
+  --header-foreground: #ece9e3;
+  --overlay: rgb(0 0 0 / 0.6);
+}
+
+@layer base {
+  * {
+    /* ring-offset-card: sem isso o offset do anel de foco é branco fixo e vira halo no escuro. */
+    @apply border-border ring-offset-card outline-ring/50;
+  }
+  body {
+    /* Corpo 14px / 1.4 (docs/design.md > Tipografia). */
+    @apply bg-background text-sm leading-[1.4] text-foreground;
+  }
+  html {
+    @apply font-sans;
+    /* Espaço da barra de rolagem sempre reservado: a largura não muda entre páginas. */
+    scrollbar-gutter: stable;
+  }
+  /* Seleção de texto no fundo claro da sinalização: é o usuário agindo. */
+  ::selection {
+    background-color: var(--sinalizacao-fundo);
+    color: var(--foreground);
+  }
+}
+
+/* Movimento: só em resposta a uma ação, para mostrar o que mudou (docs/design.md > Movimento). */
+@keyframes cadeia-preenche {
+  0% {
+    background-size: 0 100%;
+    color: var(--sinalizacao-foreground);
+    border-color: var(--sinalizacao);
+  }
+  55% {
+    color: var(--sinalizacao-foreground);
+  }
+  100% {
+    background-size: 100% 100%;
+    color: var(--on-color);
+    border-color: var(--foreground);
+  }
+}
+
+@keyframes cadeia-preenche-rejeicao {
+  0% {
+    background-size: 0 100%;
+    color: var(--sinalizacao-foreground);
+    border-color: var(--sinalizacao);
+  }
+  55% {
+    color: var(--sinalizacao-foreground);
+  }
+  100% {
+    background-size: 100% 100%;
+    color: var(--on-color);
+    border-color: var(--rejeitado);
+  }
+}
+
+@keyframes cadeia-acende {
+  0% {
+    background-color: var(--card);
+    border-color: var(--border);
+    color: var(--muted-foreground);
+  }
+  100% {
+    background-color: var(--sinalizacao);
+    border-color: var(--sinalizacao);
+    color: var(--sinalizacao-foreground);
+  }
+}
+
+@keyframes faixa-recolhe {
+  0% {
+    background-color: var(--sinalizacao);
+  }
+  100% {
+    background-color: var(--muted);
+  }
+}
+
+/* Duas variantes idênticas: alternar o nome reinicia a animação a cada troca de usuário. */
+@keyframes linha-pulsa-a {
+  0% {
+    background-color: var(--sinalizacao);
+  }
+  100% {
+    background-color: var(--sinalizacao-fundo);
+  }
+}
+
+@keyframes linha-pulsa-b {
+  0% {
+    background-color: var(--sinalizacao);
+  }
+  100% {
+    background-color: var(--sinalizacao-fundo);
+  }
+}
+
+/* Linha que acabou de entrar ou mudar por ação do usuário (item adicionado, faixa salva).
+   Duas variantes idênticas, como no pulso: alternar o nome reinicia a animação na mesma linha. */
+@keyframes linha-entra-a {
+  0% {
+    background-color: var(--muted);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes linha-entra-b {
+  0% {
+    background-color: var(--muted);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/*
+ * Classes que disparam os keyframes acima. Ficam fora de @layer de propósito: regra sem
+ * camada vence as utilities do Tailwind, então `.anima-preenche` sobrepõe `bg-foreground`
+ * enquanto anima. `forwards` mantém o estado final, que é igual às classes estáticas.
+ */
+.anima-preenche {
+  background-color: var(--sinalizacao);
+  background-image: linear-gradient(var(--foreground), var(--foreground));
+  background-repeat: no-repeat;
+  animation: cadeia-preenche 550ms ease-out forwards;
+}
+.anima-preenche-rejeicao {
+  background-color: var(--sinalizacao);
+  background-image: linear-gradient(var(--rejeitado), var(--rejeitado));
+  background-repeat: no-repeat;
+  animation: cadeia-preenche-rejeicao 550ms ease-out forwards;
+}
+.anima-acende {
+  animation: cadeia-acende 400ms ease-out 450ms both;
+}
+.anima-faixa-recolhe {
+  animation: faixa-recolhe 700ms ease-out forwards;
+}
+.anima-linha-pulsa-a {
+  animation: linha-pulsa-a 900ms ease-out forwards;
+}
+.anima-linha-pulsa-b {
+  animation: linha-pulsa-b 900ms ease-out forwards;
+}
+.anima-linha-entra-a {
+  animation: linha-entra-a 450ms ease-out;
+}
+.anima-linha-entra-b {
+  animation: linha-entra-b 450ms ease-out;
+}

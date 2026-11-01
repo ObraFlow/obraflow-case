@@ -1,0 +1,129 @@
+// Contrato de entrada para criar um pedido. O mesmo schema valida o form (react-hook-form),
+// a server action (next-safe-action) e o POST /api/pedidos.
+
+import { z } from "zod";
+import { MAX_CENTS } from "@/domain/pedido/calcularTotais";
+import { centavosDeTexto } from "@/lib/money";
+import { quantidadeDeTexto } from "@/lib/quantidade";
+import { centavosSchema, dataSchema, idSchema, quantidadeSchema } from "./comum";
+
+export const itemPedidoSchema = z.object({
+  descricao: z
+    .string({ error: "Informe a descrição." })
+    .trim()
+    .min(1, "Informe a descrição do item.")
+    .max(200, "Descrição deve ter no máximo 200 caracteres."),
+  quantidade: quantidadeSchema,
+  unidade: z
+    .string({ error: "Informe a unidade." })
+    .trim()
+    .min(1, "Informe a unidade (un, kg, m³...).")
+    .max(20, "Unidade deve ter no máximo 20 caracteres."),
+  precoUnitarioCents: centavosSchema,
+});
+
+export const criarPedidoSchema = z.object({
+  obraId: idSchema,
+  fornecedorId: idSchema,
+  /** Data no formato ISO "AAAA-MM-DD" (valor nativo do <input type="date">). */
+  dataPedido: dataSchema,
+  observacoes: z
+    .string()
+    .trim()
+    .max(1000, "Observações devem ter no máximo 1000 caracteres.")
+    .optional(),
+  itens: z.array(itemPedidoSchema).min(1, "Adicione pelo menos um item ao pedido."),
+  /** Pedido rejeitado que este refaz. O service confere que ele está rejeitado e ainda sem nova versão. */
+  origemId: idSchema.optional(),
+});
+
+export type ItemPedidoInput = z.infer<typeof itemPedidoSchema>;
+export type CriarPedidoInput = z.infer<typeof criarPedidoSchema>;
+
+/** Filtros da lista de pedidos (GET /api/pedidos e tela de aprovações). */
+export const filtroPedidosSchema = z.object({
+  status: z.enum(["PENDENTE", "APROVADO", "REJEITADO"]).optional(),
+  obraId: idSchema.optional(),
+  /** Só pedidos em que este usuário é o aprovador do step atual. */
+  pendentesPara: idSchema.optional(),
+  /** Só pendentes que esperam o aprovador da vez há este número de dias ou mais. */
+  atrasadoHaDias: z.coerce.number().int().positive().max(365).optional(),
+  /** Número do pedido ("12" ou "#12") ou trecho do nome da obra ou do fornecedor. */
+  busca: z.string().trim().max(100, "Busca deve ter no máximo 100 caracteres.").optional(),
+});
+
+export type FiltroPedidos = z.infer<typeof filtroPedidosSchema>;
+
+export const POR_PAGINA_PADRAO = 10;
+
+/** Página da lista (tela de aprovações). `pagina` começa em 1. */
+export const paginacaoSchema = z.object({
+  pagina: z.coerce.number().int().positive().catch(1),
+  porPagina: z.coerce.number().int().min(5).max(50).catch(POR_PAGINA_PADRAO),
+});
+
+export type Paginacao = z.infer<typeof paginacaoSchema>;
+
+/**
+ * O que o FORMULÁRIO de pedido segura: ids como texto (valor do <select>), preço em reais
+ * como texto ("34,90") e quantidade como texto. Valida com mensagens por campo; no submit
+ * `paraCriarPedidoInput` converte para `CriarPedidoInput` (centavos), o contrato da action
+ * e da API, que valida de novo no server.
+ */
+export const itemPedidoFormSchema = z.object({
+  // Descrição e unidade são as mesmas regras do contrato da action; só quantidade e preço
+  // diferem, porque no form ainda são texto digitado em pt-BR ("1.000,5", "1.500,00").
+  descricao: itemPedidoSchema.shape.descricao,
+  quantidade: z
+    .string()
+    .trim()
+    .min(1, "Informe a quantidade.")
+    .refine((texto) => !texto.startsWith("-"), "Quantidade deve ser maior que zero.")
+    .refine((texto) => quantidadeDeTexto(texto) !== null, "Quantidade inválida. Ex.: 2,5 ou 1.000.")
+    .refine(
+      (texto) => Number(quantidadeDeTexto(texto) ?? 0) > 0,
+      "Quantidade deve ser maior que zero.",
+    ),
+  unidade: itemPedidoSchema.shape.unidade,
+  precoUnitario: z
+    .string()
+    .trim()
+    .min(1, "Informe o preço unitário.")
+    .refine((texto) => centavosDeTexto(texto) !== null, "Preço unitário inválido. Ex.: 34,90.")
+    .refine((texto) => (centavosDeTexto(texto) ?? -1) >= 0, "Preço unitário não pode ser negativo.")
+    .refine(
+      (texto) => (centavosDeTexto(texto) ?? 0) <= MAX_CENTS,
+      "Preço acima do limite suportado (R$ 21.474.836,47).",
+    ),
+});
+
+export const pedidoFormSchema = z.object({
+  obraId: z.string().regex(/^[1-9]\d*$/, "Selecione a obra."),
+  fornecedorId: z.string().regex(/^[1-9]\d*$/, "Selecione o fornecedor."),
+  dataPedido: z.string().min(1, "Informe a data do pedido."),
+  observacoes: z.string().trim().max(1000, "Observações devem ter no máximo 1000 caracteres."),
+  itens: z.array(itemPedidoFormSchema).min(1, "Adicione pelo menos um item ao pedido."),
+  /** Não é digitado: entra pelos valores iniciais quando o form refaz um pedido rejeitado. */
+  origemId: z.number().int().positive().optional(),
+});
+
+export type ItemPedidoFormInput = z.infer<typeof itemPedidoFormSchema>;
+export type PedidoFormInput = z.infer<typeof pedidoFormSchema>;
+
+/** Converte o formulário validado para o contrato da action/API. */
+export function paraCriarPedidoInput(form: PedidoFormInput): CriarPedidoInput {
+  return {
+    obraId: Number(form.obraId),
+    fornecedorId: Number(form.fornecedorId),
+    dataPedido: form.dataPedido,
+    observacoes: form.observacoes.trim() === "" ? undefined : form.observacoes.trim(),
+    itens: form.itens.map((item) => ({
+      descricao: item.descricao.trim(),
+      // Canônico ("1.000,5" → "1000.5"); o form já validou, o fallback só satisfaz o tipo.
+      quantidade: quantidadeDeTexto(item.quantidade) ?? item.quantidade.trim(),
+      unidade: item.unidade.trim(),
+      precoUnitarioCents: centavosDeTexto(item.precoUnitario) ?? 0,
+    })),
+    origemId: form.origemId,
+  };
+}

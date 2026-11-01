@@ -1,0 +1,330 @@
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useAction } from "next-safe-action/hooks";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useFieldArray, useForm, useFormState, useWatch } from "react-hook-form";
+import { toast } from "sonner";
+import { ImpactoOrcamento } from "@/components/pedidos/impacto-orcamento";
+import { ItensPedido } from "@/components/pedidos/itens-pedido";
+import { PreviewAlcada } from "@/components/pedidos/preview-alcada";
+import { usePreviewAlcada } from "@/components/pedidos/use-preview-alcada";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { formatarDataDoInstante } from "@/lib/datas";
+import type { FornecedorDto, ObraDto, PedidoDetalhe } from "@/lib/dto";
+import { formatarCentavos, textoDeCentavos } from "@/lib/money";
+import { formatarQuantidade } from "@/lib/quantidade";
+import {
+  paraCriarPedidoInput,
+  pedidoFormSchema,
+  type ItemPedidoFormInput,
+  type PedidoFormInput,
+} from "@/lib/schemas/pedido";
+import { totaisParaExibicao } from "@/lib/totais";
+import { criarPedidoAction } from "@/server/actions/pedidos";
+
+const ITEM_EM_BRANCO: ItemPedidoFormInput = {
+  descricao: "",
+  quantidade: "",
+  unidade: "",
+  precoUnitario: "",
+};
+
+/** "AAAA-MM-DD" de hoje no fuso do browser (valor nativo do <input type="date">). */
+function hojeIso(): string {
+  const agora = new Date();
+  const mes = String(agora.getMonth() + 1).padStart(2, "0");
+  const dia = String(agora.getDate()).padStart(2, "0");
+  return `${agora.getFullYear()}-${mes}-${dia}`;
+}
+
+const CLASSE_SELECT =
+  "h-[38px] w-full rounded-sm border border-input bg-card pr-7 pl-2 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none aria-invalid:border-destructive";
+
+/** Valores iniciais ao refazer um pedido rejeitado: tudo igual, menos a data (hoje). */
+function valoresDaOrigem(origem: PedidoDetalhe): PedidoFormInput {
+  return {
+    obraId: String(origem.obraId),
+    fornecedorId: String(origem.fornecedorId),
+    dataPedido: "",
+    observacoes: origem.observacoes ?? "",
+    itens: origem.itens.map((item) => ({
+      descricao: item.descricao,
+      quantidade: formatarQuantidade(item.quantidade),
+      unidade: item.unidade,
+      precoUnitario: textoDeCentavos(item.precoUnitarioCents),
+    })),
+    origemId: origem.id,
+  };
+}
+
+/**
+ * Formulário de novo pedido. Texto em reais no form (`pedidoFormSchema`); no submit
+ * `paraCriarPedidoInput` converte para centavos e a action (`criarPedidoSchema`) valida de
+ * novo e recalcula os totais no server. O total e o preview da alçada aqui são só exibição.
+ * Botão desabilitado enquanto há campo inválido, valor sem faixa ou o usuário atual na
+ * própria cadeia, com a frase do que falta. Com `origem`, refaz um pedido rejeitado.
+ */
+export function FormularioPedido({
+  obras,
+  fornecedores,
+  usuarioAtualId,
+  origem = null,
+}: {
+  obras: ObraDto[];
+  fornecedores: FornecedorDto[];
+  usuarioAtualId: number | null;
+  origem?: PedidoDetalhe | null;
+}) {
+  const router = useRouter();
+  const [erroDoServidor, setErroDoServidor] = useState<string | null>(null);
+
+  const form = useForm<PedidoFormInput>({
+    resolver: zodResolver(pedidoFormSchema),
+    mode: "all",
+    defaultValues: origem
+      ? valoresDaOrigem(origem)
+      : {
+          obraId: obras.length === 1 ? String(obras[0].id) : "",
+          fornecedorId: fornecedores.length === 1 ? String(fornecedores[0].id) : "",
+          dataPedido: "",
+          observacoes: "",
+          itens: [ITEM_EM_BRANCO],
+        },
+  });
+  const itens = useFieldArray({ control: form.control, name: "itens" });
+
+  // A data de hoje é preenchida depois de montar, no fuso do browser, para não haver
+  // diferença entre o que o server renderizou e o que o client calcula.
+  useEffect(() => {
+    if (form.getValues("dataPedido") === "") form.setValue("dataPedido", hojeIso());
+  }, [form]);
+
+  const obraId = useWatch({ control: form.control, name: "obraId" });
+  const itensDigitados = useWatch({ control: form.control, name: "itens" });
+  const observacoes = useWatch({ control: form.control, name: "observacoes" });
+
+  const totais = totaisParaExibicao(itensDigitados ?? []);
+  const obraIdNumero = /^[1-9]\d*$/.test(obraId) ? Number(obraId) : null;
+  const { preview, tentarDeNovo } = usePreviewAlcada(
+    obraIdNumero,
+    totais.completo ? totais.totalPedidoCents : null,
+  );
+
+  const { execute, isPending } = useAction(criarPedidoAction, {
+    onSuccess({ data }) {
+      toast.success(
+        data.refeitoDeId
+          ? `Pedido #${data.pedidoId} enviado: nova versão do #${data.refeitoDeId}.`
+          : `Pedido #${data.pedidoId} criado: ${formatarCentavos(data.totalCents)}.`,
+        {
+          description: data.aprovadorAtualNome
+            ? `Agora aguarda ${data.aprovadorAtualNome}.`
+            : undefined,
+        },
+      );
+      router.push(`/aprovacoes/${data.pedidoId}`);
+    },
+    onError({ error }) {
+      setErroDoServidor(
+        error.serverError ?? "Não foi possível criar o pedido. Confira os campos e tente de novo.",
+      );
+    },
+  });
+
+  const enviar = form.handleSubmit((valores) => execute(paraCriarPedidoInput(valores)));
+
+  // useFormState assina errors/isValid de verdade; ler form.formState direto não re-renderiza.
+  const { errors: erros, isValid } = useFormState({ control: form.control });
+  const itensComErro = Array.isArray(erros.itens) ? erros.itens.filter(Boolean).length : 0;
+  const temFaixa = preview.estado === "pronto" && preview.resultado.faixa !== null;
+  // Segregação de funções: quem aprovaria o pedido não pode cadastrá-lo. O service é a
+  // trava de verdade; aqui a pessoa descobre antes de enviar.
+  const naPropriaAlcada =
+    preview.estado === "pronto" &&
+    usuarioAtualId !== null &&
+    preview.resultado.cadeia.some((nivel) => nivel.usuarioId === usuarioAtualId);
+
+  // O que ainda falta, na ordem em que o usuário preenche. Uma frase só.
+  let faltando: string | null = null;
+  if (!obraId) faltando = "Escolha a obra.";
+  else if (erros.fornecedorId || !form.getValues("fornecedorId"))
+    faltando = "Escolha o fornecedor.";
+  else if (erros.dataPedido) faltando = "Informe a data do pedido.";
+  else if (itensComErro > 0)
+    faltando = itensComErro === 1 ? "1 item com erro." : `${itensComErro} itens com erro.`;
+  else if (!totais.completo) faltando = "Preencha todos os itens.";
+  else if (preview.estado === "carregando") faltando = "Verificando a alçada…";
+  else if (preview.estado === "erro") faltando = "Não foi possível verificar a alçada.";
+  else if (!temFaixa) faltando = "Sem faixa de alçada para este valor.";
+  else if (naPropriaAlcada)
+    faltando = "Este pedido seria aprovado por você. Peça a outra pessoa para cadastrá-lo.";
+  // O resolver valida de forma assíncrona: por um instante `isValid` é false sem erro
+  // apontado. O botão fica desabilitado nesse instante, então a frase também precisa existir.
+  else if (!isValid) faltando = "Conferindo os campos…";
+
+  const podeEnviar = faltando === null && isValid && !isPending;
+
+  return (
+    <form
+      onSubmit={(evento) => {
+        setErroDoServidor(null);
+        return enviar(evento);
+      }}
+      noValidate
+      className="flex min-w-0 flex-col gap-6 rounded-sm border bg-card px-6 py-5"
+    >
+      {origem && <AvisoDeOrigem origem={origem} />}
+
+      <fieldset className="grid gap-4 md:grid-cols-2">
+        <legend className="mb-3 text-lg font-bold">Dados gerais</legend>
+
+        <Field data-invalid={!!erros.obraId || undefined}>
+          <FieldLabel htmlFor="pedido-obra">Obra</FieldLabel>
+          <select
+            id="pedido-obra"
+            aria-invalid={!!erros.obraId || undefined}
+            className={CLASSE_SELECT}
+            {...form.register("obraId")}
+          >
+            <option value="">Selecione a obra</option>
+            {obras.map((obra) => (
+              <option key={obra.id} value={obra.id}>
+                {obra.nome}
+              </option>
+            ))}
+          </select>
+          <FieldError errors={[erros.obraId]} />
+        </Field>
+
+        <Field data-invalid={!!erros.fornecedorId || undefined}>
+          <FieldLabel htmlFor="pedido-fornecedor">Fornecedor</FieldLabel>
+          <select
+            id="pedido-fornecedor"
+            aria-invalid={!!erros.fornecedorId || undefined}
+            className={CLASSE_SELECT}
+            {...form.register("fornecedorId")}
+          >
+            <option value="">Selecione o fornecedor</option>
+            {fornecedores.map((fornecedor) => (
+              <option key={fornecedor.id} value={fornecedor.id}>
+                {fornecedor.nome}
+                {fornecedor.cnpj ? ` (${fornecedor.cnpj})` : ""}
+              </option>
+            ))}
+          </select>
+          <FieldError errors={[erros.fornecedorId]} />
+        </Field>
+
+        <Field data-invalid={!!erros.dataPedido || undefined}>
+          <FieldLabel htmlFor="pedido-data">Data do pedido</FieldLabel>
+          <Input
+            id="pedido-data"
+            type="date"
+            aria-invalid={!!erros.dataPedido || undefined}
+            className="h-[38px] w-fit rounded-sm"
+            {...form.register("dataPedido")}
+          />
+          <FieldError errors={[erros.dataPedido]} />
+        </Field>
+
+        <Field data-invalid={!!erros.observacoes || undefined}>
+          <FieldLabel htmlFor="pedido-observacoes">Observações internas (opcional)</FieldLabel>
+          <Textarea
+            id="pedido-observacoes"
+            rows={2}
+            placeholder="Ex.: reposição de estoque para a concretagem da laje do bloco B"
+            aria-invalid={!!erros.observacoes || undefined}
+            className="min-h-[38px] rounded-sm"
+            {...form.register("observacoes")}
+          />
+          <div className="flex justify-between gap-2">
+            <FieldError errors={[erros.observacoes]} />
+            <span className="ml-auto text-xs text-muted-foreground tabular-nums">
+              {(observacoes ?? "").length}/1000
+            </span>
+          </div>
+        </Field>
+      </fieldset>
+
+      <ItensPedido
+        form={form}
+        itens={itens.fields}
+        totaisItensCents={totais.totaisItensCents}
+        // `shouldFocus`: o cursor vai para a descrição do item novo, e o browser rola até ele.
+        aoAdicionar={() => itens.append(ITEM_EM_BRANCO, { shouldFocus: true })}
+        aoRemover={(indice) => itens.remove(indice)}
+      />
+
+      {/* Fora do rodapé fixo: no celular ele já leva total, faixa e botão. */}
+      {preview.estado === "pronto" && preview.resultado.impacto && (
+        <ImpactoOrcamento impacto={preview.resultado.impacto} />
+      )}
+
+      {/* A faixa e a cadeia ficam no fluxo, logo depois dos itens e do orçamento: no celular
+          elas não cabem no rodapé fixo sem esconder os campos atrás dele. */}
+      <PreviewAlcada preview={preview} obraId={obraIdNumero} tentarDeNovo={tentarDeNovo} />
+
+      {/* Abaixo de `lg` o rodapé gruda no fim da tela: só total, a frase do que falta e o
+          botão ficam visíveis enquanto a pessoa rola pelos itens. */}
+      <div className="sticky bottom-0 -mx-6 -mb-5 flex flex-col gap-4 border-t-2 border-foreground bg-card px-6 pt-4 pb-5 lg:static lg:mx-0 lg:mb-0 lg:px-0 lg:pb-0">
+        <div className="flex flex-wrap items-baseline justify-between gap-2 lg:pr-[92px]">
+          <span className="text-sm font-medium">
+            Total do pedido{" "}
+            <span className="font-normal text-muted-foreground tabular-nums">
+              ({itens.fields.length === 1 ? "1 item" : `${itens.fields.length} itens`})
+            </span>
+          </span>
+          <output className="text-xl font-bold tabular-nums" aria-live="polite">
+            {formatarCentavos(totais.totalPedidoCents)}
+            {!totais.completo && totais.totaisItensCents.some((total) => total !== null) && (
+              <span className="ml-2 text-sm font-normal text-muted-foreground">
+                (parcial: há itens sem total)
+              </span>
+            )}
+          </output>
+        </div>
+
+        {erroDoServidor && (
+          <Alert variant="destructive" className="rounded-sm border-rejeitado">
+            <AlertTitle>Não foi possível criar o pedido</AlertTitle>
+            <AlertDescription>{erroDoServidor}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* A frase do que falta fica encostada no botão que ela explica. */}
+        <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+          {faltando && (
+            <p className="text-sm text-muted-foreground sm:text-right" aria-live="polite">
+              {faltando}
+            </p>
+          )}
+          <Button type="submit" className="h-10 lg:h-[38px]" disabled={!podeEnviar}>
+            {isPending ? "Enviando…" : origem ? "Enviar nova versão" : "Cadastrar pedido"}
+          </Button>
+        </div>
+      </div>
+    </form>
+  );
+}
+
+/** Por que o formulário já vem preenchido: o pedido de origem e o motivo da rejeição. */
+function AvisoDeOrigem({ origem }: { origem: PedidoDetalhe }) {
+  const rejeicao = origem.aprovacoes.find((aprovacao) => aprovacao.status === "REJEITADA");
+  return (
+    <div className="flex flex-col gap-1 rounded-sm border-l-4 border-rejeitado bg-rejeitado-fundo px-4 py-3 text-sm">
+      <p className="font-semibold">
+        Nova versão do pedido #{origem.id}
+        {rejeicao &&
+          `, rejeitado por ${rejeicao.aprovadorNome}${rejeicao.decididoEm ? ` em ${formatarDataDoInstante(rejeicao.decididoEm)}` : ""}`}
+        .
+      </p>
+      {rejeicao?.motivo && <p className="text-rejeitado-texto">“{rejeicao.motivo}”</p>}
+    </div>
+  );
+}

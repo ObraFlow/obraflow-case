@@ -1,0 +1,167 @@
+// Modelagem do Dokimos (pedidos de compra com aprovação por alçada).
+// Convenções: dinheiro em centavos (Int), quantidade em Decimal, datas em UTC.
+// A URL do banco vem de prisma.config.ts (Prisma 7 não a lê daqui).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Cadastros (existem "de fábrica" — vêm do seed; sem tela de cadastro)
+// ---------------------------------------------------------------------------
+
+/// Projeto/canteiro. As regras de alçada são por obra.
+model Obra {
+  id             Int      @id @default(autoincrement())
+  nome           String
+  /// Orçamento de compras da obra, em centavos. 0 = sem orçamento definido (sem percentual nem alerta).
+  orcamentoCents Int      @default(0)
+  criadoEm       DateTime @default(now())
+
+  regras  RegraAlcada[]
+  pedidos Pedido[]
+}
+
+/// Pessoa que cria pedidos e/ou aprova. Sem auth: é escolhida no seletor "Agindo como".
+model Usuario {
+  id       Int      @id @default(autoincrement())
+  nome     String
+  email    String   @unique
+  cargo    String?
+  criadoEm DateTime @default(now())
+
+  niveis         NivelRegra[]
+  aprovacoes     AprovacaoPedido[]
+  pedidosCriados Pedido[]
+}
+
+model Fornecedor {
+  id       Int      @id @default(autoincrement())
+  nome     String
+  cnpj     String?  @unique
+  criadoEm DateTime @default(now())
+
+  pedidos Pedido[]
+}
+
+// ---------------------------------------------------------------------------
+// Regras de alçada (configuração; podem mudar a qualquer momento)
+// ---------------------------------------------------------------------------
+
+/// Faixa de valor de uma obra. minCents inclusivo; maxCents null = sem teto.
+/// Faixas da mesma obra não se sobrepõem (validado no service; o unique em minCents é só uma rede extra).
+model RegraAlcada {
+  id           Int      @id @default(autoincrement())
+  obraId       Int
+  minCents     Int
+  maxCents     Int?
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  obra    Obra         @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  niveis  NivelRegra[]
+  pedidos Pedido[]
+
+  @@unique([obraId, minCents])
+}
+
+/// Um aprovador em uma posição da faixa. A ordem define o fluxo (0 decide primeiro).
+model NivelRegra {
+  id        Int @id @default(autoincrement())
+  regraId   Int
+  ordem     Int
+  usuarioId Int
+
+  regra   RegraAlcada @relation(fields: [regraId], references: [id], onDelete: Cascade)
+  usuario Usuario     @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+
+  @@unique([regraId, ordem])
+  @@unique([regraId, usuarioId])
+}
+
+// ---------------------------------------------------------------------------
+// Pedidos (histórico; nunca são alterados pela mudança de uma regra)
+// ---------------------------------------------------------------------------
+
+enum StatusPedido {
+  PENDENTE
+  APROVADO
+  REJEITADO
+}
+
+model Pedido {
+  id           Int          @id @default(autoincrement())
+  obraId       Int
+  fornecedorId Int
+  criadoPorId  Int
+  dataPedido   DateTime     @db.Date
+  observacoes  String?
+  totalCents   Int
+  status       StatusPedido @default(PENDENTE)
+  /// Índice da próxima AprovacaoPedido pendente. Igual ao nº de níveis quando a cadeia terminou.
+  stepAtual    Int          @default(0)
+  /// Qual regra gerou a cadeia (informativo). Se a regra for apagada, o snapshot em `aprovacoes` continua.
+  regraId      Int?
+  /// Pedido rejeitado que este refaz. Único: um rejeitado tem no máximo uma nova versão.
+  origemId     Int?         @unique
+  criadoEm     DateTime     @default(now())
+  atualizadoEm DateTime     @updatedAt
+
+  obra       Obra              @relation(fields: [obraId], references: [id], onDelete: Restrict)
+  fornecedor Fornecedor        @relation(fields: [fornecedorId], references: [id], onDelete: Restrict)
+  criadoPor  Usuario           @relation(fields: [criadoPorId], references: [id], onDelete: Restrict)
+  regra      RegraAlcada?      @relation(fields: [regraId], references: [id], onDelete: SetNull)
+  origem     Pedido?           @relation("Refazer", fields: [origemId], references: [id], onDelete: SetNull)
+  refeitoPor Pedido?           @relation("Refazer")
+  itens      ItemPedido[]
+  aprovacoes AprovacaoPedido[]
+
+  @@index([status])
+  @@index([obraId])
+}
+
+/// Linha do pedido. Totais calculados no server (quantidade × preço) e persistidos.
+model ItemPedido {
+  id                 Int     @id @default(autoincrement())
+  pedidoId           Int
+  ordem              Int
+  descricao          String
+  quantidade         Decimal @db.Decimal(12, 3)
+  unidade            String
+  precoUnitarioCents Int
+  totalCents         Int
+
+  pedido Pedido @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+
+  @@unique([pedidoId, ordem])
+}
+
+enum StatusAprovacao {
+  PENDENTE
+  APROVADA
+  REJEITADA
+  /// Níveis depois de uma rejeição: nunca chegaram a decidir.
+  CANCELADA
+}
+
+/// Snapshot da cadeia copiado dos NivelRegra na criação do pedido. É o histórico/trilha de auditoria.
+model AprovacaoPedido {
+  id          Int             @id @default(autoincrement())
+  pedidoId    Int
+  ordem       Int
+  aprovadorId Int
+  status      StatusAprovacao @default(PENDENTE)
+  motivo      String?
+  decididoEm  DateTime?
+
+  pedido    Pedido  @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  aprovador Usuario @relation(fields: [aprovadorId], references: [id], onDelete: Restrict)
+
+  @@unique([pedidoId, ordem])
+  @@index([aprovadorId, status])
+}

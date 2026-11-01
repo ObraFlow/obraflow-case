@@ -1,189 +1,241 @@
-![Banner do desafio ObraFlow](assets/banner.png)
+# ObraFlow — Dokimos (pedidos de compra com aprovação por alçada)
 
-# Desafio Full-stack — ObraFlow
+[![CI](https://github.com/jphillipe/obraflow-case/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jphillipe/obraflow-case/actions/workflows/ci.yml)
 
-Bem-vindo(a) ao nosso processo seletivo! Estamos buscando alguém com curiosidade técnica, autonomia e, acima de tudo, **visão de produto e criatividade** para transformar problemas reais em soluções.
-## Contexto
+**Demo publicada:** https://obraflow-theta.vercel.app (Vercel + Postgres na Neon, com os dados de demonstração do seed; escolha quem você é em "Agindo como").
 
-O **ObraFlow** é uma plataforma para empresas do setor de construção civil, concebida como parte de um [ERP (*Enterprise Resource Planning*)](https://pt.wikipedia.org/wiki/Sistema_integrado_de_gest%C3%A3o_empresarial).
+## Telas
 
-O **Dokimos** é o serviço de aprovações do ObraFlow. Ele gerencia **alçadas de aprovação**: regras que definem quem pode autorizar uma decisão e em qual ordem, de acordo com o contexto do pedido — neste caso, a obra e o valor da compra.
+Capturas da demo publicada, agindo como João Mendes (aprovador do pedido #1). O amarelo aparece só onde ele precisa agir.
 
-A gestão de alçadas é necessária para que a empresa mantenha controle financeiro e operacional. Compras de menor impacto podem ser decididas rapidamente por responsáveis próximos à obra; compras de maior valor exigem revisão adicional de pessoas com maior responsabilidade. Isso reduz o risco de gastos indevidos, evita que uma única pessoa aprove decisões além de sua responsabilidade e cria uma trilha auditável de quem aprovou ou rejeitou cada pedido.
+| Aprovações: cards de resumo, abas por situação, as linhas "Sua vez" com a caixa para aprovar de uma vez e a cadeia de cada pedido | Detalhe do pedido: faixa de decisão, itens e timeline da alçada                                                       |
+| --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| ![Lista de aprovações](.github/screenshots/aprovacoes-1280.png)                                                                   | ![Detalhe do pedido](.github/screenshots/pedido-1280.png)                                                             |
+| **Novo pedido**: itens em tabela, impacto no orçamento da obra e a cadeia que será aplicada, antes de cadastrar                   | **Regras de alçada**: faixas por obra, aprovadores herdados, lacuna entre faixas e simulador                          |
+| ![Novo pedido](.github/screenshots/novo-pedido-1280.png)                                                                          | ![Regras de alçada](.github/screenshots/regras-1280.png)                                                              |
+| **Acompanhamento**: orçamento por obra, compras aprovadas por mês, fornecedores, fila por aprovador e tempo até decidir           | **Celular (375px)**: lista em blocos e detalhe com itens compactos                                                    |
+| ![Acompanhamento](.github/screenshots/acompanhamento-1280.png)                                                                    | ![Lista no celular](.github/screenshots/aprovacoes-375.png) ![Detalhe no celular](.github/screenshots/pedido-375.png) |
 
-Também é importante que essas regras sejam configuráveis por obra: projetos diferentes podem ter orçamentos, portes e responsáveis distintos. Assim, o sistema deve identificar a regra aplicável no momento da criação do pedido, formar a cadeia de aprovadores e só avançar para a próxima pessoa depois da aprovação anterior. Em caso de rejeição, o fluxo é interrompido e o motivo fica registrado no histórico.
+## Como rodar
 
-Em produção, uma regra simples seria:
+Pré-requisitos: Node 24+, Docker.
 
-```text
-Obra 1 — valor até R$ 10.000,00
--> Aprovadores: João
-Obra 1 — valor acima de R$ 10.000 
--> Aprovadores: Amanda
+```bash
+cp .env.example .env
+npm install
+npm run db:up        # sobe o Postgres (docker compose)
+npm run db:migrate   # aplica as migrations e gera o client (Prisma 7 não gera sozinho no migrate)
+npm run db:seed      # dados de demonstração
+npm run dev          # http://localhost:3000
 ```
 
-*   Se um pedido na Obra 1 custar **R$ 8.000,00**, basta o clique da João para ser aprovado.
-*   Se custar **R$ 12.500,00**, João precisa aprovar primeiro. Só depois da aprovação dela é que o pedido fica liberado para o Amanda decidir. Se a João (ou o Amanda) rejeitar, o pedido é cancelado na hora e precisa ter um motivo registrado.
+Outros scripts: `npm run check` (lint + prettier + tsc + testes; o `tsc` precisa do client que o `db:migrate` gera, então rode o `check` depois dele), `npm run format`, `npm test`, `npm run db:studio`, `npm run db:down`.
 
-Neste desafio você vai construir a **versão simplificada** desse fluxo: as telas de um sistema de pedidos de compra com aprovação por alçada.
+Testes de ponta a ponta (Playwright, desktop e celular, contra o Postgres do Docker): `npx playwright install chromium` uma vez e depois `npm run test:e2e`. Ele reaproveita o `npm run dev` que estiver na porta 3000 (ou sobe um) e recria o banco com o seed antes de cada arquivo de teste.
 
----
+A cada commit, um hook `pre-commit` (husky) roda `lint-staged`: ESLint com `--fix` e Prettier só nos arquivos em stage. Se o lint falhar, o commit não acontece.
 
-# Backend e persistência
+### Deploy (Vercel + Neon)
 
-Você deve projetar e implementar a [API](https://pt.wikipedia.org/wiki/Interface_de_programa%C3%A7%C3%A3o_de_aplica%C3%A7%C3%B5es) (ou outro mecanismo de comunicação entre front-end e servidor) e a persistência necessários para suportar o desafio. O contrato, as rotas e o formato dos dados são livres, desde que atendam aos comportamentos abaixo:
+A demo em https://obraflow-theta.vercel.app roda na Vercel, ligada ao branch `main` deste repositório (cada push publica), com o Postgres na Neon (região `sa-east-1`, funções da Vercel em `gru1`). A única diferença para o ambiente local é a variável `DATABASE_URL`. Para reproduzir:
 
-* cadastrar e listar obras, usuários, fornecedores, pedidos e regras de alçada;
-* criar pedidos com cabeçalho e **N itens**; calcular e persistir seus totais;
-* determinar a cadeia de aprovadores conforme a obra e o valor total do pedido;
-* registrar aprovações e rejeições, incluindo o motivo obrigatório de rejeição;
-* impedir decisões fora da ordem da alçada e preservar o histórico;
-* criar, editar, remover e consultar níveis e aprovadores das regras por obra;
-* garantir a consistência das leituras e escritas dos dados.
+1. Crie um banco Postgres (Neon, Supabase, RDS) e copie a connection string.
+2. Na Vercel, importe o repositório, defina `DATABASE_URL` e o comando de build `prisma generate && next build` (o client do Prisma é gerado no build porque `src/generated/prisma` não vai para o git).
+3. Aplique as migrations e o seed no banco remoto a partir da sua máquina, apontando a variável só para esses comandos:
 
-Inclua dados de demonstração suficientes para avaliar o fluxo: ao menos 2 obras, usuários, regras e pedidos em diferentes estados.
+```bash
+DATABASE_URL="postgresql://..." npx prisma migrate deploy
+DATABASE_URL="postgresql://..." npx prisma db seed
+```
 
-Documente no `README.md` como iniciar a aplicação, popular os dados (quando aplicável) e consumir a API. Se optar por expor uma API HTTP, documente também os principais endpoints e payloads.
+Não há secret além da `DATABASE_URL`: sem autenticação, o "Agindo como" é um cookie.
 
----
+Em cada push na `main` e em cada pull request, o GitHub Actions (`.github/workflows/ci.yml`) roda dois jobs em paralelo: `check`, o mesmo `npm run check` do dia a dia (`next typegen` para os tipos globais `PageProps`/`LayoutProps` que o `tsc` precisa em um clone limpo, lint, Prettier, `tsc` e os testes do domínio), e `e2e`, que sobe um Postgres de serviço, aplica migrations e seed, faz o `next build` (ele prerenderiza páginas com `"use cache"` e por isso precisa de banco) e roda os fluxos Playwright contra o `next start`, em desktop e celular.
 
-# Tecnologias
+## Tecnologias e motivos
 
-A stack é **livre**. Escolha as tecnologias de front-end, back-end, banco de dados, ORM, biblioteca de estilos, testes e infraestrutura que considerar mais adequadas.
+| Dependência                                                                                                                               | Por quê                                                                                                                                                                                                                                                     |
+| ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Next.js 16 (App Router, RSC)                                                                                                              | Front e back no mesmo projeto. Server Components para listagens, server actions para mutações, `loading.tsx`/`error.tsx` por rota.                                                                                                                          |
+| Tailwind v4 + shadcn/ui                                                                                                                   | Componentes acessíveis copiados para o repositório (`src/components/ui`), sem lib de UI como dependência fechada. O CLI `shadcn` fica em devDependencies.                                                                                                   |
+| Prisma 7 + PostgreSQL                                                                                                                     | Schema declarativo, migrations versionadas e transações. Postgres por ser o banco que uma empresa usaria em produção.                                                                                                                                       |
+| `@prisma/adapter-pg`                                                                                                                      | O Prisma 7 exige um driver adapter; este é o adapter oficial para Postgres (usa `pg` por baixo).                                                                                                                                                            |
+| Zod                                                                                                                                       | Um único schema de validação compartilhado entre formulário (client) e server action/API (server).                                                                                                                                                          |
+| react-hook-form + `@hookform/resolvers`                                                                                                   | `useFieldArray` resolve a lista de N itens do pedido; o resolver liga o Zod ao formulário.                                                                                                                                                                  |
+| Vitest                                                                                                                                    | Testes unitários apenas em `src/domain` (regras de alçada são funções puras).                                                                                                                                                                               |
+| `next-safe-action`                                                                                                                        | Toda server action passa por ele: valida com o mesmo Zod do formulário, um middleware injeta o usuário "Agindo como", e `handleServerError` decide o que chega ao client (mensagem de domínio em pt-BR ou erro genérico).                                   |
+| `@next-safe-action/adapter-react-hook-form`                                                                                               | `useHookFormAction` liga action + `useForm` e devolve os erros de validação do servidor para os campos certos. Funciona com `zodResolver` e `useFieldArray`.                                                                                                |
+| `ky`                                                                                                                                      | Cliente HTTP fino sobre `fetch` (≈4 kB) usado só em client components para leituras interativas em `/api` (`prefix`, `retry`, timeout, `.json<T>()`). Axios não se integra ao `fetch` do Next e é muito maior; o server nunca chama a própria API por HTTP. |
+| `sonner`, `lucide-react`, `@base-ui/react`, `class-variance-authority`, `cn`, `tw-animate-css`                                            | Trazidos pelo shadcn/ui (toasts, ícones, primitivos acessíveis, variantes de classe, animações).                                                                                                                                                            |
+| Base do scaffold: `react`, `react-dom`, `typescript`, `tailwindcss`, `@tailwindcss/turbopack`, `eslint`, `eslint-config-next`, `@types/*` | Vêm do `create-next-app`. TypeScript estrito e as regras do Next para React Hooks e Core Web Vitals.                                                                                                                                                        |
+| Prettier + `prettier-plugin-tailwindcss`                                                                                                  | Formatação única para todo o time; o plugin ordena as classes Tailwind, o que mantém o JSX legível.                                                                                                                                                         |
+| `eslint-config-prettier`                                                                                                                  | Desliga as regras de estilo do ESLint que conflitariam com o Prettier; o ESLint fica só com regras de correção.                                                                                                                                             |
+| `tsx`                                                                                                                                     | Executa `prisma/seed.ts` em TypeScript sem passo de build (`prisma db seed`). Só devDependency; o Node puro não resolve os imports sem extensão do client gerado pelo Prisma.                                                                               |
+| husky + lint-staged                                                                                                                       | Hook `pre-commit` que lint-a e formata apenas os arquivos em stage. Garante que nada entra no histórico fora do padrão.                                                                                                                                     |
 
-A única exigência é que a aplicação possa ser executada localmente conforme as instruções do seu `README.md`, sem depender de serviços pagos ou de credenciais externas.
+Sem autenticação por escopo do desafio: o usuário atual é simulado por um seletor "Agindo como" no header, persistido em cookie.
 
-Testes são desejáveis, mas não obrigatórios.
+## Design
 
----
+A identidade visual "Canteiro" está documentada em tokens (paleta, tipografia, raio, estados da cadeia de alçada) e também em um arquivo Figma gerado **a partir do app**, não o contrário:
 
-# O que você vai construir
+**[Figma: ObraFlow — Dokimos](https://www.figma.com/design/P8bpSTcaDVS25sia62cPqN)**
 
-Três telas. O layout é livre — **não entregamos Figma, API ou implementação de referência**. O desenho das telas e as decisões de produto são parte da avaliação.
+- **Tokens:** paleta com as 14 cores como variáveis da coleção "Canteiro", escala tipográfica (Archivo), forma (raio 2px, bordas, botões de 38px, linhas de tabela de 46px) e os seis estados do bloco da cadeia de alçada, badges de situação e as três faixas de decisão.
+- **Telas 1280 e Telas 375:** as cinco telas mais o detalhe de um pedido rejeitado, em cada largura, importadas do DOM renderizado do app (agindo como João Mendes, com o seed) pelo conector MCP do Figma; textos, cores e layout são os do produto.
+- O que ficou diferente do browser está anotado na página Tokens: a Archivo do Figma não tem o eixo de largura (wordmark e títulos aparecem na largura normal), o campo de data vira texto e o rodapé fixo do formulário no celular aparece no fluxo.
 
-## 1. Cadastro de pedido de compra
+As regras que o Figma documenta valem para o código: amarelo só onde o usuário atual precisa agir, status sempre com texto, sem sombra e sem decoração, movimento só em resposta a uma ação.
 
-Um pedido de compra representa uma solicitação ao fornecedor e deve conter **um ou mais itens**. A alçada é determinada pelo **valor total do pedido**, e não pelo valor isolado de um item.
+Tema claro, escuro ou do sistema, trocado no header; só os tokens mudam.
 
+## Como a alçada é modelada, calculada e persistida
 
-### Dados gerais
+**Modelada.** Uma regra de alçada é uma faixa de valor de uma obra (`RegraAlcada`: `minCents` inclusivo, `maxCents` nulo = sem teto) com níveis ordenados (`NivelRegra`: posição e aprovador). Faixas da mesma obra não se sobrepõem e uma pessoa não aparece em duas faixas da mesma obra (`validarFaixas`, no domínio, antes de gravar).
 
-| Campo | Obrigatório | Comportamento esperado |
-|---|---:|---|
-| Obra | Sim | Lista as obras disponíveis para o pedido. |
-| Fornecedor | Sim | Identifica o fornecedor do pedido. |
-| Data do pedido | Sim | Data de emissão do pedido. |
-| Observações internas | Não | Campo livre para justificar ou complementar a solicitação. |
+**Calculada.** Na criação do pedido, o total dos itens (centavos, calculado no server) escolhe a faixa aplicável da obra (`resolverRegra`); sem faixa, o pedido é recusado com a obra e o valor na mensagem. A cadeia é acumulada (`montarCadeia`): aprovadores das faixas com mínimo abaixo da aplicável, em ordem crescente de valor, e por fim os da própria faixa. Tudo em `src/domain`, sem banco, com testes.
 
-Não é **obrigatório** criar uma tela de cadastro de fornecedor, obra ou usuário — se quiser, considere que esses dados já existem no sistema. A tela deve apenas permitir selecionar a obra e o fornecedor do pedido.
+**Persistida.** A cadeia é copiada para o pedido (`AprovacaoPedido`, uma linha por aprovador, `status` e `decididoEm`), e `Pedido.stepAtual` aponta para a próxima posição pendente. Editar ou apagar a regra depois não muda pedidos existentes: o histórico é o snapshot. Cada decisão roda em uma transação que recarrega o pedido, aplica a regra (`aplicarDecisao`) e grava com `updateMany ... where status = PENDENTE`; se nenhuma linha mudou, outra pessoa decidiu antes e a resposta é 409.
 
-### Itens do pedido
+```mermaid
+erDiagram
+    Obra ||--o{ RegraAlcada : "tem faixas"
+    Obra ||--o{ Pedido : "recebe"
+    RegraAlcada ||--|{ NivelRegra : "ordena"
+    Usuario ||--o{ NivelRegra : "aprova em"
+    RegraAlcada o|--o{ Pedido : "faixa aplicada (informativo)"
+    Fornecedor ||--o{ Pedido : "fornece"
+    Usuario ||--o{ Pedido : "cria"
+    Pedido ||--|{ ItemPedido : "contém"
+    Pedido ||--|{ AprovacaoPedido : "cadeia copiada"
+    Usuario ||--o{ AprovacaoPedido : "decide"
 
-A tela começa com um item em branco e deve permitir **adicionar, editar e remover N itens** antes do envio. Cada item deve ter, no mínimo:
+    RegraAlcada {
+        int minCents
+        int maxCents "nulo = sem teto"
+    }
+    NivelRegra {
+        int ordem
+    }
+    Pedido {
+        int totalCents
+        enum status "PENDENTE | APROVADO | REJEITADO"
+        int stepAtual
+    }
+    ItemPedido {
+        decimal quantidade "12,3"
+        int precoUnitarioCents
+        int totalCents
+    }
+    AprovacaoPedido {
+        int ordem
+        enum status "PENDENTE | APROVADA | REJEITADA | CANCELADA"
+        string motivo
+        datetime decididoEm
+    }
+```
 
-| Campo | Obrigatório | Comportamento esperado |
-|---|---:|---|
-| Descrição | Sim | Descreve claramente o material ou serviço. |
-| Quantidade | Sim | Número positivo; pode aceitar decimais. |
-| Unidade | Sim | Por exemplo: `un`, `kg`, `m`, `m²` ou `h`. |
-| Preço unitário | Sim | Valor monetário não negativo. |
-| Total do item | Calculado | `quantidade × preço unitário`; não deve ser editável diretamente. |
+```mermaid
+sequenceDiagram
+    actor A as Aprovador da vez
+    participant UI as FaixaDecisao (client)
+    participant SA as registrarDecisaoAction (next-safe-action)
+    participant S as registrarDecisao (service)
+    participant D as aplicarDecisao (domínio)
+    participant DB as Postgres
 
-O candidato pode definir a experiência de uso mais adequada — por exemplo, uma tabela expansível, um formulário por item ou um drawer — desde que a inclusão de vários itens permaneça clara.
+    A->>UI: clica Aprovar (ou Rejeitar com motivo)
+    UI->>SA: { pedidoId, tipo, motivo? } validado por Zod
+    SA->>SA: usuário do cookie "agindo-como"
+    SA->>S: registrarDecisao(pedidoId, usuarioId, decisão)
+    S->>DB: BEGIN
+    S->>DB: SELECT pedido + aprovações (estado atual)
+    S->>D: aplicarDecisao(estado, usuarioId, decisão)
+    D-->>S: próximo estado ou ErroDominio (fora de ordem, usuário errado, motivo ausente)
+    S->>DB: UPDATE AprovacaoPedido SET status, decididoEm WHERE pedido, ordem AND status = PENDENTE
+    alt count = 0 (outra decisão chegou antes)
+        S-->>SA: ConflitoDeDecisao
+        SA-->>UI: mensagem "Este passo já foi decidido" + recarrega
+    else count = 1
+        S->>DB: UPDATE Pedido SET stepAtual / status (+ CANCELADA nos níveis seguintes se rejeitou)
+        S->>DB: COMMIT
+        S-->>SA: PedidoDetalhe (DTO)
+        SA->>SA: revalidatePath(/aprovacoes, /aprovacoes/[id])
+        SA-->>UI: sucesso
+        UI->>UI: faixa recolhe, bloco da cadeia preenche, próximo acende
+    end
+```
 
-### Totalização e envio
+## Decisões técnicas
 
-A interface deve exibir o **total do pedido**, calculado pela soma dos totais dos itens. Esse é o valor usado para selecionar a regra de alçada.
+1. **Dinheiro em centavos (`Int`), quantidade em `Decimal` convertida para milésimos inteiros antes de multiplicar.** Total do item e do pedido calculados e persistidos no server; nada de ponto flutuante em dinheiro. Detalhe: [`src/domain/pedido/calcularTotais.ts`](src/domain/pedido/calcularTotais.ts).
+2. **A cadeia de aprovação é um snapshot copiado para o pedido na criação.** Editar ou apagar a regra depois não altera pedidos existentes: é a trilha de auditoria. Detalhe: [`AprovacaoPedido` em `prisma/schema.prisma`](prisma/schema.prisma) e [`criarPedido`](src/server/services/pedidos.ts).
+3. **Cadeia acumulada: compras maiores passam por quem aprova as menores e ainda pela própria faixa.** Por isso uma pessoa não pode estar em duas faixas da mesma obra. Detalhe: [`montarCadeia.ts`](src/domain/alcada/montarCadeia.ts) e [`validarFaixas.ts`](src/domain/alcada/validarFaixas.ts).
+4. **Decisão em transação com lock otimista; lote é um laço dessa mesma transação.** Recarrega o pedido, aplica a regra e grava com `updateMany ... where status = PENDENTE`; se nenhuma linha mudou, outra pessoa decidiu antes e a resposta é 409. Aprovar vários de uma vez repete isso pedido a pedido e devolve o que passou e o que falhou, em vez de desfazer tudo por causa de um. Quem cadastrou o pedido não decide sobre ele, e quem o aprovaria não o cadastra. Detalhe: [`registrarDecisao` e `aprovarEmLote`](src/server/services/decisoes.ts), [`segregacao.ts`](src/domain/alcada/segregacao.ts).
+5. **Três canais de comunicação, uma regra para escolher.** Página carrega → Server Component chama o service; usuário muda algo → server action (`next-safe-action`) com Zod e `revalidatePath`; leitura interativa no client → `ky` chamando `GET /api/...`, o mesmo endpoint documentado abaixo. Detalhe: [`src/server/actions`](src/server/actions) e [`src/app/api`](src/app/api).
+6. **Domínio puro testado sem banco; o fluxo inteiro testado no navegador.** `src/domain` não importa Next nem Prisma; alçada, atraso, orçamento e as métricas do acompanhamento são funções que recebem e devolvem dados simples, cobertas por 142 testes Vitest. O que depende de tela, banco e cookie (aprovar na ordem, rejeitar com motivo, valor sem faixa, lote, refazer, celular sem rolagem) são 11 fluxos Playwright contra o Postgres com o seed. Detalhe: [`src/domain`](src/domain) e [`e2e/`](e2e).
+7. **DTOs na fronteira.** `Decimal` e `Date` nunca chegam ao client: os services devolvem tipos serializáveis (`quantidade: string`, datas ISO, `*Cents: number`), os mesmos da UI e da API. Detalhe: [`src/lib/dto.ts`](src/lib/dto.ts) e [`src/server/dto.ts`](src/server/dto.ts).
+8. **Valor sem faixa aplicável bloqueia a criação; orçamento estourado só avisa.** Sem faixa, o pedido não existe, no front e no back, com obra e valor na mensagem. Passar do orçamento da obra aparece antes de enviar ("este pedido ultrapassa o orçamento em R$ X"), mas não bloqueia: quem decide é a alçada, e o Acompanhamento mostra a obra "Quase no limite" a partir de 90% comprometido. Detalhe: [`resolverRegra.ts`](src/domain/alcada/resolverRegra.ts), [`encontrarLacunas.ts`](src/domain/alcada/encontrarLacunas.ts) e [`resumoOrcamento.ts`](src/domain/orcamento/resumoOrcamento.ts).
+9. **Sem autenticação por escopo: o usuário atual é o seletor "Agindo como", persistido em cookie e lido no server.** A API recebe o usuário no corpo porque não tem cookie. Em produção isso vira sessão autenticada, como descrito em [O que mudaria em produção](#o-que-mudaria-em-produção). Detalhe: [`src/server/usuario-atual.ts`](src/server/usuario-atual.ts).
+10. **O Figma foi gerado a partir do app, não o contrário.** O desenho nasceu em código e tokens; o arquivo Figma é documentação importada do DOM renderizado e regenerável. Detalhe: seção [Design](#design).
 
-O botão **Cadastrar pedido** só deve ficar disponível quando os dados gerais e todos os itens forem válidos. Ao criar o pedido, o back-end deve persistir cabeçalho, itens, total calculado e cadeia inicial de aprovação.
-## 2. Aprovação
+## O que mudaria em produção
 
-A tela deve listar pedidos e permitir abrir os detalhes de cada um. A lista pode ser em tabela, cartões ou outra composição clara, mas deve apresentar pelo menos:
+O que está aqui é o recorte do desafio. Em produção, dentro do ERP, eu mudaria nesta ordem:
 
-| Informação por pedido | Descrição |
-|---|---|
-| Identificador, obra e fornecedor | Contexto rápido do pedido. |
-| Data, quantidade de itens e valor total | Resumo financeiro e operacional. |
-| Situação | Pendente, aprovado ou rejeitado. |
-| Alçada atual | Aprovadores concluídos, aprovador atual e próximas etapas. |
-| Ações | Aprovar ou rejeitar quando houver uma decisão disponível. |
+1. **Autenticação e autorização.** O "Agindo como" vira sessão autenticada (SSO da empresa) e o `usuarioId` deixa de vir do cookie ou do corpo da API: as actions e os route handlers leem o usuário da sessão. Permissões por papel (quem cria pedido, quem edita regra, quem só consulta) e por obra, com o domínio continuando a decidir quem é o aprovador da vez.
+2. **Multiempresa.** Obra, usuário, fornecedor, regra e pedido ganham `empresaId`, com índice e filtro em toda consulta; o cache de cadastros (`cacheTag("cadastros")`) passa a ser por empresa.
+3. **Notificação de verdade.** O sino por polling vira fila: cada decisão publica um evento (`PedidoAguardandoDecisao`, `PedidoAprovado`, `PedidoRejeitado`) consumido por e-mail, push e integrações do ERP (compras, financeiro). O contrato já existe: é o mesmo DTO da API.
+4. **Auditoria e retenção.** Além do snapshot da cadeia, uma tabela de eventos imutável (quem, quando, de onde, o quê) para alçada, regras e pedidos, com retenção definida pelo financeiro. Edição de regra passa a gerar versão, não sobrescrita.
+5. **Operação.** Migrations por pipeline (`prisma migrate deploy` no deploy, nunca da máquina de alguém), backups e restauração testados no Postgres gerenciado, observabilidade (logs estruturados com `requestId`, métricas de tempo de decisão que o Acompanhamento já calcula, alertas de erro 5xx e de fila parada), rate limit e proteção na API pública.
+6. **Escala das leituras.** Lista e acompanhamento com volume real saem das consultas em memória para agregações no banco ou views materializadas, sem mudar o domínio; o preview da alçada ganha cache curto por obra.
+7. **Qualidade.** Testes de integração dos services contra um Postgres descartável (hoje os services só são exercitados pelos fluxos Playwright), testes de contrato da API e um ambiente de preview por pull request com banco próprio, além dos testes de domínio e dos fluxos ponta a ponta que já rodam no CI.
+8. **Produto.** Anexos no pedido (cotações, notas), delegação de alçada em férias com registro de quem decidiu por quem, limites por período além de por pedido, e fuso horário por empresa em vez do fixo em Brasília.
 
-Nos detalhes, apresente os itens — descrição, quantidade, unidade, preço unitário e total — além do histórico de decisões. A lista de pedidos **pendentes** deve refletir o nível atual da alçada, calculado e persistido pelo back-end. A rejeição exige motivo, interrompe o fluxo e fica registrada no histórico. Quando toda a cadeia for concluída, as ações de decisão devem estar desabilitadas com uma explicação.
+## API REST
 
-## 3. Regras da alçada
+Mesmos services das telas, expostos como JSON. Dinheiro sempre em centavos inteiros; quantidade como texto decimal (`"2,5"` ou `"2.5"`); datas `AAAA-MM-DD`.
 
-A tela deve permitir selecionar uma obra e configurar as faixas de valor que definem a cadeia de aprovação. Uma representação mínima pode ser uma tabela como esta:
+| Método e rota                     | O que faz                                                                                                                                                                                                                                                                                     | Respostas                                                                                       |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `GET /api/obras`                  | Lista obras.                                                                                                                                                                                                                                                                                  | 200                                                                                             |
+| `GET /api/usuarios`               | Lista usuários (possíveis aprovadores e criadores).                                                                                                                                                                                                                                           | 200                                                                                             |
+| `GET /api/fornecedores`           | Lista fornecedores.                                                                                                                                                                                                                                                                           | 200                                                                                             |
+| `GET /api/regras?obraId=1`        | Faixas da obra com seus níveis, ordenadas por valor.                                                                                                                                                                                                                                          | 200, 400                                                                                        |
+| `POST /api/regras`                | Cria faixa. Corpo: `{ obraId, minCents, maxCents (null = sem teto), aprovadores: [{ usuarioId }] }`.                                                                                                                                                                                          | 201, 400, 404, 409 sobreposição, 422                                                            |
+| `PUT /api/regras/{id}`            | Edita a faixa (mesmo corpo).                                                                                                                                                                                                                                                                  | 200, 400, 404, 409, 422                                                                         |
+| `DELETE /api/regras/{id}`         | Remove a faixa. Pedidos antigos mantêm o snapshot.                                                                                                                                                                                                                                            | 204, 404                                                                                        |
+| `GET /api/regras/aplicavel`       | `?obraId=1&valorCents=1250000` → qual faixa e cadeia este valor cairia (`faixa: null` se nenhuma) e `impacto`: o que esse valor faz com o orçamento da obra (`null` sem orçamento).                                                                                                           | 200, 400, 404                                                                                   |
+| `GET /api/acompanhamento`         | Orçamento por obra (aprovado e em aprovação contra o orçamento), fila por aprovador, tempo até decidir, compras aprovadas por mês (6 meses), fornecedores com mais compras e últimas movimentações. `?obraId=1` recorta tudo menos o bloco por obra. O mesmo DTO da tela `/acompanhamento`.   | 200, 400, 404                                                                                   |
+| `GET /api/pedidos`                | Lista (resumo: totais, `totalItens`, cadeia `aprovacoes` e aprovador da vez). Filtros opcionais: `status`, `obraId`, `busca`, `pendentesPara` (id do aprovador da vez) e `atrasadoHaDias` (pendentes sem decisão do nível atual há N dias ou mais); os dois últimos só com `status` PENDENTE. | 200, 400                                                                                        |
+| `POST /api/pedidos`               | Cria pedido. Corpo: `{ obraId, fornecedorId, dataPedido, observacoes?, itens: [...], criadoPorId, origemId? }`. `origemId` refaz um pedido rejeitado (uma vez só); quem está na cadeia que aprovaria o pedido não pode cadastrá-lo.                                                           | 201, 400, 404, 409 origem já refeita, 422 sem faixa / valor / segregação / origem não rejeitada |
+| `GET /api/pedidos/{id}`           | Detalhe com itens, cadeia de aprovação e, se houver, `refeitoDe` / `refeitoPor`.                                                                                                                                                                                                              | 200, 404                                                                                        |
+| `POST /api/pedidos/{id}/decisoes` | `{ usuarioId, tipo: "APROVAR" }` ou `{ usuarioId, tipo: "REJEITAR", motivo }`. Quem cadastrou o pedido não decide sobre ele.                                                                                                                                                                  | 200, 400 sem motivo, 404, 409 fora de ordem, 422 segregação                                     |
+| `POST /api/pedidos/decisoes/lote` | `{ usuarioId, pedidoIds: [1, 7] }`. Aprova um por um, cada um na própria transação; responde sempre 200 com `{ aprovados, falhas: [{ pedidoId, codigo, mensagem }] }`. Rejeição não tem lote: o motivo é por pedido.                                                                          | 200, 400                                                                                        |
 
-| Faixa de valor | Aprovadores, na ordem do fluxo | Ações |
-|---|---|---|
-| Até R$ 10.000,00 | Amanda | Editar / remover |
-| Acima de R$ 10.000,00 | Amanda → João | Editar / remover |
+Item de pedido: `{ descricao, quantidade: "150", unidade: "sc", precoUnitarioCents: 3490 }`. Os totais são calculados no servidor e devolvidos em `itens[].totalCents` e `totalCents`.
 
-A interface deve listar usuários disponíveis e permitir:
+Exemplos (PowerShell ou bash, servidor em `localhost:3000`):
 
-* criar, editar e remover níveis/faixas de alçada;
-* definir o limite de valor de cada faixa;
-* adicionar, remover e reordenar aprovadores em cada faixa;
-* listar as regras já salvas para a obra selecionada.
+```bash
+curl -s "http://localhost:3000/api/regras/aplicavel?obraId=1&valorCents=1250000"
+```
 
-O comportamento para valores sem regra aplicável deve ser definido e documentado pelo candidato — por exemplo, impedir o envio do pedido com uma mensagem clara.
+```bash
+curl -s -X POST http://localhost:3000/api/pedidos -H "Content-Type: application/json" -d "{\"obraId\":1,\"fornecedorId\":1,\"dataPedido\":\"2026-10-28\",\"criadoPorId\":5,\"itens\":[{\"descricao\":\"Cimento CP-II\",\"quantidade\":\"150\",\"unidade\":\"sc\",\"precoUnitarioCents\":3490}]}"
+```
 
----
+```bash
+curl -s -X POST http://localhost:3000/api/pedidos/1/decisoes -H "Content-Type: application/json" -d "{\"usuarioId\":1,\"tipo\":\"APROVAR\"}"
+```
 
-# Validações e erros (exigidos)
+Erro, sempre no mesmo formato:
 
-| Situação | Comportamento esperado |
-|---|---|
-| Quantidade ou preço unitário inválido, negativo ou não numérico | erro no item correspondente, mensagem compreensível, não envia |
-| Pedido sem itens | erro claro; não envia |
-| Campos obrigatórios vazios (obra, fornecedor, data ou descrição de item) | erro no campo correspondente; não envia |
-| Nenhuma obra cadastrada | empty state amigável, não tela branca |
-| API fora do ar / 500 | estado de erro com opção de tentar novamente |
-| Rejeitar sem motivo | validação antes do submit |
-| Cadeia de alçada já concluída | botão de decisão desabilitado + explicação |
-
-Loading state é obrigatório em toda lista.
-
----
-
-# 📦 Como entregar (Prazo: 01/11/2026 às 23:59)
-O repositório deve conter instruções claras para instalar dependências, configurar o ambiente e iniciar a solução completa (front-end, back-end e banco de dados, quando aplicável). O método de execução é livre; `docker compose` é aceito, mas não obrigatório.
-
-Repositório deve conter:
-
-* código-fonte do front-e˝nd e do back-end;
-* dados de demonstração e instruções para criá-los ou carregá-los;
-* `README.md` com explicando:
-  * screenshots das telas;
-  * as tecnologias escolhidas e os motivos da escolha;
-  * como a regra de alçada é modelada, calculada e persistida;
-  * como o front-end se comunica com o back-end;
-  * como a consistência e a integridade dos dados são garantidas;
-  * o que mudaria em produção;
-1. Faça um **Fork** deste repositório (`https://github.com/ObraFlow/obraflow-case`).
-2. Abra um **Pull Request (PR)** para este repositório até **01/11/2026 às 23:59**.
-3. **Importante:** Na descrição do seu Pull Request, deixe seu **e-mail e telefone (WhatsApp)** para contato!
-
----
-
-# Avaliação
-
-| Critério | Peso |
-|---|---:|
-| Funcionamento completo: front-end, back-end e persistência | 25% |
-| Modelagem e implementação das regras de alçada | 20% |
-| Qualidade de código, organização e decisões técnicas | 15% |
-| **Desenho de UI: hierarquia, clareza, consistência** | 20% |
-| Estados (loading / empty / erro), responsividade e validações | 10% |
-| Documentação (`## Decisões técnicas`) | 10% |
-
-IA é permitida — mas você precisará explicar cada decisão na entrevista de 30 min.
-
----
-
-## Contato
-
-
-**Jonathan Bispo**  
-WhatsApp: [+55 71 99204-4335](https://wa.me/5571992044335)  
-E-mail: [contrato@obraflow.io](mailto:contrato@obraflow.io)
+```json
+{
+  "erro": {
+    "codigo": "SEM_FAIXA_APLICAVEL",
+    "mensagem": "A obra \"Residencial Jardim das Acácias\" não tem faixa de alçada que cubra o valor R$ 7.000,00. Ajuste as regras da obra ou o valor do pedido."
+  }
+}
+```

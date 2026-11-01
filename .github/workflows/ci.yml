@@ -1,0 +1,71 @@
+# Dois jobs em paralelo, a cada push na main e em cada pull request.
+#
+# `check` é o mesmo `npm run check` do dia a dia, sem banco: `next typegen` (tipos globais
+# PageProps/LayoutProps que o tsc precisa num clone limpo), lint, Prettier, tsc e Vitest.
+#
+# `e2e` sobe um Postgres de serviço, aplica as migrations e o seed, faz o `next build`
+# (ele prerenderiza páginas com "use cache" e por isso precisa do banco) e roda o Playwright
+# contra o `next start`, em desktop e celular. O relatório só é guardado quando falha.
+name: CI
+
+# `push` só na main; os outros branches são cobertos pelo evento de pull request, senão
+# cada push em um branch com PR aberto rodaria o mesmo workflow duas vezes.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      # `prisma.config.ts` exige a variável para carregar; o generate e os testes não conectam.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run check
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: obraflow
+          POSTGRES_PASSWORD: obraflow
+          POSTGRES_DB: obraflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U obraflow -d obraflow"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://obraflow:obraflow@localhost:5432/obraflow
+      CI: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx prisma migrate deploy
+      - run: npm run db:seed
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
