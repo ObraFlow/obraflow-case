@@ -1,0 +1,34 @@
+{
+  "name": "dokimos-workspace",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "setup": "node apps/api/scripts/setup-local.mjs && npm run db:up --workspace @dokimos/api && npm run db:seed --workspace @dokimos/api",
+    "dev": "npm run db:up --workspace @dokimos/api && npm run build --workspace @dokimos/shared && concurrently -k -c auto -n api,web \"npm run dev --workspace @dokimos/api\" \"npm run dev --workspace @dokimos/web\"",
+    "build": "npm run build --workspace @dokimos/shared && npm run build --workspace @dokimos/api && npm run build --workspace @dokimos/web",
+    "bundle": "node scripts/bundle.mjs",
+    "test": "node scripts/test.mjs",
+    "review": "node scripts/review.mjs",
+    "review:dev": "npm run setup && npm run dev",
+    "check": "eslint . && prettier --check \"**/*.{ts,tsx,mjs,css}\"",
+    "fix": "eslint . --fix && prettier --write \"**/*.{ts,tsx,mjs,css}\"",
+    "typecheck": "npm run build --workspace @dokimos/shared && tsc -p apps/api/tsconfig.test.json && tsc -p apps/web/tsconfig.test.json"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "concurrently": "^10.0.6",
+    "dotenv": "^16.6.0",
+    "eslint": "10.14.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.13.0",
+    "pg": "^8.16.0",
+    "prettier": "3.9.10",
+    "typescript-eslint": "8.72.1"
+  }
+}

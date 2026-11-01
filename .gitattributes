@@ -1,0 +1,5 @@
+# Keep formatted sources LF on every checkout so `prettier --check` passes on Windows.
+*.ts text eol=lf
+*.tsx text eol=lf
+*.mjs text eol=lf
+*.css text eol=lf
