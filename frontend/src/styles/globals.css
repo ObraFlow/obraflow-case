@@ -1,0 +1,38 @@
+@import 'tailwindcss';
+@import './layout.css';
+@import './orders.css';
+@import './rules.css';
+@import './responsive.css';
+
+:root {
+  --ink: #252523;
+  --muted: #8a8984;
+  --line: #e8e5de;
+  --paper: #fbfaf6;
+  --card: #fffefa;
+  --coral: #e86e5e;
+  --green: #84aa8b;
+  --navy: #202b2b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
