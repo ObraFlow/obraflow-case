@@ -1,0 +1,44 @@
+.card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4em;
+  padding: 0.75rem 1rem;
+  border: 1px solid;
+  border-inline-start-width: 0.25rem;
+  border-radius: 0.5rem;
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+  overflow-wrap: anywhere;
+}
+.icon {
+  flex: 0 0 auto;
+  margin-top: 0.2em;
+  width: 1em;
+  height: 1em;
+}
+.title {
+  font-weight: 600;
+}
+.warning {
+  border-color: var(--warning-border);
+  color: var(--warning);
+  background: var(--warning-surface);
+}
+.info,
+.alert {
+  border-color: var(--info-border);
+  color: var(--info);
+  background: var(--info-surface);
+}
+.error {
+  border-color: var(--error-border);
+  color: var(--error);
+  background: var(--error-surface);
+}
+.content {
+  min-width: 0;
+  flex: 1;
+}
+.content > * + * {
+  margin-block-start: 0.75rem;
+}

@@ -1,0 +1,128 @@
+/* Wide: one row, exactly as the pages laid it out before. The wrappers disappear (display: contents)
+   so the page's own field blocks flow beside the search. */
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+  padding: 1rem;
+}
+.search {
+  flex: 1 1 15rem;
+  min-width: 0;
+}
+.note {
+  flex: 0 0 auto;
+  align-self: center;
+  margin: 0 0 0.6rem;
+  color: var(--muted-foreground);
+  font-size: var(--type-meta);
+  white-space: nowrap;
+}
+.toggle {
+  display: none;
+}
+.body,
+.inner,
+.fields {
+  display: contents;
+}
+
+/* Phones: search + one icon button; the filters expand underneath in two columns. */
+@media (max-width: 599px) {
+  .bar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.5rem;
+    padding: 0.85rem;
+  }
+  .toggle {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid var(--input);
+    border-radius: 0.5rem;
+    background: var(--card);
+    color: var(--foreground);
+    cursor: pointer;
+  }
+  .toggle[aria-expanded="true"] {
+    background: var(--selection-surface);
+    border-color: var(--selection-indicator);
+  }
+  .count {
+    position: absolute;
+    top: -0.4rem;
+    right: -0.4rem;
+    display: grid;
+    place-items: center;
+    min-width: 1.15rem;
+    height: 1.15rem;
+    padding-inline: 0.25rem;
+    border-radius: 999px;
+    background: var(--primary);
+    color: var(--primary-foreground);
+    font-size: 0.625rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .body {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-rows: 0fr;
+    visibility: hidden;
+    transition:
+      grid-template-rows 220ms cubic-bezier(0.2, 0.65, 0.3, 1),
+      visibility 0s linear 220ms;
+  }
+  .body[data-open="true"] {
+    grid-template-rows: 1fr;
+    visibility: visible;
+    transition-delay: 0s;
+  }
+  .inner {
+    display: block;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .body[data-open="true"] .inner {
+    padding-top: 0.35rem;
+  }
+  .fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+  .fields > * {
+    min-width: 0;
+  }
+  .fields > button {
+    grid-column: 1 / -1;
+  }
+  .dot {
+    position: absolute;
+    top: -0.2rem;
+    right: -0.2rem;
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    background: var(--primary);
+  }
+  /* The note only shows while the filters are open, so the collapsed bar stays one row. */
+  .note {
+    display: none;
+    grid-column: 1 / -1;
+    margin: 0;
+    white-space: normal;
+  }
+  .body[data-open="true"] ~ .note {
+    display: block;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .body {
+    transition: none;
+  }
+}

@@ -1,0 +1,126 @@
+.field {
+  min-width: 0;
+}
+.control {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--input);
+  border-radius: 0.5rem;
+  background: transparent;
+}
+.control[data-invalid="true"] {
+  border-color: var(--error);
+}
+.control input {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+}
+.control:has(input:focus-visible) {
+  border-color: var(--ring);
+  outline: 3px solid var(--ring);
+  outline-offset: -3px;
+}
+.control input:focus-visible {
+  outline: none;
+}
+.calendarTrigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.4rem;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.calendarTrigger:hover:not(:disabled) {
+  background: var(--muted);
+  color: var(--foreground);
+}
+.calendarTrigger:disabled {
+  color: var(--disabled-foreground);
+  background: var(--disabled-surface);
+  cursor: not-allowed;
+}
+@media (max-width: 600px), (pointer: coarse) {
+  .calendarTrigger {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+}
+.positioner {
+  z-index: 70;
+}
+.popup {
+  width: min(20rem, calc(100vw - 1.5rem));
+  max-height: var(--available-height);
+  overflow-y: auto;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--foreground) 12%, transparent);
+  outline: none;
+}
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: var(--type-body);
+  font-weight: 600;
+}
+.heading p {
+  text-transform: none;
+}
+.grid {
+  margin-top: 0.75rem;
+}
+.week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  text-align: center;
+}
+.week [role="columnheader"] {
+  padding: 0.4rem 0;
+  font-size: var(--type-meta);
+  color: var(--muted-foreground);
+}
+.week button {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 0.4rem;
+  font-size: var(--type-label);
+  cursor: pointer;
+}
+.week button:hover:not(:disabled) {
+  background: var(--muted);
+}
+.week button[data-today="true"] {
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.week [aria-selected="true"] button {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.week button:disabled {
+  color: var(--disabled-foreground);
+  background: var(--disabled-surface);
+  cursor: not-allowed;
+}
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.25rem;
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.6rem;
+}
+
+.control:has(input:disabled) {
+  background: var(--disabled-surface);
+  border-color: var(--disabled-border);
+}

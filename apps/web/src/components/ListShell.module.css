@@ -1,0 +1,37 @@
+.shell {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+.fixed {
+  flex: none;
+  min-width: 0;
+}
+.notices {
+  display: grid;
+  gap: 0.75rem;
+}
+.notices:empty {
+  display: none;
+}
+.body {
+  min-width: 0;
+}
+
+/* Wide and tall enough: the frame fills the screen (the main area has 2rem of padding above and below) and
+   only the list region scrolls. Anything smaller keeps ordinary page scrolling. */
+@media (min-width: 900px) and (min-height: 600px) {
+  .shell {
+    height: calc(100dvh - 4rem);
+  }
+  .body {
+    flex: 1 1 0;
+    min-height: 0;
+  }
+  .body > :global(.catalog-viewport),
+  .body > :global([data-list-region]) {
+    height: 100%;
+    max-height: none;
+  }
+}

@@ -1,0 +1,25 @@
+.button {
+  flex-shrink: 0;
+}
+.labels {
+  display: inline-grid;
+}
+.labels > span {
+  grid-area: 1 / 1;
+}
+.hidden {
+  visibility: hidden;
+}
+.spinning {
+  animation: refresh-spin 1s linear infinite;
+}
+@keyframes refresh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spinning {
+    animation: none;
+  }
+}

@@ -1,0 +1,247 @@
+.shell {
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr);
+  min-height: 100dvh;
+  transition: grid-template-columns 240ms cubic-bezier(0.2, 0.65, 0.3, 1);
+}
+.shell[data-collapsed="true"] {
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+}
+.sidebar {
+  position: sticky;
+  z-index: 10;
+  top: 0;
+  height: 100dvh;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+  background: var(--card);
+  border-right: 1px solid var(--border);
+}
+.sidebarContent {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding: 1.5rem 1rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.brandLink {
+  padding: 0 0.25rem;
+}
+.brandLink > :first-child,
+.navItem > svg {
+  flex-shrink: 0;
+}
+.navLabel {
+  display: inline-block;
+  max-width: 12rem;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 1;
+  transition:
+    max-width 240ms cubic-bezier(0.2, 0.65, 0.3, 1),
+    opacity 160ms ease;
+}
+.navigation {
+  margin-top: 2.5rem;
+}
+.mobileActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.mobileActions > button {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.navItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.5rem;
+  font-size: var(--type-label);
+  font-weight: 500;
+  color: var(--muted-foreground);
+  text-align: left;
+  white-space: nowrap;
+  transition:
+    gap 240ms ease,
+    padding 240ms ease;
+}
+.navItem {
+  margin-block: 0.25rem;
+}
+.navItem[aria-current="page"] {
+  color: var(--selection-foreground);
+  background: var(--selection-surface);
+  font-weight: 600;
+}
+.navItem[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.65rem;
+  bottom: 0.65rem;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--selection-indicator);
+}
+.navItem:hover:not(:disabled):not([aria-current="page"]) {
+  background: color-mix(in srgb, var(--muted) 60%, var(--card));
+  color: var(--foreground);
+}
+.navItem:disabled {
+  opacity: 0.6;
+}
+.adminGroup {
+  margin: 2rem 0.75rem 0.5rem;
+  font-size: var(--type-eyebrow);
+  letter-spacing: 0.12em;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+}
+.adminGroup {
+  max-height: 3rem;
+  overflow: hidden;
+  white-space: nowrap;
+  transition:
+    opacity 160ms ease,
+    max-height 240ms ease,
+    margin 240ms ease;
+}
+.sidebarFooter {
+  margin-top: auto;
+  padding-top: 2rem;
+}
+.collapseToggle {
+  position: absolute;
+  z-index: 1;
+  top: 33.333333%;
+  right: -1.25rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--muted-foreground);
+  transform: translateY(-50%);
+}
+.collapseToggle:hover {
+  border-color: var(--primary);
+  background: var(--muted);
+  color: var(--primary);
+}
+.accountSection {
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+.drawer {
+  background: var(--card);
+  animation: none;
+  transition:
+    translate 240ms cubic-bezier(0.2, 0.65, 0.3, 1),
+    opacity 200ms ease;
+}
+.drawer[data-starting-style],
+.drawer[data-ending-style] {
+  translate: -100% 0;
+  opacity: 0;
+}
+.drawer[data-ending-style] {
+  transition-duration: 180ms;
+}
+.drawerBrand {
+  margin: 0;
+  padding: calc(1.25rem + env(safe-area-inset-top)) 3.5rem 1rem 1.25rem;
+}
+.drawerBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 1rem calc(1rem + env(safe-area-inset-bottom));
+}
+.drawerBody .navigation {
+  margin-top: 0.5rem;
+}
+.shell[data-collapsed="true"] .navLabel {
+  max-width: 0;
+  opacity: 0;
+}
+.shell[data-collapsed="true"] .brandLink [data-brand] {
+  gap: 0;
+}
+.shell[data-collapsed="true"] .adminGroup {
+  max-height: 0;
+  margin-block: 0;
+  opacity: 0;
+}
+.shell[data-collapsed="true"] .navItem {
+  gap: 0;
+  padding-inline: 0.6875rem;
+}
+.workspace {
+  min-width: 0;
+}
+.mobileHeader {
+  display: none;
+}
+.main {
+  padding: 2rem;
+}
+@media (max-width: 899px) {
+  .shell,
+  .shell[data-collapsed="true"] {
+    grid-template-columns: minmax(0, 1fr);
+    transition: none;
+  }
+  .sidebar {
+    display: none;
+  }
+  .mobileHeader {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-height: 3.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+    padding: calc(0.375rem + env(safe-area-inset-top)) calc(0.5rem + env(safe-area-inset-right)) 0.375rem
+      calc(0.5rem + env(safe-area-inset-left));
+  }
+  .mobileHeader > button {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+  .mobileBrand {
+    flex: 1;
+    min-width: 0;
+    padding-inline: 0.25rem;
+  }
+  .main {
+    padding: 1.5rem 1rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .drawer {
+    transition: none;
+  }
+  .shell,
+  .navLabel,
+  .navItem,
+  .adminGroup {
+    transition: none;
+  }
+}

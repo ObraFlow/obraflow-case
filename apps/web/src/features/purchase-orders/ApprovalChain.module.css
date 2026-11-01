@@ -1,0 +1,96 @@
+.chain {
+  display: flex;
+  align-items: flex-start;
+  width: fit-content;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0.3rem 0;
+  overflow-x: auto;
+  list-style: none;
+}
+.step {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  flex: 0 0 5.25rem;
+  gap: 0.35rem;
+  min-width: 0;
+  color: var(--muted-foreground);
+}
+.step:not(:last-child)::after {
+  position: absolute;
+  top: 2.5rem;
+  left: calc(50% + 0.9rem);
+  width: calc(100% - 1.8rem);
+  height: 1px;
+  background: var(--input);
+  content: "";
+}
+.name {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+  max-width: 100%;
+  padding-inline: 0.3rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--type-label);
+  line-height: 1.25rem;
+  color: var(--foreground);
+}
+.node {
+  display: grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border: 1px solid var(--input);
+  border-radius: 50%;
+  background: var(--muted);
+  font-size: var(--type-meta);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.step[data-state="APPROVED"] .node {
+  color: var(--approved);
+  border-color: var(--approved);
+  background: var(--approved-surface);
+}
+.step[data-state="REJECTED"] .node {
+  color: var(--rejected);
+  border-color: var(--rejected);
+  background: var(--rejected-surface);
+}
+.step[data-state="CURRENT"] .node {
+  color: var(--pending);
+  border-color: var(--pending);
+  background: var(--pending-surface);
+  animation: current-pulse 2s ease-in-out infinite;
+}
+
+.nameText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.selfIcon {
+  flex: none;
+  color: var(--foreground);
+}
+@keyframes current-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  50% {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--pending) 22%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .step[data-state="CURRENT"] .node {
+    animation: none;
+  }
+}

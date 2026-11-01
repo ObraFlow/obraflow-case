@@ -1,0 +1,124 @@
+.list {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.card {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 0;
+  min-height: 4.5rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  background: var(--card);
+}
+.card:has(button:enabled, a):hover {
+  border-color: color-mix(in srgb, var(--foreground) 22%, var(--border));
+}
+.card[data-active="false"] {
+  background: var(--inactive-surface);
+  border-color: var(--inactive-border);
+  --muted-foreground: var(--inactive-foreground);
+}
+.icon {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.65rem;
+  color: var(--muted-foreground);
+  background: var(--muted);
+}
+.identity {
+  min-width: 0;
+}
+.identity h2 {
+  overflow-wrap: anywhere;
+  color: var(--foreground);
+  font-size: var(--type-body);
+  font-weight: 600;
+  line-height: 1.3;
+}
+.identity p {
+  margin-top: 0;
+  overflow-wrap: anywhere;
+  color: var(--muted-foreground);
+  font-size: var(--type-meta);
+  line-height: 1.4;
+}
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.status {
+  display: inline-flex;
+  justify-content: center;
+  min-width: 3.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  font-size: var(--type-meta);
+  color: var(--muted-foreground);
+  background: var(--muted);
+}
+.status[data-active="true"] {
+  color: var(--approved);
+  background: var(--approved-surface);
+}
+.status[data-active="false"] {
+  color: var(--inactive-foreground);
+  box-shadow: inset 0 0 0 1px var(--inactive-border);
+}
+.action {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.protected {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--muted-foreground);
+  font-size: var(--type-meta);
+}
+@media (max-width: 600px) {
+  /* One compact row: avatar, identity with its status underneath, and the action at the right. */
+  .card {
+    grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.15rem 0.7rem;
+    min-height: 0;
+    padding: 0.65rem 0.75rem;
+  }
+  .card > :first-child {
+    grid-row: 1 / span 2;
+    align-self: center;
+  }
+  .controls {
+    display: contents;
+  }
+  .status {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;
+    min-width: 0;
+    padding: 0.1rem 0.5rem;
+  }
+  .action {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    width: auto;
+  }
+  .action:empty {
+    display: none;
+  }
+  .action > button {
+    min-height: 2.5rem;
+  }
+}

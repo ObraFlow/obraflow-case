@@ -1,0 +1,74 @@
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0.25rem 0.4rem;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  font-variant-numeric: tabular-nums;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.trigger svg {
+  flex: none;
+}
+.trigger:hover,
+.trigger[data-popup-open] {
+  background: var(--muted);
+  color: var(--foreground);
+}
+.trigger[aria-invalid="true"] {
+  color: var(--error);
+  text-decoration: underline dotted;
+  text-underline-offset: 0.25rem;
+}
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+}
+.positioner {
+  z-index: 60;
+}
+.popup {
+  box-sizing: border-box;
+  width: min(21rem, calc(100vw - 1.5rem));
+  max-height: var(--available-height);
+  overflow-y: auto;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--foreground) 15%, transparent);
+  outline: none;
+}
+.title {
+  margin-bottom: 1rem;
+  padding-right: 2rem;
+  font-size: 1.5rem;
+  font-weight: 650;
+  line-height: 2rem;
+}
+.close {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+@media (max-width: 600px), (pointer: coarse) {
+  .trigger {
+    min-height: 2.75rem;
+  }
+  .title {
+    padding-right: 3rem;
+  }
+}
