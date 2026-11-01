@@ -10,21 +10,21 @@ import { FormsModule } from '@angular/forms';
     <div class="modal-overlay" (click)="fechar.emit()">
       <div class="modal-dialog" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h3 style="color: var(--rose-700); display: flex; align-items: center; gap: 0.5rem;">
-            <span>✕</span> Rejeitar Pedido de Compra
+          <h3 style="color: var(--slate-900);">
+            Rejeitar Pedido de Compra
           </h3>
           <button
             type="button"
             (click)="fechar.emit()"
-            style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: var(--slate-400);"
+            style="background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--slate-400);"
           >
             &times;
           </button>
         </div>
 
         <div class="modal-body">
-          <p style="margin-bottom: 1rem; color: var(--slate-600); font-size: 0.9rem;">
-            A rejeição <strong>interrompe imediatamente</strong> a cadeia de alçadas deste pedido. Por exigência do processo, informe detalhadamente o motivo da não aprovação.
+          <p style="margin-bottom: 0.85rem; color: var(--slate-600); font-size: 0.85rem;">
+            A rejeição interrompe o fluxo de aprovação. Informe o motivo da não aprovação deste pedido.
           </p>
 
           <div class="form-group">
@@ -35,11 +35,11 @@ import { FormsModule } from '@angular/forms';
               class="form-control"
               rows="4"
               [(ngModel)]="motivo"
-              placeholder="Ex: Preço cotado do material 20% acima da referência de mercado..."
+              placeholder="Descreva o motivo da rejeição..."
               [class.is-invalid]="tentouSubmeter && motivoInvalido"
             ></textarea>
             <div *ngIf="tentouSubmeter && motivoInvalido" class="invalid-feedback">
-              O motivo é obrigatório e deve ter pelo menos 5 caracteres.
+              O motivo é obrigatório (mínimo de 5 caracteres).
             </div>
           </div>
         </div>
@@ -47,7 +47,7 @@ import { FormsModule } from '@angular/forms';
         <div class="modal-footer">
           <button
             type="button"
-            class="btn btn-secondary"
+            class="btn btn-secondary btn-sm"
             (click)="fechar.emit()"
             [disabled]="loading"
           >
@@ -55,11 +55,11 @@ import { FormsModule } from '@angular/forms';
           </button>
           <button
             type="button"
-            class="btn btn-danger"
+            class="btn btn-danger btn-sm"
             (click)="confirmarRejeicao()"
             [disabled]="loading"
           >
-            <span *ngIf="loading" class="spinner" style="width: 1rem; height: 1rem; border-width: 2px;"></span>
+            <span *ngIf="loading" class="spinner" style="width: 0.85rem; height: 0.85rem; border-width: 2px;"></span>
             Confirmar Rejeição
           </button>
         </div>
@@ -87,4 +87,3 @@ export class ModalRejeicaoComponent {
     this.confirmar.emit(this.motivo.trim());
   }
 }
-

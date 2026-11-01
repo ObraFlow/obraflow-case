@@ -18,38 +18,33 @@ import { ErrorBannerComponent } from '../../shared/components/error-banner.compo
     ErrorBannerComponent,
   ],
   template: `
-    <div class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
+    <div class="container" style="padding-top: 1.5rem; padding-bottom: 3rem;">
       <!-- Cabeçalho -->
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
         <div>
-          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
-            <span style="font-size: 1.5rem;">⚖️</span>
-            <h1>Configuração de Regras de Alçada</h1>
-          </div>
-          <p>
-            Defina faixas financeiras e a cadeia sequencial de aprovadores por obra no serviço Dokimos.
-          </p>
+          <h1>Regras de Alçada</h1>
+          <p style="margin-top: 0.2rem;">Configuração de faixas de valor e cadeia de aprovadores por obra.</p>
         </div>
         <button
           *ngIf="obraSelecionadaId && !exibindoFormulario"
           type="button"
-          class="btn btn-primary"
+          class="btn btn-primary btn-sm"
           (click)="iniciarNovaRegra()"
         >
-          <span>+</span> Nova Faixa de Alçada
+          Nova Faixa
         </button>
       </div>
 
       <!-- Seletor de Obra -->
-      <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
-        <label class="form-label" style="font-size: 0.85rem;">Selecione a Obra para Visualizar e Gerenciar as Regras:</label>
-        <div style="display: flex; gap: 1rem; align-items: center; max-width: 480px;">
+      <div class="card" style="margin-bottom: 1rem; padding: 1rem;">
+        <label class="form-label" style="font-size: 0.78rem;">Selecione a Obra</label>
+        <div style="display: flex; gap: 0.75rem; align-items: center; max-width: 440px;">
           <select
-            class="form-select"
+            class="form-select form-control-sm"
             [(ngModel)]="obraSelecionadaId"
             (change)="carregarRegrasObra()"
           >
-            <option value="">Selecione uma obra...</option>
+            <option value="">Selecione...</option>
             <option *ngFor="let obra of obras" [value]="obra.id">{{ obra.nome }}</option>
           </select>
           <button
@@ -58,22 +53,15 @@ import { ErrorBannerComponent } from '../../shared/components/error-banner.compo
             (click)="carregarRegrasObra()"
             [disabled]="!obraSelecionadaId || loadingRegras"
           >
-            🔄 Recarregar
+            Atualizar
           </button>
-        </div>
-      </div>
-
-      <!-- Banner Informativo sobre Regra de Alçada -->
-      <div class="alert alert-info">
-        <div>
-          <strong>Como funciona a alçada Dokimos:</strong> O sistema identifica a faixa de valor compatível com o total do pedido. A aprovação ocorre de forma <strong>estritamente sequencial</strong> (da etapa 1 até a última). Qualquer rejeição encerra o fluxo e grava o motivo obrigatório.
         </div>
       </div>
 
       <!-- Loading State -->
       <app-loading-spinner
         *ngIf="loadingRegras"
-        mensagem="Buscando faixas de alçada e aprovadores da obra..."
+        mensagem="Carregando regras de alçada..."
       ></app-loading-spinner>
 
       <!-- Erro -->
@@ -86,25 +74,23 @@ import { ErrorBannerComponent } from '../../shared/components/error-banner.compo
       <!-- Empty State se nenhuma obra selecionada -->
       <app-empty-state
         *ngIf="!obraSelecionadaId && !loadingRegras"
-        icone="🏗️"
         titulo="Selecione uma obra"
-        mensagem="Escolha uma obra no seletor acima para visualizar, editar ou cadastrar suas regras de aprovação."
+        mensagem="Escolha uma obra no seletor para gerenciar as regras de aprovação."
       ></app-empty-state>
 
       <!-- Empty State se obra não tem regras cadastradas -->
       <app-empty-state
         *ngIf="obraSelecionadaId && !loadingRegras && !erro && regras.length === 0 && !exibindoFormulario"
-        icone="⚖️"
-        titulo="Nenhuma regra cadastrada para esta obra"
-        mensagem="Pedidos criados nesta obra serão bloqueados até que ao menos uma regra de alçada seja configurada."
-        botaoTexto="Cadastrar Primeira Regra"
+        titulo="Nenhuma regra cadastrada"
+        mensagem="Esta obra ainda não possui faixas de alçada cadastradas."
+        botaoTexto="Cadastrar Regra"
         (acao)="iniciarNovaRegra()"
       ></app-empty-state>
 
       <!-- Formulário de Criação / Edição de Regra -->
-      <div *ngIf="exibindoFormulario" class="card" style="margin-bottom: 2rem; border-color: var(--primary-500); box-shadow: 0 4px 12px rgba(2, 132, 199, 0.1);">
+      <div *ngIf="exibindoFormulario" class="card" style="margin-bottom: 1.5rem; border-color: var(--primary-300);">
         <div class="card-header" style="background: var(--primary-50);">
-          <h3 style="color: var(--primary-700);">
+          <h3 style="color: var(--primary-800);">
             {{ editandoRegraId ? 'Editar Faixa de Alçada' : 'Nova Faixa de Alçada' }}
           </h3>
           <button type="button" class="btn btn-secondary btn-sm" (click)="cancelarFormulario()">
@@ -116,15 +102,15 @@ import { ErrorBannerComponent } from '../../shared/components/error-banner.compo
             {{ erroFormulario }}
           </div>
 
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.85rem; margin-bottom: 1rem;">
             <!-- Descrição -->
             <div class="form-group" style="margin-bottom: 0;">
-              <label class="form-label">Descrição da Faixa</label>
+              <label class="form-label">Descrição</label>
               <input
                 type="text"
-                class="form-control"
+                class="form-control form-control-sm"
                 [(ngModel)]="formRegra.descricao"
-                placeholder="Ex: Até R$ 10.000,00 ou Diretoria Geral"
+                placeholder="Ex: Até R$ 10.000,00"
               />
             </div>
 
@@ -135,7 +121,7 @@ import { ErrorBannerComponent } from '../../shared/components/error-banner.compo
                 type="number"
                 step="0.01"
                 min="0"
-                class="form-control"
+                class="form-control form-control-sm"
                 [(ngModel)]="formRegra.valorMinimo"
               />
             </div>
@@ -144,89 +130,84 @@ import { ErrorBannerComponent } from '../../shared/components/error-banner.compo
             <div class="form-group" style="margin-bottom: 0;">
               <label class="form-label">
                 Valor Máximo (R$)
-                <small style="color: var(--slate-500); font-weight: normal;">(deixe vazio para sem limite)</small>
+                <small style="color: var(--slate-500);">(deixe vazio para sem teto)</small>
               </label>
               <input
                 type="number"
                 step="0.01"
                 min="0"
-                class="form-control"
+                class="form-control form-control-sm"
                 [(ngModel)]="formRegra.valorMaximo"
-                placeholder="Ex: 10000 (ou vazio se acima de...)"
+                placeholder="Sem limite"
               />
             </div>
           </div>
 
-          <!-- Cadeia de Aprovadores Ordenados -->
-          <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--slate-200);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-              <div>
-                <strong style="color: var(--slate-800);">Aprovadores na Ordem do Fluxo</strong>
-                <p style="font-size: 0.8rem; color: var(--slate-500); margin: 0;">
-                  A ordem define a sequência obrigatória de aprovação. O aprovador do nível 2 só decide após o nível 1 aprovar.
-                </p>
-              </div>
+          <!-- Cadeia de Aprovadores -->
+          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--slate-200);">
+            <div style="margin-bottom: 0.65rem;">
+              <strong style="color: var(--slate-800); font-size: 0.85rem;">Ordem de Aprovadores</strong>
+              <p style="font-size: 0.78rem; color: var(--slate-500); margin: 0;">
+                A ordem define a sequência de liberação do pedido.
+              </p>
             </div>
 
-            <!-- Lista de Aprovadores da Regra -->
-            <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;">
+            <!-- Lista de Aprovadores -->
+            <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.85rem;">
               <div
                 *ngFor="let aprovador of formRegra.aprovadores; let idx = index"
-                style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 0.5rem;"
+                style="display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0.75rem; background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 0.25rem;"
               >
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                  <span class="badge" style="background: var(--slate-200); color: var(--slate-700); font-size: 0.8rem; width: 1.75rem; height: 1.75rem; justify-content: center; padding: 0;">
+                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                  <span class="badge" style="background: var(--slate-200); color: var(--slate-700); font-size: 0.75rem;">
                     {{ idx + 1 }}º
                   </span>
                   <div>
-                    <strong style="font-size: 0.9rem;">{{ getNomeUsuario(aprovador.usuarioId) }}</strong>
-                    <div style="font-size: 0.75rem; color: var(--slate-500);">
+                    <strong style="font-size: 0.85rem;">{{ getNomeUsuario(aprovador.usuarioId) }}</strong>
+                    <span style="font-size: 0.75rem; color: var(--slate-500); margin-left: 0.5rem;">
                       {{ getCargoUsuario(aprovador.usuarioId) }}
-                    </div>
+                    </span>
                   </div>
                 </div>
 
-                <!-- Botões de Reordenação e Remoção -->
+                <!-- Botões de Reordenação -->
                 <div style="display: flex; gap: 0.25rem;">
                   <button
                     type="button"
                     class="btn btn-secondary btn-sm"
-                    style="padding: 0.2rem 0.5rem;"
+                    style="padding: 0.15rem 0.45rem; font-size: 0.75rem;"
                     [disabled]="idx === 0"
                     (click)="moverAprovador(idx, -1)"
-                    title="Mover para etapa anterior"
                   >
-                    ↑
+                    Subir
                   </button>
                   <button
                     type="button"
                     class="btn btn-secondary btn-sm"
-                    style="padding: 0.2rem 0.5rem;"
+                    style="padding: 0.15rem 0.45rem; font-size: 0.75rem;"
                     [disabled]="idx === formRegra.aprovadores.length - 1"
                     (click)="moverAprovador(idx, 1)"
-                    title="Mover para próxima etapa"
                   >
-                    ↓
+                    Descer
                   </button>
                   <button
                     type="button"
                     class="btn btn-secondary btn-sm"
-                    style="color: var(--rose-600); padding: 0.2rem 0.5rem;"
+                    style="color: var(--rose-600); padding: 0.15rem 0.45rem; font-size: 0.75rem;"
                     (click)="removerAprovadorDaRegra(idx)"
-                    title="Remover aprovador"
                   >
-                    ✕
+                    Remover
                   </button>
                 </div>
               </div>
             </div>
 
-            <!-- Adicionar Novo Aprovador à Lista -->
-            <div style="display: flex; gap: 0.75rem; align-items: center; background: #ffffff; padding: 0.75rem; border: 1px dashed var(--slate-300); border-radius: 0.5rem; max-width: 520px;">
-              <select class="form-select form-select-sm" [(ngModel)]="novoUsuarioId">
-                <option value="">Selecione um usuário para adicionar...</option>
+            <!-- Adicionar Aprovador -->
+            <div style="display: flex; gap: 0.5rem; align-items: center; max-width: 480px;">
+              <select class="form-select form-control-sm" [(ngModel)]="novoUsuarioId">
+                <option value="">Selecione um usuário...</option>
                 <option *ngFor="let u of usuariosDisponiveis" [value]="u.id">
-                  {{ u.nome }} — {{ u.cargo }}
+                  {{ u.nome }} ({{ u.cargo }})
                 </option>
               </select>
               <button
@@ -235,64 +216,63 @@ import { ErrorBannerComponent } from '../../shared/components/error-banner.compo
                 [disabled]="!novoUsuarioId"
                 (click)="adicionarAprovadorNaRegra()"
               >
-                + Adicionar
+                Adicionar
               </button>
             </div>
           </div>
 
           <!-- Ações do Formulário -->
-          <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--slate-200);">
-            <button type="button" class="btn btn-secondary" (click)="cancelarFormulario()" [disabled]="salvando">
+          <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.25rem; padding-top: 0.85rem; border-top: 1px solid var(--slate-200);">
+            <button type="button" class="btn btn-secondary btn-sm" (click)="cancelarFormulario()" [disabled]="salvando">
               Cancelar
             </button>
-            <button type="button" class="btn btn-primary" (click)="salvarRegra()" [disabled]="salvando">
-              <span *ngIf="salvando" class="spinner" style="width: 1rem; height: 1rem; border-width: 2px;"></span>
-              Salvar Regra de Alçada
+            <button type="button" class="btn btn-primary btn-sm" (click)="salvarRegra()" [disabled]="salvando">
+              <span *ngIf="salvando" class="spinner" style="width: 0.85rem; height: 0.85rem; border-width: 2px;"></span>
+              Salvar Regra
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Tabela de Regras Existentes -->
+      <!-- Tabela de Regras -->
       <div *ngIf="obraSelecionadaId && !loadingRegras && regras.length > 0" class="card">
         <div class="card-header">
-          <h3>Faixas de Alçada Configuradas ({{ regras.length }})</h3>
+          <h3>Faixas Configuradas ({{ regras.length }})</h3>
         </div>
         <div class="table-responsive">
           <table class="table">
             <thead>
               <tr>
-                <th style="min-width: 180px;">Faixa de Valor</th>
-                <th style="min-width: 220px;">Descrição</th>
-                <th style="min-width: 320px;">Aprovadores, na Ordem do Fluxo</th>
+                <th style="min-width: 170px;">Faixa de Valor</th>
+                <th style="min-width: 180px;">Descrição</th>
+                <th style="min-width: 280px;">Aprovadores (Ordem)</th>
                 <th style="text-align: right; width: 140px;">Ações</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let regra of regras">
                 <td>
-                  <strong style="color: var(--primary-700); font-size: 0.95rem;">
+                  <strong style="color: var(--primary-700); font-size: 0.85rem;">
                     {{ formatarFaixa(regra) }}
                   </strong>
                 </td>
                 <td>
-                  <span style="font-size: 0.85rem; color: var(--slate-600);">
+                  <span style="font-size: 0.825rem; color: var(--slate-600);">
                     {{ regra.descricao || '—' }}
                   </span>
                 </td>
                 <td>
-                  <!-- Stepper inline dos aprovadores -->
-                  <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem;">
+                  <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem;">
                     <ng-container *ngFor="let ap of regra.aprovadores; let last = last">
-                      <span class="badge" style="background: var(--slate-100); border: 1px solid var(--slate-300); color: var(--slate-800); font-weight: 500; font-size: 0.78rem;">
-                        <strong>{{ ap.ordem }}º</strong> {{ ap.usuario?.nome }}
+                      <span class="badge" style="background: var(--slate-100); border: 1px solid var(--slate-300); color: var(--slate-800); font-size: 0.75rem;">
+                        {{ ap.ordem }}º {{ ap.usuario?.nome }}
                       </span>
-                      <span *ngIf="!last" style="color: var(--slate-400); font-weight: bold;">→</span>
+                      <span *ngIf="!last" style="color: var(--slate-400);">→</span>
                     </ng-container>
                   </div>
                 </td>
                 <td style="text-align: right;">
-                  <div style="display: flex; justify-content: flex-end; gap: 0.4rem;">
+                  <div style="display: flex; justify-content: flex-end; gap: 0.35rem;">
                     <button
                       type="button"
                       class="btn btn-secondary btn-sm"

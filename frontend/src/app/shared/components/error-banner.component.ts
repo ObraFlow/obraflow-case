@@ -6,13 +6,10 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="alert alert-danger" style="display: flex; align-items: center; justify-content: space-between;">
-      <div style="display: flex; align-items: center; gap: 0.75rem;">
-        <span style="font-size: 1.25rem;">⚠️</span>
-        <div>
-          <strong style="display: block; font-size: 0.9rem;">Erro na comunicação</strong>
-          <span style="font-size: 0.85rem;">{{ mensagem }}</span>
-        </div>
+    <div class="alert alert-danger" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+      <div>
+        <strong style="display: block; font-size: 0.85rem;">Erro de conexão</strong>
+        <span style="font-size: 0.8rem;">{{ mensagem }}</span>
       </div>
       <button
         *ngIf="mostrarRetry"
@@ -26,8 +23,7 @@ import { CommonModule } from '@angular/common';
   `,
 })
 export class ErrorBannerComponent {
-  @Input() mensagem: string = 'Não foi possível conectar à API. Verifique se o servidor backend está em execução.';
+  @Input() mensagem: string = 'Não foi possível carregar os dados. Verifique a conexão com o servidor.';
   @Input() mostrarRetry: boolean = true;
   @Output() retry = new EventEmitter<void>();
 }
-

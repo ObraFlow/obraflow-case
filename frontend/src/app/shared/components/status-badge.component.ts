@@ -15,9 +15,6 @@ import { PedidoStatus } from '../../core/models/models';
         'badge-rejected': status === 'REJEITADO'
       }"
     >
-      <span *ngIf="status === 'PENDENTE'">⏳</span>
-      <span *ngIf="status === 'APROVADO'">✓</span>
-      <span *ngIf="status === 'REJEITADO'">✕</span>
       {{ status }}
     </span>
   `,
@@ -25,4 +22,3 @@ import { PedidoStatus } from '../../core/models/models';
 export class StatusBadgeComponent {
   @Input({ required: true }) status!: PedidoStatus | string;
 }
-

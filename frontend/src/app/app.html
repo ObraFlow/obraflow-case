@@ -1,62 +1,43 @@
-<!-- Top Header Navbar -->
 <header style="background: #ffffff; border-bottom: 1px solid var(--slate-200); position: sticky; top: 0; z-index: 100;">
-  <div class="container" style="display: flex; justify-content: space-between; align-items: center; height: 4rem;">
-    <!-- Brand / Logo -->
-    <div style="display: flex; align-items: center; gap: 1.5rem;">
-      <a routerLink="/" style="display: flex; align-items: center; gap: 0.6rem; text-decoration: none;">
-        <div style="width: 2.25rem; height: 2.25rem; background: var(--primary-600); border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; color: #ffffff; font-weight: 800; font-size: 1.1rem; box-shadow: 0 2px 4px rgba(2, 132, 199, 0.25);">
-          O
-        </div>
-        <div>
-          <span style="font-size: 1.15rem; font-weight: 800; color: var(--slate-900); letter-spacing: -0.02em;">
-            Obra<span style="color: var(--primary-600);">Flow</span>
-          </span>
-          <span style="font-size: 0.7rem; font-weight: 600; background: var(--primary-50); color: var(--primary-700); padding: 0.15rem 0.4rem; border-radius: 0.25rem; margin-left: 0.4rem; border: 1px solid var(--primary-100);">
-            Dokimos
-          </span>
-        </div>
+  <div class="container" style="display: flex; justify-content: space-between; align-items: center; height: 3.5rem;">
+    <!-- Brand -->
+    <div style="display: flex; align-items: center; gap: 2rem;">
+      <a routerLink="/" style="text-decoration: none; font-size: 1.15rem; font-weight: 700; color: var(--slate-900); letter-spacing: -0.02em;">
+        ObraFlow
       </a>
 
-      <!-- Navigation Links -->
-      <nav style="display: flex; gap: 0.5rem; margin-left: 1rem;">
+      <!-- Navigation -->
+      <nav style="display: flex; gap: 0.25rem;">
         <a
           routerLink="/pedidos"
-          routerLinkActive="btn-primary"
+          routerLinkActive="active"
           [routerLinkActiveOptions]="{ exact: true }"
-          class="btn btn-secondary btn-sm"
-          style="border-color: transparent;"
+          class="nav-link"
         >
-          📋 Aprovações
+          Pedidos
         </a>
         <a
           routerLink="/pedidos/novo"
-          routerLinkActive="btn-primary"
-          class="btn btn-secondary btn-sm"
-          style="border-color: transparent;"
+          routerLinkActive="active"
+          class="nav-link"
         >
-          ➕ Novo Pedido
+          Novo Pedido
         </a>
         <a
           routerLink="/regras"
-          routerLinkActive="btn-primary"
-          class="btn btn-secondary btn-sm"
-          style="border-color: transparent;"
+          routerLinkActive="active"
+          class="nav-link"
         >
-          ⚖️ Regras de Alçada
+          Regras de Alçada
         </a>
       </nav>
     </div>
 
-    <!-- Seletor de Simulação de Usuário -->
-    <div style="display: flex; align-items: center; gap: 0.75rem; background: var(--slate-50); padding: 0.35rem 0.75rem; border-radius: 0.5rem; border: 1px solid var(--slate-200);">
-      <div style="display: flex; align-items: center; gap: 0.4rem;">
-        <span style="font-size: 0.85rem;">👤</span>
-        <span style="font-size: 0.78rem; font-weight: 600; color: var(--slate-500); text-transform: uppercase;">
-          Simular como:
-        </span>
-      </div>
+    <!-- User Selector -->
+    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem;">
+      <span style="color: var(--slate-500); font-weight: 500;">Usuário:</span>
       <select
-        style="padding: 0.25rem 0.5rem; font-size: 0.825rem; border: 1px solid var(--slate-300); border-radius: 0.35rem; background: #ffffff; color: var(--slate-800); font-weight: 500; cursor: pointer;"
+        style="padding: 0.25rem 0.5rem; font-size: 0.8rem; border: 1px solid var(--slate-300); border-radius: 0.25rem; background: #ffffff; color: var(--slate-800); cursor: pointer;"
         [(ngModel)]="usuarioSelecionadoId"
         (change)="selecionarUsuario(usuarioSelecionadoId)"
       >
@@ -68,19 +49,13 @@
   </div>
 </header>
 
-<!-- Main Router Outlet -->
-<main style="min-height: calc(100vh - 8rem);">
+<main style="min-height: calc(100vh - 7rem);">
   <router-outlet></router-outlet>
 </main>
 
-<!-- Footer -->
-<footer style="background: #ffffff; border-top: 1px solid var(--slate-200); padding: 1.5rem 0; text-align: center; font-size: 0.825rem; color: var(--slate-500);">
-  <div class="container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
-    <div>
-      <strong>ObraFlow</strong> — Desafio Full-stack (Dokimos: Serviço de Alçadas de Aprovação)
-    </div>
-    <div>
-      Construído com <strong>NestJS</strong> (Backend) + <strong>Prisma / PostgreSQL</strong> + <strong>Angular</strong> (Frontend)
-    </div>
+<footer style="background: #ffffff; border-top: 1px solid var(--slate-200); padding: 1rem 0; font-size: 0.78rem; color: var(--slate-500);">
+  <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>ObraFlow</div>
+    <div>Serviço de Gestão e Alçadas de Aprovação</div>
   </div>
 </footer>

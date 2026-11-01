@@ -26,20 +26,20 @@ import { ErrorBannerComponent } from '../../shared/components/error-banner.compo
     ErrorBannerComponent,
   ],
   template: `
-    <div class="container" style="padding-top: 2rem; padding-bottom: 4rem; max-width: 980px;">
+    <div class="container" style="padding-top: 1.5rem; padding-bottom: 3rem; max-width: 960px;">
       <!-- Breadcrumb e Título -->
-      <div style="margin-bottom: 1.5rem;">
-        <a routerLink="/pedidos" style="color: var(--primary-600); text-decoration: none; font-size: 0.85rem; font-weight: 500;">
-          ← Voltar para lista de pedidos
+      <div style="margin-bottom: 1.25rem;">
+        <a routerLink="/pedidos" style="color: var(--primary-600); text-decoration: none; font-size: 0.825rem; font-weight: 500;">
+          Voltar para pedidos
         </a>
-        <h1 style="margin-top: 0.5rem;">Novo Pedido de Compra</h1>
-        <p>Preencha os dados do pedido e adicione os itens. O valor total definirá automaticamente a regra de alçada aplicável.</p>
+        <h1 style="margin-top: 0.35rem;">Novo Pedido de Compra</h1>
+        <p style="margin-top: 0.15rem;">Preencha os dados gerais e os itens do pedido.</p>
       </div>
 
       <!-- Loading State Inicial -->
       <app-loading-spinner
         *ngIf="loadingAuxiliares"
-        mensagem="Carregando obras e fornecedores cadastrados..."
+        mensagem="Carregando dados..."
       ></app-loading-spinner>
 
       <!-- Erro ao Carregar Dados Auxiliares -->
@@ -52,10 +52,9 @@ import { ErrorBannerComponent } from '../../shared/components/error-banner.compo
       <!-- Empty State se Nenhuma Obra Cadastrada -->
       <app-empty-state
         *ngIf="!loadingAuxiliares && !erroAuxiliares && obras.length === 0"
-        icone="🏗️"
         titulo="Nenhuma obra cadastrada"
-        mensagem="Para emitir um pedido de compra, é necessário que ao menos uma obra esteja cadastrada no sistema ObraFlow."
-        botaoTexto="Recarregar Dados"
+        mensagem="É necessário ter ao menos uma obra cadastrada para emitir pedidos."
+        botaoTexto="Recarregar"
         (acao)="carregarDadosAuxiliares()"
       ></app-empty-state>
 
@@ -66,56 +65,54 @@ import { ErrorBannerComponent } from '../../shared/components/error-banner.compo
         (ngSubmit)="salvarPedido()"
       >
         <!-- Feedback de Erro do Envio -->
-        <div *ngIf="erroEnvio" class="alert alert-danger" style="margin-bottom: 1.5rem;">
-          <div>
-            <strong>Atenção:</strong> {{ erroEnvio }}
-          </div>
+        <div *ngIf="erroEnvio" class="alert alert-danger" style="margin-bottom: 1rem;">
+          {{ erroEnvio }}
         </div>
 
         <!-- Seção 1: Dados Gerais -->
-        <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card" style="margin-bottom: 1.25rem;">
           <div class="card-header">
-            <h3>1. Dados Gerais da Solicitação</h3>
+            <h3>Dados Gerais</h3>
           </div>
           <div class="card-body">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.85rem;">
               <!-- Obra -->
               <div class="form-group">
                 <label class="form-label">
-                  Obra de Destino <span class="req">*</span>
+                  Obra <span class="req">*</span>
                 </label>
                 <select
-                  class="form-select"
+                  class="form-select form-control-sm"
                   formControlName="obraId"
                   [class.is-invalid]="isCampoInvalido('obraId')"
                 >
-                  <option value="">Selecione a obra...</option>
+                  <option value="">Selecione...</option>
                   <option *ngFor="let obra of obras" [value]="obra.id">
                     {{ obra.nome }}
                   </option>
                 </select>
                 <div *ngIf="isCampoInvalido('obraId')" class="invalid-feedback">
-                  A seleção da obra é obrigatória.
+                  A obra é obrigatória.
                 </div>
               </div>
 
               <!-- Fornecedor -->
               <div class="form-group">
                 <label class="form-label">
-                  Fornecedor Homologado <span class="req">*</span>
+                  Fornecedor <span class="req">*</span>
                 </label>
                 <select
-                  class="form-select"
+                  class="form-select form-control-sm"
                   formControlName="fornecedorId"
                   [class.is-invalid]="isCampoInvalido('fornecedorId')"
                 >
-                  <option value="">Selecione o fornecedor...</option>
+                  <option value="">Selecione...</option>
                   <option *ngFor="let f of fornecedores" [value]="f.id">
-                    {{ f.razaoSocial }} ({{ f.cnpj }})
+                    {{ f.razaoSocial }}
                   </option>
                 </select>
                 <div *ngIf="isCampoInvalido('fornecedorId')" class="invalid-feedback">
-                  A seleção do fornecedor é obrigatória.
+                  O fornecedor é obrigatório.
                 </div>
               </div>
 
@@ -126,64 +123,57 @@ import { ErrorBannerComponent } from '../../shared/components/error-banner.compo
                 </label>
                 <input
                   type="date"
-                  class="form-control"
+                  class="form-control form-control-sm"
                   formControlName="dataPedido"
                   [class.is-invalid]="isCampoInvalido('dataPedido')"
                 />
                 <div *ngIf="isCampoInvalido('dataPedido')" class="invalid-feedback">
-                  A data do pedido é obrigatória.
+                  A data é obrigatória.
                 </div>
               </div>
             </div>
 
             <!-- Observações -->
             <div class="form-group" style="margin-bottom: 0;">
-              <label class="form-label">Observações Internas (Opcional)</label>
+              <label class="form-label">Observações</label>
               <textarea
                 class="form-control"
                 rows="2"
                 formControlName="observacoes"
-                placeholder="Justificativa técnica, lote de entrega, número da requisição ou detalhes da compra..."
+                placeholder="Observações internas opcionais..."
               ></textarea>
             </div>
           </div>
         </div>
 
-        <!-- Seção 2: Itens do Pedido (N Itens Dinâmicos) -->
-        <div class="card" style="margin-bottom: 1.5rem;">
+        <!-- Seção 2: Itens do Pedido -->
+        <div class="card" style="margin-bottom: 1.25rem;">
           <div class="card-header">
-            <div>
-              <h3>2. Itens do Pedido ({{ itensArray.length }})</h3>
-              <p style="font-size: 0.8rem; margin: 0; color: var(--slate-500);">
-                Adicione materiais ou serviços. O total de cada item é calculado automaticamente.
-              </p>
-            </div>
+            <h3>Itens do Pedido ({{ itensArray.length }})</h3>
             <button
               type="button"
               class="btn btn-secondary btn-sm"
               (click)="adicionarItem()"
             >
-              <span>+</span> Adicionar Item
+              Adicionar Item
             </button>
           </div>
 
-          <div class="card-body" style="padding: 1rem;">
-            <!-- Validação se lista de itens estiver vazia -->
+          <div class="card-body" style="padding: 0.85rem;">
             <div *ngIf="itensArray.length === 0" class="alert alert-warning" style="margin-bottom: 0;">
-              O pedido precisa de pelo menos 1 item para ser cadastrado.
+              O pedido precisa de pelo menos 1 item.
             </div>
 
-            <!-- Tabela de Itens Editáveis -->
             <div *ngIf="itensArray.length > 0" class="table-responsive">
               <table class="table">
                 <thead>
                   <tr>
-                    <th style="min-width: 240px;">Descrição do Material/Serviço <span class="req">*</span></th>
-                    <th style="width: 110px;">Qtd <span class="req">*</span></th>
-                    <th style="width: 100px;">Unidade <span class="req">*</span></th>
-                    <th style="width: 140px;">Preço Unit. (R$) <span class="req">*</span></th>
-                    <th style="width: 140px; text-align: right;">Total do Item</th>
-                    <th style="width: 50px;"></th>
+                    <th style="min-width: 240px;">Descrição <span class="req">*</span></th>
+                    <th style="width: 100px;">Qtd <span class="req">*</span></th>
+                    <th style="width: 90px;">Unidade <span class="req">*</span></th>
+                    <th style="width: 130px;">Preço Unit. (R$) <span class="req">*</span></th>
+                    <th style="width: 130px; text-align: right;">Total</th>
+                    <th style="width: 70px; text-align: center;">Ação</th>
                   </tr>
                 </thead>
                 <tbody formArrayName="itens">
@@ -234,19 +224,18 @@ import { ErrorBannerComponent } from '../../shared/components/error-banner.compo
                         [class.is-invalid]="isItemInvalido(i, 'precoUnitario')"
                       />
                     </td>
-                    <td style="text-align: right; font-weight: 600; font-family: monospace; font-size: 0.95rem; color: var(--slate-800);">
+                    <td style="text-align: right; font-weight: 600; font-family: monospace; font-size: 0.9rem; color: var(--slate-800);">
                       {{ calcularTotalItem(i) | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
                     </td>
                     <td style="text-align: center;">
                       <button
                         type="button"
                         class="btn btn-secondary btn-sm"
-                        style="color: var(--rose-600); padding: 0.25rem 0.5rem;"
-                        title="Remover item"
+                        style="color: var(--rose-600); font-size: 0.75rem; padding: 0.2rem 0.4rem;"
                         (click)="removerItem(i)"
                         [disabled]="itensArray.length <= 1"
                       >
-                        🗑️
+                        Remover
                       </button>
                     </td>
                   </tr>
@@ -254,45 +243,43 @@ import { ErrorBannerComponent } from '../../shared/components/error-banner.compo
               </table>
             </div>
 
-            <!-- Botão Adicionar Item no Rodapé da Tabela -->
-            <div style="margin-top: 1rem; display: flex; justify-content: flex-start;">
+            <div style="margin-top: 0.75rem;">
               <button
                 type="button"
                 class="btn btn-secondary btn-sm"
                 (click)="adicionarItem()"
               >
-                <span>+</span> Adicionar outro item
+                Adicionar outro item
               </button>
             </div>
           </div>
         </div>
 
         <!-- Seção 3: Totalização e Envio -->
-        <div class="card" style="margin-bottom: 2rem; background: var(--slate-900); color: #ffffff; border-color: var(--slate-800);">
-          <div class="card-body" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
+        <div class="card" style="margin-bottom: 2rem; background: #ffffff; border-color: var(--primary-200);">
+          <div class="card-body" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
             <div>
-              <span style="font-size: 0.85rem; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em; display: block;">
-                Totalização do Pedido
+              <span style="font-size: 0.78rem; color: var(--slate-500); text-transform: uppercase; font-weight: 500;">
+                Valor Total do Pedido
               </span>
-              <div style="font-size: 2rem; font-weight: 800; color: #38bdf8;">
+              <div style="font-size: 1.75rem; font-weight: 700; color: var(--primary-700);">
                 {{ totalGeralCalculado | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
               </div>
-              <span style="font-size: 0.8rem; color: var(--slate-400);">
-                Soma de {{ itensArray.length }} {{ itensArray.length === 1 ? 'item' : 'itens' }}
+              <span style="font-size: 0.78rem; color: var(--slate-500);">
+                {{ itensArray.length }} {{ itensArray.length === 1 ? 'item' : 'itens' }}
               </span>
             </div>
 
-            <div style="display: flex; gap: 1rem; align-items: center;">
-              <a routerLink="/pedidos" class="btn btn-secondary" style="background: transparent; color: var(--slate-300); border-color: var(--slate-700);">
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <a routerLink="/pedidos" class="btn btn-secondary btn-sm">
                 Cancelar
               </a>
               <button
                 type="submit"
                 class="btn btn-primary"
-                style="padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 600;"
                 [disabled]="form.invalid || enviando || totalGeralCalculado <= 0"
               >
-                <span *ngIf="enviando" class="spinner" style="width: 1.1rem; height: 1rem; border-width: 2px;"></span>
+                <span *ngIf="enviando" class="spinner" style="width: 0.85rem; height: 0.85rem; border-width: 2px;"></span>
                 Cadastrar Pedido
               </button>
             </div>
