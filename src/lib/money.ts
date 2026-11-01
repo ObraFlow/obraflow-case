@@ -2,6 +2,8 @@
 // Este módulo só converte entre centavos e a representação em reais para a UI.
 // Sem Prisma, sem Next: pode ser importado em client e server.
 
+import { normalizarDecimal } from "@/lib/numero";
+
 const formatadorBRL = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
@@ -14,36 +16,41 @@ export function formatarCentavos(cents: number): string {
 
 /**
  * Converte o que o usuário digitou em um campo de dinheiro para centavos, lendo como se lê
- * em pt-BR. Devolve null quando o texto não é um número.
+ * em pt-BR (`normalizarDecimal`, a mesma regra da quantidade). Devolve null quando o texto
+ * não é um número.
  *
  *   "1.234,56" → 123456   "1234,56" → 123456   "R$ 1.234,56" → 123456   "1234" → 123400
- *   "1.500"    → 150000   (ponto seguido de exatamente 3 dígitos é milhar)
- *   "1.5"      → 150      "1234.56" → 123456  (ponto com 1 ou 2 dígitos é decimal)
- *   "0.500"    → 50       (grupo inicial zero não é milhar: é meio real)
+ *   "1.500"    → 150000   "1.5" → 150   "0.500" → 50
  *
  * O campo reescreve o valor ao perder o foco (`textoDeCentavos`), então o que foi entendido
  * fica visível antes de enviar.
  */
 export function centavosDeTexto(texto: string): number | null {
-  const limpo = texto.replace(/\s|R\$/g, "");
-  if (limpo === "") return null;
+  const normalizado = normalizarDecimal(texto.replace(/R\$/g, ""));
+  if (normalizado === null) return null;
+  return Math.round(Number(normalizado) * 100);
+}
 
-  let normalizado: string;
-  if (limpo.includes(",")) {
-    // Com vírgula, ela é o separador decimal e os pontos são de milhar.
-    normalizado = limpo.replace(/\./g, "").replace(",", ".");
-  } else if (/^-?[1-9]\d{0,2}(\.\d{3})+$/.test(limpo)) {
-    // Só pontos, cada um seguido de 3 dígitos, começando sem zero: milhares ("1.500", "1.500.000").
-    normalizado = limpo.replace(/\./g, "");
-  } else {
-    // Sem vírgula e sem agrupamento de milhar: um ponto, se houver, é o decimal.
-    normalizado = limpo;
-  }
+const formatadorCurto = new Intl.NumberFormat("pt-BR", {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 1,
+});
 
-  const reais = Number(normalizado);
-  if (!Number.isFinite(reais)) return null;
+/** Arredonda a uma casa decimal, do mesmo jeito que `formatadorCurto` vai mostrar. */
+function umaCasa(valor: number): number {
+  return Math.round(valor * 10) / 10;
+}
 
-  return Math.round(reais * 100);
+/**
+ * Valor abreviado para eixos de gráfico, onde "R$ 12.000,00" não cabe:
+ * 1_200_000 → "R$ 12 mil"; 150_000_000 → "R$ 1,5 mi"; abaixo de mil, o valor inteiro.
+ * A unidade é escolhida depois do arredondamento: R$ 999.950 vira "R$ 1 mi", não "R$ 1.000 mil".
+ */
+export function formatarCentavosCurto(cents: number): string {
+  const reais = cents / 100;
+  if (umaCasa(reais / 1_000) < 1) return formatarCentavos(cents);
+  if (umaCasa(reais / 1_000) < 1_000) return `R$ ${formatadorCurto.format(reais / 1_000)} mil`;
+  return `R$ ${formatadorCurto.format(reais / 1_000_000)} mi`;
 }
 
 const formatadorDecimal = new Intl.NumberFormat("pt-BR", {

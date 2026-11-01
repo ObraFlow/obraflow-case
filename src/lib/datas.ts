@@ -60,6 +60,56 @@ export function descreverIdade(desdeIso: string, agoraIso: string): string {
   return `há ${dias} dias`;
 }
 
+const formatadorAnoMes = new Intl.DateTimeFormat("en-CA", {
+  timeZone: FUSO_HORARIO,
+  year: "numeric",
+  month: "2-digit",
+});
+
+/** Instante em ms → chave do mês no fuso de Brasília, "2026-10". */
+export function chaveDoMes(ms: number): string {
+  // en-CA formata como "2026-10-31"; só o ano e o mês interessam.
+  return formatadorAnoMes.format(new Date(ms)).slice(0, 7);
+}
+
+/**
+ * Chaves dos últimos `quantidade` meses, do mais antigo ao atual (inclusive). Anda pelos
+ * números do ano e do mês, sem Date, para o fuso não mudar o resultado.
+ */
+export function ultimosMeses(agoraMs: number, quantidade: number): string[] {
+  const [anoAtual, mesAtual] = chaveDoMes(agoraMs).split("-").map(Number);
+  const meses: string[] = [];
+  for (let atras = quantidade - 1; atras >= 0; atras -= 1) {
+    const indice = anoAtual * 12 + (mesAtual - 1) - atras;
+    const ano = Math.floor(indice / 12);
+    const mes = (indice % 12) + 1;
+    meses.push(`${ano}-${String(mes).padStart(2, "0")}`);
+  }
+  return meses;
+}
+
+const formatadorMesCurto = new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC", month: "short" });
+const formatadorMesLongo = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "UTC",
+  month: "long",
+  year: "numeric",
+});
+
+function dataDoMes(chave: string): Date {
+  const [ano, mes] = chave.split("-").map(Number);
+  return new Date(Date.UTC(ano, mes - 1, 15));
+}
+
+/** "2026-10" → "out" (sem o ponto que o pt-BR põe). */
+export function nomeDoMesCurto(chave: string): string {
+  return formatadorMesCurto.format(dataDoMes(chave)).replace(".", "");
+}
+
+/** "2026-10" → "outubro de 2026". */
+export function nomeDoMesLongo(chave: string): string {
+  return formatadorMesLongo.format(dataDoMes(chave));
+}
+
 /** Duração em ms → "menos de 1 hora", "5 horas", "1 dia", "2,5 dias". */
 export function formatarDuracao(ms: number): string {
   if (ms < HORA_MS) return "menos de 1 hora";

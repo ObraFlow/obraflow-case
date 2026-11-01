@@ -28,9 +28,10 @@ export const dataSchema = z.iso.date({
 });
 
 /**
- * Formato de quantidade: até 9 dígitos inteiros e 3 casas, com vírgula ou ponto. É o mesmo
- * limite de `quantidadeParaMilesimos` no domínio (Decimal(12,3) no banco); form, schema da
- * action e totais de exibição usam esta constante para não divergirem.
+ * Formato CANÔNICO de quantidade (o que a API e a action recebem): até 9 dígitos inteiros e
+ * 3 casas, com vírgula ou ponto como decimal, sem milhar. É o mesmo limite de
+ * `quantidadeParaMilesimos` no domínio (Decimal(12,3) no banco). O formulário aceita o jeito
+ * pt-BR de digitar ("1.000,5") e traduz para este formato com `quantidadeDeTexto`.
  */
 export const REGEX_QUANTIDADE = /^\d{1,9}([.,]\d{1,3})?$/;
 

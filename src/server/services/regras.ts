@@ -5,12 +5,14 @@
 import { resolverRegra } from "@/domain/alcada/resolverRegra";
 import { validarFaixas, type FaixaParaValidar } from "@/domain/alcada/validarFaixas";
 import { NaoEncontrado } from "@/domain/erros";
+import { impactoNoOrcamento } from "@/domain/orcamento/resumoOrcamento";
 import { cadeiaAcumulada, paraFaixaAlcada } from "@/lib/cadeia";
 import type { FaixaAplicavelDto, RegraDto } from "@/lib/dto";
 import { formatarFaixa } from "@/lib/money";
 import type { SalvarFaixaInput } from "@/lib/schemas/regra";
 import { includeRegra, paraRegraDto } from "@/server/dto";
 import { prisma } from "@/server/prisma";
+import { resumoOrcamentoDaObra } from "@/server/services/orcamento";
 
 export async function listarRegras(obraId: number): Promise<RegraDto[]> {
   const regras = await prisma.regraAlcada.findMany({
@@ -23,16 +25,19 @@ export async function listarRegras(obraId: number): Promise<RegraDto[]> {
 
 /**
  * Preview (simulador na tela de regras e formulário de pedido): qual faixa um valor cairia
- * nesta obra e a cadeia acumulada que aprovaria. Devolve `faixa: null` em vez de lançar
- * erro, porque aqui é só informação para o usuário; quem bloqueia a criação é `criarPedido`.
+ * nesta obra, a cadeia acumulada que aprovaria e o que esse valor faz com o orçamento da
+ * obra. Devolve `faixa: null` em vez de lançar erro, porque aqui é só informação para o
+ * usuário; quem bloqueia a criação é `criarPedido`. O orçamento vai junto para o formulário
+ * mostrar o impacto com a mesma consulta do preview, sem um segundo pedido ao servidor.
  */
 export async function obterFaixaAplicavel(
   obraId: number,
   valorCents: number,
 ): Promise<FaixaAplicavelDto> {
-  const [obra, regras] = await Promise.all([
+  const [obra, regras, orcamento] = await Promise.all([
     prisma.obra.findUnique({ where: { id: obraId }, select: { nome: true } }),
     listarRegras(obraId),
+    resumoOrcamentoDaObra(obraId),
   ]);
   if (!obra) throw new NaoEncontrado("Obra", "f");
 
@@ -52,6 +57,7 @@ export async function obterFaixaAplicavel(
           herdado,
         }))
       : [],
+    impacto: orcamento ? impactoNoOrcamento(orcamento, valorCents) : null,
   };
 }
 

@@ -30,8 +30,8 @@ export type {
 
 // --- Cadastros ---------------------------------------------------------------
 
-export function paraObraDto(obra: { id: number; nome: string }): ObraDto {
-  return { id: obra.id, nome: obra.nome };
+export function paraObraDto(obra: { id: number; nome: string; orcamentoCents: number }): ObraDto {
+  return { id: obra.id, nome: obra.nome, orcamentoCents: obra.orcamentoCents };
 }
 
 export function paraUsuarioDto(usuario: {
@@ -90,6 +90,8 @@ export const includePedidoResumo = {
 export const includePedidoDetalhe = {
   ...includePedidoResumo,
   itens: { orderBy: { ordem: "asc" } },
+  origem: { select: { id: true } },
+  refeitoPor: { select: { id: true } },
 } satisfies Prisma.PedidoInclude;
 
 type PedidoResumoCarregado = Prisma.PedidoGetPayload<{ include: typeof includePedidoResumo }>;
@@ -155,6 +157,8 @@ export function paraPedidoDetalhe(pedido: PedidoDetalheCarregado): PedidoDetalhe
     criadoPorId: pedido.criadoPorId,
     observacoes: pedido.observacoes,
     regraId: pedido.regraId,
+    refeitoDe: pedido.origem ? { id: pedido.origem.id } : null,
+    refeitoPor: pedido.refeitoPor ? { id: pedido.refeitoPor.id } : null,
     itens: pedido.itens.map(paraItemDto),
   };
 }

@@ -44,3 +44,19 @@ export const decisaoApiSchema = z.discriminatedUnion("tipo", [
 ]);
 
 export type DecisaoApiInput = z.infer<typeof decisaoApiSchema>;
+
+/**
+ * Aprovar vários pedidos de uma vez. Só aprovação: rejeitar exige um motivo por pedido.
+ * O teto evita um laço longo demais em uma única requisição.
+ */
+export const aprovarEmLoteSchema = z.object({
+  pedidoIds: z
+    .array(idSchema)
+    .min(1, "Marque pelo menos um pedido.")
+    .max(50, "No máximo 50 pedidos de uma vez."),
+});
+
+export type AprovarEmLoteInput = z.infer<typeof aprovarEmLoteSchema>;
+
+/** Corpo do POST /api/pedidos/decisoes/lote: sem cookie, o chamador diz quem aprova. */
+export const aprovarEmLoteApiSchema = aprovarEmLoteSchema.extend({ usuarioId: idSchema });

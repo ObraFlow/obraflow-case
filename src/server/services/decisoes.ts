@@ -3,16 +3,17 @@
 
 import { aplicarDecisao } from "@/domain/alcada/aplicarDecisao";
 import type { Decisao, EstadoAprovacao } from "@/domain/alcada/tipos";
-import { ConflitoDeDecisao, NaoEncontrado } from "@/domain/erros";
-import type { PedidoDetalhe } from "@/lib/dto";
+import { ConflitoDeDecisao, ErroDominio, NaoEncontrado } from "@/domain/erros";
+import type { PedidoDetalhe, ResultadoLoteDto } from "@/lib/dto";
 import { includePedidoDetalhe, paraPedidoDetalhe } from "@/server/dto";
 import { prisma } from "@/server/prisma";
 
 /**
  * Fluxo (ARQUITETURA.md §5 e §9):
  * 1. dentro de `$transaction`, recarrega o pedido com a cadeia;
- * 2. `aplicarDecisao` valida vez/ordem/motivo e devolve o estado seguinte (ou lança
- *    DecisaoForaDeOrdem / MotivoObrigatorio);
+ * 2. `aplicarDecisao` valida vez/ordem/motivo e segregação (quem cadastrou não decide) e
+ *    devolve o estado seguinte (ou lança DecisaoForaDeOrdem / MotivoObrigatorio /
+ *    SegregacaoDeFuncoes);
  * 3. grava o step com `updateMany ... where status = PENDENTE`: se `count === 0`, outra
  *    decisão chegou entre o passo 1 e aqui → ConflitoDeDecisao (lock otimista, sem travar linha);
  * 4. em rejeição, cancela os níveis seguintes; por fim atualiza status e stepAtual do pedido.
@@ -32,6 +33,7 @@ export async function registrarDecisao(
     const estadoAtual: EstadoAprovacao = {
       status: pedido.status,
       stepAtual: pedido.stepAtual,
+      criadoPorId: pedido.criadoPorId,
       cadeia: pedido.aprovacoes.map((aprovacao) => ({
         ordem: aprovacao.ordem,
         aprovadorId: aprovacao.aprovadorId,
@@ -65,4 +67,32 @@ export async function registrarDecisao(
     });
     return paraPedidoDetalhe(atualizado);
   });
+}
+
+/**
+ * Aprova vários pedidos de uma vez, um por um, cada um na própria transação de
+ * `registrarDecisao`: o que foi aprovado fica aprovado, e o relatório diz o que não deu
+ * (outra pessoa decidiu antes, não era a vez, quem cadastrou tentou aprovar).
+ *
+ * Aqui o erro de domínio de um item não é engolido: é traduzido para o resultado, que é o
+ * contrato deste caso de uso. Erro de infraestrutura (banco fora) continua subindo e
+ * interrompe o lote, como em qualquer outro service.
+ */
+export async function aprovarEmLote(
+  pedidoIds: number[],
+  usuarioId: number,
+): Promise<ResultadoLoteDto> {
+  const resultado: ResultadoLoteDto = { aprovados: [], falhas: [] };
+
+  for (const pedidoId of new Set(pedidoIds)) {
+    try {
+      await registrarDecisao(pedidoId, { tipo: "APROVAR" }, usuarioId);
+      resultado.aprovados.push(pedidoId);
+    } catch (erro) {
+      if (!(erro instanceof ErroDominio)) throw erro;
+      resultado.falhas.push({ pedidoId, codigo: erro.codigo, mensagem: erro.message });
+    }
+  }
+
+  return resultado;
 }

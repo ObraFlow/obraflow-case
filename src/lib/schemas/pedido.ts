@@ -4,7 +4,8 @@
 import { z } from "zod";
 import { MAX_CENTS } from "@/domain/pedido/calcularTotais";
 import { centavosDeTexto } from "@/lib/money";
-import { centavosSchema, dataSchema, idSchema, quantidadeSchema, REGEX_QUANTIDADE } from "./comum";
+import { quantidadeDeTexto } from "@/lib/quantidade";
+import { centavosSchema, dataSchema, idSchema, quantidadeSchema } from "./comum";
 
 export const itemPedidoSchema = z.object({
   descricao: z
@@ -32,6 +33,8 @@ export const criarPedidoSchema = z.object({
     .max(1000, "Observações devem ter no máximo 1000 caracteres.")
     .optional(),
   itens: z.array(itemPedidoSchema).min(1, "Adicione pelo menos um item ao pedido."),
+  /** Pedido rejeitado que este refaz. O service confere que ele está rejeitado e ainda sem nova versão. */
+  origemId: idSchema.optional(),
 });
 
 export type ItemPedidoInput = z.infer<typeof itemPedidoSchema>;
@@ -43,6 +46,8 @@ export const filtroPedidosSchema = z.object({
   obraId: idSchema.optional(),
   /** Só pedidos em que este usuário é o aprovador do step atual. */
   pendentesPara: idSchema.optional(),
+  /** Só pendentes que esperam o aprovador da vez há este número de dias ou mais. */
+  atrasadoHaDias: z.coerce.number().int().positive().max(365).optional(),
   /** Número do pedido ("12" ou "#12") ou trecho do nome da obra ou do fornecedor. */
   busca: z.string().trim().max(100, "Busca deve ter no máximo 100 caracteres.").optional(),
 });
@@ -67,15 +72,18 @@ export type Paginacao = z.infer<typeof paginacaoSchema>;
  */
 export const itemPedidoFormSchema = z.object({
   // Descrição e unidade são as mesmas regras do contrato da action; só quantidade e preço
-  // diferem, porque no form ainda são texto em reais.
+  // diferem, porque no form ainda são texto digitado em pt-BR ("1.000,5", "1.500,00").
   descricao: itemPedidoSchema.shape.descricao,
   quantidade: z
     .string()
     .trim()
     .min(1, "Informe a quantidade.")
     .refine((texto) => !texto.startsWith("-"), "Quantidade deve ser maior que zero.")
-    .regex(REGEX_QUANTIDADE, "Quantidade inválida. Ex.: 2,5.")
-    .refine((texto) => Number(texto.replace(",", ".")) > 0, "Quantidade deve ser maior que zero."),
+    .refine((texto) => quantidadeDeTexto(texto) !== null, "Quantidade inválida. Ex.: 2,5 ou 1.000.")
+    .refine(
+      (texto) => Number(quantidadeDeTexto(texto) ?? 0) > 0,
+      "Quantidade deve ser maior que zero.",
+    ),
   unidade: itemPedidoSchema.shape.unidade,
   precoUnitario: z
     .string()
@@ -95,6 +103,8 @@ export const pedidoFormSchema = z.object({
   dataPedido: z.string().min(1, "Informe a data do pedido."),
   observacoes: z.string().trim().max(1000, "Observações devem ter no máximo 1000 caracteres."),
   itens: z.array(itemPedidoFormSchema).min(1, "Adicione pelo menos um item ao pedido."),
+  /** Não é digitado: entra pelos valores iniciais quando o form refaz um pedido rejeitado. */
+  origemId: z.number().int().positive().optional(),
 });
 
 export type ItemPedidoFormInput = z.infer<typeof itemPedidoFormSchema>;
@@ -109,9 +119,11 @@ export function paraCriarPedidoInput(form: PedidoFormInput): CriarPedidoInput {
     observacoes: form.observacoes.trim() === "" ? undefined : form.observacoes.trim(),
     itens: form.itens.map((item) => ({
       descricao: item.descricao.trim(),
-      quantidade: item.quantidade.trim(),
+      // Canônico ("1.000,5" → "1000.5"); o form já validou, o fallback só satisfaz o tipo.
+      quantidade: quantidadeDeTexto(item.quantidade) ?? item.quantidade.trim(),
       unidade: item.unidade.trim(),
       precoUnitarioCents: centavosDeTexto(item.precoUnitario) ?? 0,
     })),
+    origemId: form.origemId,
   };
 }

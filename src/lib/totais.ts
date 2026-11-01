@@ -4,7 +4,7 @@
 
 import { calcularTotalItemCents, MAX_CENTS } from "@/domain/pedido/calcularTotais";
 import { centavosDeTexto } from "@/lib/money";
-import { REGEX_QUANTIDADE } from "@/lib/schemas/comum";
+import { quantidadeDeTexto } from "@/lib/quantidade";
 
 export type TotaisParaExibicao = {
   /** Um total por item; `null` quando o item ainda não dá para calcular. */
@@ -16,8 +16,8 @@ export type TotaisParaExibicao = {
 };
 
 export function totalItemParaExibicao(quantidade: string, precoUnitario: string): number | null {
-  const qtd = quantidade.trim();
-  if (!REGEX_QUANTIDADE.test(qtd) || Number(qtd.replace(",", ".")) <= 0) return null;
+  const qtd = quantidadeDeTexto(quantidade);
+  if (qtd === null || Number(qtd) <= 0) return null;
   const precoCents = centavosDeTexto(precoUnitario);
   if (precoCents === null || precoCents < 0 || precoCents > MAX_CENTS) return null;
   const total = calcularTotalItemCents({ quantidade: qtd, precoUnitarioCents: precoCents });

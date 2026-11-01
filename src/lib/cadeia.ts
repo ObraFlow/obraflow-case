@@ -3,6 +3,7 @@
 // traduz o snapshot de um pedido para os estados que a tela desenha (lista e timeline).
 
 import { chegouNaMesa } from "@/domain/acompanhamento/chegouNaMesa";
+import type { PedidoAcompanhado } from "@/domain/acompanhamento/tipos";
 import { niveisAcumulados } from "@/domain/alcada/montarCadeia";
 import type { FaixaAlcada, StatusPedido } from "@/domain/alcada/tipos";
 import type { AprovacaoDto, NivelDto, PedidoResumo, RegraDto } from "@/lib/dto";
@@ -98,24 +99,26 @@ export function niveisDoPedido(pedido: {
  */
 export function aguardandoDesde(pedido: PedidoResumo): string | null {
   if (pedido.status !== "PENDENTE") return null;
-  const instante = chegouNaMesa(
-    {
-      id: pedido.id,
-      obraId: pedido.obraId,
-      totalCents: pedido.totalCents,
-      status: pedido.status,
-      stepAtual: pedido.stepAtual,
-      criadoEm: new Date(pedido.criadoEm).getTime(),
-      aprovacoes: pedido.aprovacoes.map((aprovacao) => ({
-        ordem: aprovacao.ordem,
-        aprovadorId: aprovacao.aprovadorId,
-        status: aprovacao.status,
-        decididoEm: aprovacao.decididoEm ? new Date(aprovacao.decididoEm).getTime() : null,
-      })),
-    },
-    pedido.stepAtual,
-  );
+  const instante = chegouNaMesa(paraPedidoAcompanhado(pedido), pedido.stepAtual);
   return new Date(instante).toISOString();
+}
+
+/** DTO da lista → tipo do domínio de acompanhamento (datas ISO viram ms). */
+export function paraPedidoAcompanhado(pedido: PedidoResumo): PedidoAcompanhado {
+  return {
+    id: pedido.id,
+    obraId: pedido.obraId,
+    totalCents: pedido.totalCents,
+    status: pedido.status,
+    stepAtual: pedido.stepAtual,
+    criadoEm: new Date(pedido.criadoEm).getTime(),
+    aprovacoes: pedido.aprovacoes.map((aprovacao) => ({
+      ordem: aprovacao.ordem,
+      aprovadorId: aprovacao.aprovadorId,
+      status: aprovacao.status,
+      decididoEm: aprovacao.decididoEm ? new Date(aprovacao.decididoEm).getTime() : null,
+    })),
+  };
 }
 
 export function estadoDoNivel(

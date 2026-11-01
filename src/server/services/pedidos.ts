@@ -1,13 +1,30 @@
 // Pedidos de compra: criação (com snapshot da cadeia) e leitura.
 // Quem decide (aprovar/rejeitar) está em decisoes.ts.
 
+import { instanteDeAprovacao } from "@/domain/acompanhamento/encerramento";
+import { DIA_MS, DIAS_PARA_ATRASO, estaAtrasado } from "@/domain/acompanhamento/estaAtrasado";
 import { montarCadeia } from "@/domain/alcada/montarCadeia";
 import { resolverRegra } from "@/domain/alcada/resolverRegra";
+import { posicaoNaCadeia } from "@/domain/alcada/segregacao";
 import type { FaixaAlcada } from "@/domain/alcada/tipos";
-import { NaoEncontrado, SemFaixaAplicavel } from "@/domain/erros";
+import {
+  NaoEncontrado,
+  OrigemJaRefeita,
+  OrigemNaoRejeitada,
+  SegregacaoDeFuncoes,
+  SemFaixaAplicavel,
+} from "@/domain/erros";
 import { calcularTotais } from "@/domain/pedido/calcularTotais";
-import type { Prisma } from "@/generated/prisma/client";
-import type { PaginaDePedidos, PedidoDetalhe, PedidoResumo } from "@/lib/dto";
+import { Prisma } from "@/generated/prisma/client";
+import { aguardandoDesde, paraPedidoAcompanhado } from "@/lib/cadeia";
+import { chaveDoMes } from "@/lib/datas";
+import type {
+  ContagemDto,
+  PaginaDePedidos,
+  PedidoDetalhe,
+  PedidoResumo,
+  ResumoPedidosDto,
+} from "@/lib/dto";
 import { cache } from "react";
 import { formatarCentavos } from "@/lib/money";
 import { idSchema } from "@/lib/schemas/comum";
@@ -24,7 +41,10 @@ import { prisma } from "@/server/prisma";
  * Cria um pedido (fluxo narrado em ARQUITETURA.md §5):
  * 1. totais em centavos pelo domínio (nunca confiamos no total vindo do browser);
  * 2. faixa da obra pelo total; sem faixa → SemFaixaAplicavel com obra e valor (decisão 2);
- * 3. snapshot da cadeia (montarCadeia) gravado em AprovacaoPedido, stepAtual = 0.
+ * 3. snapshot da cadeia (montarCadeia) gravado em AprovacaoPedido, stepAtual = 0;
+ * 4. quem cadastra não pode estar nessa cadeia (segregação de funções);
+ * 5. se refaz um pedido rejeitado (`origemId`), a origem precisa estar rejeitada e sem nova
+ *    versão; o pedido novo passa pela alçada do zero, nada é herdado.
  * O `create` aninhado grava pedido, itens e cadeia de uma vez (atômico).
  */
 export async function criarPedido(
@@ -59,38 +79,77 @@ export async function criarPedido(
   // Cadeia acumulada: aprovadores das faixas abaixo, depois os da faixa aplicável (decisão 1).
   const cadeia = montarCadeia(faixas, faixa);
 
-  const criado = await prisma.pedido.create({
-    data: {
-      obraId: input.obraId,
-      fornecedorId: input.fornecedorId,
-      criadoPorId,
-      dataPedido: new Date(`${input.dataPedido}T00:00:00.000Z`),
-      observacoes: input.observacoes?.trim() || null,
-      totalCents: totais.totalPedidoCents,
-      regraId: faixa.id,
-      stepAtual: 0,
-      itens: {
-        create: input.itens.map((item, indice) => ({
-          ordem: indice,
-          descricao: item.descricao,
-          quantidade: item.quantidade.replace(",", "."),
-          unidade: item.unidade,
-          precoUnitarioCents: item.precoUnitarioCents,
-          totalCents: totais.totaisItensCents[indice],
-        })),
+  const posicao = posicaoNaCadeia(cadeia, criadoPorId);
+  if (posicao !== null) {
+    throw new SegregacaoDeFuncoes(
+      `Um pedido de ${formatarCentavos(totais.totalPedidoCents)} na obra "${obra.nome}" seria aprovado por você (nível ${posicao + 1} de ${cadeia.length}). Peça a outra pessoa para cadastrá-lo.`,
+    );
+  }
+
+  if (input.origemId !== undefined) await conferirOrigem(input.origemId);
+
+  const criado = await prisma.pedido
+    .create({
+      data: {
+        obraId: input.obraId,
+        fornecedorId: input.fornecedorId,
+        criadoPorId,
+        dataPedido: new Date(`${input.dataPedido}T00:00:00.000Z`),
+        observacoes: input.observacoes?.trim() || null,
+        totalCents: totais.totalPedidoCents,
+        regraId: faixa.id,
+        origemId: input.origemId ?? null,
+        stepAtual: 0,
+        itens: {
+          create: input.itens.map((item, indice) => ({
+            ordem: indice,
+            descricao: item.descricao,
+            quantidade: item.quantidade.replace(",", "."),
+            unidade: item.unidade,
+            precoUnitarioCents: item.precoUnitarioCents,
+            totalCents: totais.totaisItensCents[indice],
+          })),
+        },
+        aprovacoes: {
+          create: cadeia.map((aprovacao) => ({
+            ordem: aprovacao.ordem,
+            aprovadorId: aprovacao.aprovadorId,
+            status: aprovacao.status,
+          })),
+        },
       },
-      aprovacoes: {
-        create: cadeia.map((aprovacao) => ({
-          ordem: aprovacao.ordem,
-          aprovadorId: aprovacao.aprovadorId,
-          status: aprovacao.status,
-        })),
-      },
-    },
-    include: includePedidoDetalhe,
-  });
+      include: includePedidoDetalhe,
+    })
+    .catch(async (erro: unknown): Promise<never> => {
+      // Corrida: outra nova versão do mesmo rejeitado entrou entre a conferência e o create.
+      // O @unique de origemId segurou esta; conferir de novo lança OrigemJaRefeita com o id
+      // da versão que ganhou (409), em vez de o erro do banco virar "Erro inesperado".
+      if (input.origemId !== undefined && ehViolacaoDeUnico(erro)) {
+        await conferirOrigem(input.origemId);
+      }
+      throw erro;
+    });
 
   return paraPedidoDetalhe(criado);
+}
+
+/** P2002: o banco recusou por índice único. Em Pedido o único índice assim é `origemId`. */
+function ehViolacaoDeUnico(erro: unknown): boolean {
+  return erro instanceof Prisma.PrismaClientKnownRequestError && erro.code === "P2002";
+}
+
+/**
+ * Só um pedido rejeitado pode ser refeito, e só uma vez. A corrida entre duas versões ao
+ * mesmo tempo é resolvida pelo `@unique` de `origemId` no banco.
+ */
+async function conferirOrigem(origemId: number): Promise<void> {
+  const origem = await prisma.pedido.findUnique({
+    where: { id: origemId },
+    select: { id: true, status: true, refeitoPor: { select: { id: true } } },
+  });
+  if (!origem) throw new NaoEncontrado("Pedido de origem");
+  if (origem.status !== "REJEITADO") throw new OrigemNaoRejeitada(origem.id, origem.status);
+  if (origem.refeitoPor) throw new OrigemJaRefeita(origem.id, origem.refeitoPor.id);
 }
 
 /**
@@ -98,6 +157,8 @@ export async function criarPedido(
  * `pendentesPara` filtra os pedidos em que o usuário é o aprovador da vez: o banco
  * reduz aos pedidos pendentes em que ele aparece pendente na cadeia e o ajuste fino
  * (ordem === stepAtual) é feito em memória, porque o Prisma não compara duas colunas.
+ * `atrasadoHaDias` também termina em memória: "desde quando espera" é a chegada na mesa
+ * do nível atual (domínio), não uma coluna.
  */
 export async function listarPedidos(filtro: FiltroPedidos = {}): Promise<PedidoResumo[]> {
   const pedidos = await prisma.pedido.findMany({
@@ -105,7 +166,70 @@ export async function listarPedidos(filtro: FiltroPedidos = {}): Promise<PedidoR
     orderBy: ORDEM_PEDIDOS,
     include: includePedidoResumo,
   });
-  return filtrarAprovadorDaVez(pedidos.map(paraPedidoResumo), filtro);
+  return filtrarEmMemoria(pedidos.map(paraPedidoResumo), filtro, Date.now());
+}
+
+/**
+ * Os números do topo da lista de aprovações. Duas consultas pequenas: os pendentes (com a
+ * cadeia, para saber de quem é a vez e desde quando) e os aprovados do último mês (o corte
+ * fino "aprovação final neste mês" usa o fuso de Brasília, então o banco traz uma janela um
+ * pouco maior e o recorte é feito aqui).
+ */
+export async function resumoPedidos(
+  usuarioId: number | null,
+  obraId?: number,
+): Promise<ResumoPedidosDto> {
+  const agora = Date.now();
+  const mes = chaveDoMes(agora);
+  const inicioDaJanela = new Date(agora - 32 * DIA_MS);
+
+  const [pendentes, aprovadosRecentes] = await Promise.all([
+    prisma.pedido.findMany({
+      where: { status: "PENDENTE", obraId },
+      include: includePedidoResumo,
+    }),
+    prisma.pedido.findMany({
+      where: {
+        status: "APROVADO",
+        obraId,
+        aprovacoes: { some: { decididoEm: { gte: inicioDaJanela } } },
+      },
+      include: includePedidoResumo,
+    }),
+  ]);
+
+  const resumosPendentes = pendentes.map(paraPedidoResumo);
+  const minha =
+    usuarioId === null
+      ? []
+      : resumosPendentes.filter((pedido) => pedido.aprovadorAtualId === usuarioId);
+  const atrasados = resumosPendentes.filter((pedido) =>
+    estaAtrasado(paraPedidoAcompanhado(pedido), agora),
+  );
+  const aprovadosNoMes = aprovadosRecentes.map(paraPedidoResumo).filter((pedido) => {
+    const aprovadoEm = instanteDeAprovacao(paraPedidoAcompanhado(pedido));
+    return aprovadoEm !== null && chaveDoMes(aprovadoEm) === mes;
+  });
+
+  const esperas = atrasados
+    .map(aguardandoDesde)
+    .filter((desde): desde is string => desde !== null)
+    .sort();
+
+  return {
+    mes,
+    minhaDecisao: contagem(minha),
+    pendentes: contagem(resumosPendentes),
+    atrasados: { ...contagem(atrasados), maisAntigoDesde: esperas[0] ?? null },
+    aprovadosNoMes: contagem(aprovadosNoMes),
+  };
+}
+
+function contagem(pedidos: PedidoResumo[]): ContagemDto {
+  return {
+    quantidade: pedidos.length,
+    totalCents: pedidos.reduce((soma, pedido) => soma + pedido.totalCents, 0),
+  };
 }
 
 /**
@@ -117,9 +241,9 @@ export const listarPendentesPara = cache((usuarioId: number) =>
 );
 
 /**
- * Página da lista para a tela de aprovações. Filtra e pagina no banco (`skip`/`take` + `count`
- * na mesma transação). A exceção é `pendentesPara`: como o ajuste fino é em memória, os
- * candidatos são carregados inteiros e a página é recortada depois. São poucos por pessoa.
+ * Página da lista para a tela de aprovações. Filtra e pagina no banco (`skip`/`take` + `count`).
+ * As exceções são `pendentesPara` e `atrasadoHaDias`: como o ajuste fino é em memória, os
+ * candidatos (só pendentes) são carregados inteiros e a página é recortada depois.
  */
 export async function paginarPedidos(
   filtro: FiltroPedidos,
@@ -127,12 +251,17 @@ export async function paginarPedidos(
 ): Promise<PaginaDePedidos> {
   const { porPagina } = paginacao;
 
-  if (filtro.pendentesPara) {
+  if (filtro.pendentesPara || filtro.atrasadoHaDias) {
     // Sem outros filtros é a mesma consulta do contador do header e do número da aba:
     // `listarPendentesPara` (com `cache`) roda uma vez por request para os três.
-    const soPendentes = !filtro.obraId && !filtro.status && !filtro.busca;
+    const soPendentes =
+      filtro.pendentesPara &&
+      !filtro.obraId &&
+      !filtro.status &&
+      !filtro.busca &&
+      !filtro.atrasadoHaDias;
     const todos = soPendentes
-      ? await listarPendentesPara(filtro.pendentesPara)
+      ? await listarPendentesPara(filtro.pendentesPara!)
       : await listarPedidos(filtro);
     const totalPaginas = Math.max(1, Math.ceil(todos.length / porPagina));
     const pagina = Math.min(paginacao.pagina, totalPaginas);
@@ -203,20 +332,38 @@ function wherePedidos(filtro: FiltroPedidos): Prisma.PedidoWhereInput {
 }
 
 /**
- * `pendentesPara` só faz sentido em pedidos pendentes. Se o chamador também pediu outro
- * status, a resposta certa é "nenhum" (`in: []`), não ignorar o que ele pediu.
+ * `pendentesPara` e `atrasadoHaDias` só fazem sentido em pedidos pendentes. Se o chamador
+ * também pediu outro status, a resposta certa é "nenhum" (`in: []`), não ignorar o que ele pediu.
  */
 function statusDoFiltro(filtro: FiltroPedidos): Prisma.PedidoWhereInput["status"] {
-  if (!filtro.pendentesPara) return filtro.status;
+  if (!filtro.pendentesPara && !filtro.atrasadoHaDias) return filtro.status;
   if (filtro.status && filtro.status !== "PENDENTE") return { in: [] };
   return "PENDENTE";
 }
 
-/** O Prisma não compara `aprovacoes.ordem` com `pedido.stepAtual`; o ajuste fino é aqui. */
-function filtrarAprovadorDaVez(resumos: PedidoResumo[], filtro: FiltroPedidos): PedidoResumo[] {
-  if (!filtro.pendentesPara) return resumos;
-  return resumos.filter((pedido) => pedido.aprovadorAtualId === filtro.pendentesPara);
+/**
+ * O que o banco não resolve: `aprovacoes.ordem === pedido.stepAtual` (o Prisma não compara
+ * duas colunas) e "espera o nível atual há N dias" (a chegada na mesa é calculada pelo domínio).
+ */
+function filtrarEmMemoria(
+  resumos: PedidoResumo[],
+  filtro: FiltroPedidos,
+  agoraMs: number,
+): PedidoResumo[] {
+  let lista = resumos;
+  if (filtro.pendentesPara) {
+    lista = lista.filter((pedido) => pedido.aprovadorAtualId === filtro.pendentesPara);
+  }
+  if (filtro.atrasadoHaDias) {
+    const limiteMs = filtro.atrasadoHaDias * DIA_MS;
+    lista = lista.filter((pedido) =>
+      estaAtrasado(paraPedidoAcompanhado(pedido), agoraMs, limiteMs),
+    );
+  }
+  return lista;
 }
+
+export { DIAS_PARA_ATRASO };
 
 export async function obterPedido(id: number): Promise<PedidoDetalhe> {
   const pedido = await prisma.pedido.findUnique({ where: { id }, include: includePedidoDetalhe });

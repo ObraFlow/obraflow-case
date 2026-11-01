@@ -3,9 +3,12 @@
 // Fica em lib/ porque client components também precisam destes tipos; os mappers
 // Prisma → DTO ficam em server/dto.ts.
 
+import type { TipoMovimentacao } from "@/domain/acompanhamento/ultimasMovimentacoes";
 import type { StatusAprovacao, StatusPedido } from "@/domain/alcada/tipos";
+import type { ImpactoOrcamento, ResumoOrcamento } from "@/domain/orcamento/resumoOrcamento";
 
-export type ObraDto = { id: number; nome: string };
+/** `orcamentoCents` 0 = sem orçamento definido. */
+export type ObraDto = { id: number; nome: string; orcamentoCents: number };
 
 export type UsuarioDto = { id: number; nome: string; email: string; cargo: string | null };
 
@@ -43,7 +46,11 @@ export type FaixaAplicavelDto = {
    * primeiro, depois a aplicável). Vazia quando `faixa` é null.
    */
   cadeia: Array<NivelDto & { herdado: boolean }>;
+  /** O que um pedido nesse valor faz com o orçamento da obra; null quando a obra não tem orçamento. */
+  impacto: ImpactoOrcamentoDto | null;
 };
+
+export type ImpactoOrcamentoDto = ImpactoOrcamento;
 
 export type ItemPedidoDto = {
   id: number;
@@ -102,10 +109,32 @@ export type PaginaDePedidos = {
   totalPaginas: number;
 };
 
+/** Os números do topo da lista de aprovações, já recortados pela obra quando há filtro. */
+export type ResumoPedidosDto = {
+  /** Mês de referência de `aprovadosNoMes`, "AAAA-MM". */
+  mes: string;
+  /** Pendentes cuja vez é do usuário atual; zeros quando não há usuário. */
+  minhaDecisao: ContagemDto;
+  /** Todos os pendentes. */
+  pendentes: ContagemDto;
+  /** Pendentes sem decisão do nível atual há `DIAS_PARA_ATRASO` ou mais. */
+  atrasados: ContagemDto & { maisAntigoDesde: string | null };
+  /** Aprovados cuja aprovação final caiu no mês corrente. */
+  aprovadosNoMes: ContagemDto;
+};
+
+/** Resultado de aprovar vários pedidos de uma vez: cada um passa ou falha por conta própria. */
+export type ResultadoLoteDto = {
+  aprovados: number[];
+  falhas: Array<{ pedidoId: number; codigo: string; mensagem: string }>;
+};
+
 // --- Acompanhamento ------------------------------------------------------------
 
 /** Quantidade e soma de uma situação dentro de uma obra. */
 export type ContagemDto = { quantidade: number; totalCents: number };
+
+export type OrcamentoObraDto = ResumoOrcamento;
 
 export type ResumoObraDto = {
   obraId: number;
@@ -114,6 +143,34 @@ export type ResumoObraDto = {
   aprovados: ContagemDto;
   rejeitados: ContagemDto;
   /** Soma das três situações. */
+  totalCents: number;
+  /** Orçamento contra aprovado + pendente. */
+  orcamento: OrcamentoObraDto;
+};
+
+export type ComprasDoMesDto = {
+  /** "AAAA-MM" */
+  mes: string;
+  quantidade: number;
+  totalCents: number;
+};
+
+export type FornecedorCompradoDto = {
+  fornecedorId: number;
+  fornecedorNome: string;
+  pedidosAprovados: number;
+  totalCents: number;
+};
+
+export type MovimentacaoDto = {
+  tipo: TipoMovimentacao;
+  /** ISO 8601 */
+  em: string;
+  pedidoId: number;
+  obraId: number;
+  obraNome: string;
+  usuarioId: number;
+  usuarioNome: string;
   totalCents: number;
 };
 
@@ -147,10 +204,18 @@ export type TempoObraDto = {
 export type AcompanhamentoDto = {
   /** Instante em que foi calculado (ISO 8601): referência para "há N dias". */
   geradoEm: string;
+  /** Eco do filtro `?obra=`; null = todas as obras. */
+  obraSelecionada: { id: number; nome: string } | null;
+  /** Sempre todas as obras, mesmo com filtro: é o bloco de comparação. */
   porObra: ResumoObraDto[];
+  /** Daqui para baixo, recortado pela obra selecionada. */
   fila: FilaAprovadorDto[];
   temposPorAprovador: TempoAprovadorDto[];
   temposPorObra: TempoObraDto[];
+  /** Seis meses, do mais antigo ao atual. */
+  comprasPorMes: ComprasDoMesDto[];
+  fornecedores: FornecedorCompradoDto[];
+  movimentacoes: MovimentacaoDto[];
 };
 
 /** Pedido completo para a tela de detalhe e para a API. */
@@ -159,5 +224,9 @@ export type PedidoDetalhe = PedidoResumo & {
   criadoPorId: number;
   observacoes: string | null;
   regraId: number | null;
+  /** Pedido rejeitado que este refaz. */
+  refeitoDe: { id: number } | null;
+  /** Nova versão deste pedido, quando ele foi rejeitado e refeito. */
+  refeitoPor: { id: number } | null;
   itens: ItemPedidoDto[];
 };
