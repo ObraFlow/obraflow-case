@@ -40,8 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# material de apoio local (nao vai para o repositorio)
-/docs/
+# material de apoio local (nao vai para o repositorio); so a identidade visual e publica
+/docs/*
+!/docs/design.md
 /DESAFIO.md
 
 /src/generated/prisma
