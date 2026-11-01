@@ -9,7 +9,6 @@ import {
   urlDaLista,
   type FiltrosDaLista,
 } from "@/components/aprovacoes/url-da-lista";
-import type { StatusPedido } from "@/domain/alcada/tipos";
 import type { ObraDto } from "@/lib/dto";
 
 const CLASSE_SELECT =
@@ -39,8 +38,8 @@ export function FiltrosPedidos({ obras, valores }: { obras: ObraDto[]; valores: 
     setBusca(valores.busca);
   }
 
-  // Trocar obra/situação leva só a busca já aplicada (a da URL); o texto ainda não enviado
-  // continua no campo até a pessoa apertar Enter ou "Buscar".
+  // Trocar a obra leva só a busca já aplicada (a da URL); o texto ainda não enviado
+  // continua no campo até a pessoa apertar Enter ou "Buscar". A situação é a aba.
   const navegar = (mudanca: Partial<FiltrosDaLista>) =>
     iniciarNavegacao(() => router.replace(urlDaLista({ ...valores, ...mudanca })));
 
@@ -57,8 +56,8 @@ export function FiltrosPedidos({ obras, valores }: { obras: ObraDto[]; valores: 
         navegar({ busca: busca.trim() });
       }}
     >
-      {/* No celular, Obra e Situação dividem a linha; a busca ocupa a seguinte inteira. */}
-      <label className="flex basis-[calc(50%-0.375rem)] flex-col gap-1 text-xs font-semibold text-muted-foreground sm:basis-auto">
+      {/* No celular a obra fica numa linha e a busca ocupa a seguinte inteira. */}
+      <label className="flex basis-full flex-col gap-1 text-xs font-semibold text-muted-foreground sm:basis-auto">
         Obra
         <select
           className={CLASSE_SELECT}
@@ -74,23 +73,6 @@ export function FiltrosPedidos({ obras, valores }: { obras: ObraDto[]; valores: 
               {obra.nome}
             </option>
           ))}
-        </select>
-      </label>
-
-      <label className="flex basis-[calc(50%-0.375rem)] flex-col gap-1 text-xs font-semibold text-muted-foreground sm:basis-auto">
-        Situação
-        <select
-          className={CLASSE_SELECT}
-          value={valores.status ?? ""}
-          disabled={navegando}
-          onChange={(evento) =>
-            navegar({ status: (evento.target.value || null) as StatusPedido | null })
-          }
-        >
-          <option value="">Todas</option>
-          <option value="PENDENTE">Pendente</option>
-          <option value="APROVADO">Aprovado</option>
-          <option value="REJEITADO">Rejeitado</option>
         </select>
       </label>
 

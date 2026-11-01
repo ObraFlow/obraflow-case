@@ -1,10 +1,16 @@
 import Link from "next/link";
-import type { FiltroLista } from "@/components/aprovacoes/abas-filtro";
 import { BadgeSituacao } from "@/components/aprovacoes/badge-situacao";
 import { DialogDecisao } from "@/components/aprovacoes/dialog-decisao";
-import { temFiltroAtivo, type FiltrosDaLista } from "@/components/aprovacoes/url-da-lista";
+import { CaixaMarcar, CaixaMarcarTodos } from "@/components/aprovacoes/selecao-pedidos";
+import {
+  temFiltroAtivo,
+  urlDaLista,
+  type FiltroLista,
+  type FiltrosDaLista,
+} from "@/components/aprovacoes/url-da-lista";
 import { LinhaPedido } from "@/components/aprovacoes/linha-pedido";
 import { CadeiaAlcada } from "@/components/alcada/cadeia-alcada";
+import { DIAS_PARA_ATRASO } from "@/domain/acompanhamento/estaAtrasado";
 import { aguardandoDesde, ehSuaVez, niveisDoPedido } from "@/lib/cadeia";
 import { descreverIdade, formatarData } from "@/lib/datas";
 import type { PedidoResumo } from "@/lib/dto";
@@ -14,7 +20,7 @@ import { cn } from "@/lib/utils";
 /** Etiqueta ao lado do número do pedido (docs/design.md > Etiqueta "Sua vez"). */
 function EtiquetaSuaVez() {
   return (
-    <span className="rounded-sm bg-sinalizacao px-1 text-[11px] leading-4 font-bold text-foreground">
+    <span className="rounded-sm bg-sinalizacao px-1 text-[11px] leading-4 font-bold text-sinalizacao-foreground">
       Sua vez
     </span>
   );
@@ -29,7 +35,7 @@ function LinkDoPedido({ pedido }: { pedido: PedidoResumo }) {
   return (
     <Link
       href={`/aprovacoes/${pedido.id}`}
-      className="font-semibold tabular-nums after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
+      className="font-semibold font-stretch-[112%] tabular-nums after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
     >
       #{pedido.id}
       <span className="sr-only">, abrir detalhes do pedido</span>
@@ -37,6 +43,7 @@ function LinkDoPedido({ pedido }: { pedido: PedidoResumo }) {
   );
 }
 
+/** Uma frase do que não existe e a próxima ação, por aba (ui-obraflow > Estados). */
 function EstadoVazio({
   filtro,
   temUsuario,
@@ -48,15 +55,11 @@ function EstadoVazio({
 }) {
   if (comFiltro) {
     return (
-      <div className="flex flex-col items-start gap-2 rounded-sm border bg-card p-6">
-        <p className="font-medium">Nenhum pedido com esses filtros.</p>
-        <Link
-          href={filtro === "minhas" ? "/aprovacoes?filtro=minhas" : "/aprovacoes"}
-          className="font-medium underline underline-offset-4"
-        >
-          Limpar filtros
-        </Link>
-      </div>
+      <Vazio
+        frase="Nenhum pedido com esses filtros."
+        href={urlDaLista({ filtro })}
+        acao="Limpar filtros"
+      />
     );
   }
   if (filtro === "minhas" && !temUsuario) {
@@ -69,21 +72,52 @@ function EstadoVazio({
       </div>
     );
   }
-  if (filtro === "minhas") {
-    return (
-      <div className="flex flex-col items-start gap-2 rounded-sm border bg-card p-6">
-        <p className="font-medium">Nenhum pedido aguarda a sua decisão.</p>
-        <Link href="/aprovacoes" className="font-medium underline underline-offset-4">
-          Ver todos os pedidos
-        </Link>
-      </div>
-    );
+  switch (filtro) {
+    case "minhas":
+      return (
+        <Vazio
+          frase="Nenhum pedido aguarda a sua decisão."
+          href={urlDaLista({ filtro: "pendentes" })}
+          acao="Ver os pendentes"
+        />
+      );
+    case "pendentes":
+      return <Vazio frase="Nenhum pedido pendente." href="/pedidos/novo" acao="Cadastrar pedido" />;
+    case "atrasados":
+      return (
+        <Vazio
+          frase={`Nenhum pedido sem decisão há ${DIAS_PARA_ATRASO} dias ou mais.`}
+          href={urlDaLista({ filtro: "pendentes" })}
+          acao="Ver os pendentes"
+        />
+      );
+    case "aprovados":
+      return (
+        <Vazio
+          frase="Nenhum pedido aprovado ainda."
+          href={urlDaLista({ filtro: "pendentes" })}
+          acao="Ver os pendentes"
+        />
+      );
+    case "rejeitados":
+      return <Vazio frase="Nenhum pedido rejeitado." href="/aprovacoes" acao="Ver todos" />;
+    case "todos":
+      return (
+        <Vazio
+          frase="Nenhum pedido cadastrado."
+          href="/pedidos/novo"
+          acao="Criar o primeiro pedido"
+        />
+      );
   }
+}
+
+function Vazio({ frase, href, acao }: { frase: string; href: string; acao: string }) {
   return (
     <div className="flex flex-col items-start gap-2 rounded-sm border bg-card p-6">
-      <p className="font-medium">Nenhum pedido cadastrado.</p>
-      <Link href="/pedidos/novo" className="font-medium underline underline-offset-4">
-        Criar o primeiro pedido
+      <p className="font-medium">{frase}</p>
+      <Link href={href} className="font-medium underline underline-offset-4">
+        {acao}
       </Link>
     </div>
   );
@@ -123,12 +157,21 @@ export function TabelaPedidos({
     );
   }
 
+  // Só as linhas da vez do usuário podem ser marcadas (e aprovadas de uma vez).
+  const marcavel = (pedido: PedidoResumo) => ({
+    id: pedido.id,
+    fornecedorNome: pedido.fornecedorNome,
+    totalCents: pedido.totalCents,
+  });
+  const daMinhaVez = pedidos.filter((pedido) => ehSuaVez(pedido, usuarioAtualId)).map(marcavel);
+
   return (
     <>
       {/* Celular: blocos empilhados. */}
       <div className="flex flex-col divide-y divide-linha rounded-sm border bg-card md:hidden">
         {pedidos.map((pedido) => {
           const suaVez = ehSuaVez(pedido, usuarioAtualId);
+          const secundario = suaVez ? "text-foreground/80" : "text-muted-foreground";
           return (
             <LinhaPedido
               key={pedido.id}
@@ -138,20 +181,27 @@ export function TabelaPedidos({
               className="relative flex flex-col gap-2 px-3 py-3"
             >
               <div className="flex flex-wrap items-center gap-2">
+                {/* z-10: a caixa vem antes do link que cobre a linha e precisa ficar por cima dele. */}
+                {suaVez && (
+                  <span className="relative z-10 flex items-center">
+                    <CaixaMarcar pedido={marcavel(pedido)} />
+                  </span>
+                )}
                 <LinkDoPedido pedido={pedido} />
                 {suaVez && <EtiquetaSuaVez />}
                 <span className="ml-auto flex items-center gap-2">
                   {idade(pedido) && (
-                    <span className="text-xs text-muted-foreground">aguarda {idade(pedido)}</span>
+                    <span className={cn("text-xs", secundario)}>aguarda {idade(pedido)}</span>
                   )}
                   <BadgeSituacao status={pedido.status} />
                 </span>
               </div>
               <p className="font-medium">{pedido.obraNome}</p>
-              <p className="text-muted-foreground">{pedido.fornecedorNome}</p>
+              {/* Sobre o fundo amarelo o cinza secundário não alcança AA; no escuro ainda menos. */}
+              <p className={secundario}>{pedido.fornecedorNome}</p>
               <div className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-sm tabular-nums">
-                <span className="text-muted-foreground">{formatarData(pedido.dataPedido)}</span>
-                <span className="text-muted-foreground">
+                <span className={secundario}>{formatarData(pedido.dataPedido)}</span>
+                <span className={secundario}>
                   {pedido.totalItens === 1 ? "1 item" : `${pedido.totalItens} itens`}
                 </span>
                 <span className="font-semibold">{formatarCentavos(pedido.totalCents)}</span>
@@ -171,9 +221,20 @@ export function TabelaPedidos({
       <div className="relative hidden overflow-x-auto rounded-sm border bg-card md:block">
         <table className="w-full border-collapse">
           <thead>
-            {/* Entre md e xl o espaço é curto: Fornecedor só em xl, Data e Itens só a partir de lg
-                (os blocos do celular mostram tudo). */}
+            {/* Obra e fornecedor são o contexto do pedido. A partir de xl (1280) a obra aparece
+                inteira e o fornecedor abreviado a 160px (title com o nome): cabe sem rolar com 9px
+                de folga, e acima disso o <main> para em 1200px, então não há mais espaço em 2xl.
+                Abaixo de xl a obra é abreviada e o fornecedor some; Data e Itens só a partir de lg.
+                Os blocos do celular mostram tudo. */}
             <tr className="border-b-2 border-foreground text-left text-xs font-semibold text-muted-foreground">
+              {usuarioAtualId !== null && (
+                <th scope="col" className="w-0 py-2.5 pr-0 pl-2.5">
+                  <span className="flex items-center">
+                    <CaixaMarcarTodos pedidos={daMinhaVez} />
+                    {daMinhaVez.length === 0 && <span className="sr-only">Marcar</span>}
+                  </span>
+                </th>
+              )}
               <th scope="col" className="px-2.5 py-2.5 whitespace-nowrap">
                 Pedido
               </th>
@@ -207,6 +268,7 @@ export function TabelaPedidos({
           <tbody>
             {pedidos.map((pedido) => {
               const suaVez = ehSuaVez(pedido, usuarioAtualId);
+              const secundario = suaVez ? "text-foreground/80" : "text-muted-foreground";
               return (
                 <LinhaPedido
                   key={pedido.id}
@@ -221,17 +283,29 @@ export function TabelaPedidos({
                 >
                   {/* py-3: linha de 46px (docs/design.md > Forma), igual ao skeleton. px-2.5 nas
                       células: com a idade ao lado do badge, 1134px só cabem sem rolar assim. */}
+                  {usuarioAtualId !== null && (
+                    <td className="w-0 py-3 pr-0 pl-2.5">
+                      {suaVez && (
+                        <span className="relative z-10 flex items-center">
+                          <CaixaMarcar pedido={marcavel(pedido)} />
+                        </span>
+                      )}
+                    </td>
+                  )}
                   <td className="px-2.5 py-3 whitespace-nowrap">
                     <span className="flex items-center gap-2">
                       <LinkDoPedido pedido={pedido} />
                       {suaVez && <EtiquetaSuaVez />}
                     </span>
                   </td>
-                  <td className="max-w-36 truncate px-2.5 py-3 lg:max-w-44" title={pedido.obraNome}>
+                  <td
+                    className="max-w-44 truncate px-2.5 py-3 whitespace-nowrap xl:max-w-none"
+                    title={pedido.obraNome}
+                  >
                     {pedido.obraNome}
                   </td>
                   <td
-                    className="hidden max-w-40 truncate px-2.5 py-3 text-muted-foreground xl:table-cell"
+                    className={cn("hidden max-w-40 truncate px-2.5 py-3 xl:table-cell", secundario)}
                     title={pedido.fornecedorNome}
                   >
                     {pedido.fornecedorNome}
@@ -250,13 +324,13 @@ export function TabelaPedidos({
                     <span className="inline-flex items-center gap-2 whitespace-nowrap">
                       <BadgeSituacao status={pedido.status} />
                       {idade(pedido) && (
-                        <span className="text-xs text-muted-foreground">{idade(pedido)}</span>
+                        <span className={cn("text-xs", secundario)}>{idade(pedido)}</span>
                       )}
                     </span>
                   </td>
                   <td className="px-2.5 py-3">
-                    {/* Entre md e xl a cadeia quebra linha em vez de forçar rolagem. */}
-                    <CadeiaAlcada niveis={niveisDoPedido(pedido)} className="xl:flex-nowrap" />
+                    {/* A cadeia quebra linha (três níveis em uma linha são 300px) em vez de forçar rolagem. */}
+                    <CadeiaAlcada niveis={niveisDoPedido(pedido)} />
                   </td>
                   <td className="w-0 px-2.5 py-1 text-right whitespace-nowrap">
                     {suaVez && (

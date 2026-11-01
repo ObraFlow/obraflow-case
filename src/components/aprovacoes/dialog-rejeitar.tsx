@@ -77,7 +77,7 @@ export function DialogRejeitar({
             <Button
               type="submit"
               disabled={!isValid || enviando}
-              className="bg-rejeitado text-white hover:bg-rejeitado/85"
+              className="bg-rejeitado text-on-color hover:bg-rejeitado/85"
             >
               {enviando ? "Rejeitando…" : "Rejeitar pedido"}
             </Button>

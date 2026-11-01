@@ -79,12 +79,15 @@ export function FaixaDecisao({
       aria-busy={enviando || undefined}
       className={cn(
         "flex flex-wrap items-center justify-between gap-3 rounded-sm px-5 py-3 transition-opacity duration-150",
-        suaVez ? "bg-sinalizacao text-foreground" : "bg-muted",
+        suaVez ? "bg-sinalizacao text-sinalizacao-foreground" : "bg-muted",
         enviando && "opacity-70",
         decisao && "anima-faixa-recolhe",
       )}
     >
-      <p className={cn("text-sm", suaVez ? "font-bold" : "font-medium")} aria-live="polite">
+      <p
+        className={cn("text-sm tabular-nums", suaVez ? "font-bold" : "font-medium")}
+        aria-live="polite"
+      >
         {texto}
       </p>
       {/* A key remonta os botões depois da decisão: o dialog de motivo, se estava aberto,

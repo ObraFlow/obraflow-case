@@ -109,7 +109,7 @@ function ConteudoDecisao({ pedido, aoFechar }: { pedido: PedidoResumo; aoFechar:
           <DialogTitle className="text-lg font-bold tabular-nums">
             Decidir o pedido #{pedido.id}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="tabular-nums">
             {pedido.obraNome}. Fornecedor {pedido.fornecedorNome}, emitido em{" "}
             {formatarData(pedido.dataPedido)} por {pedido.criadoPorNome}.
           </DialogDescription>
@@ -174,7 +174,7 @@ function ConteudoDecisao({ pedido, aoFechar }: { pedido: PedidoResumo; aoFechar:
                 type="submit"
                 form="form-rejeicao"
                 disabled={!isValid || enviando}
-                className="bg-rejeitado text-white hover:bg-rejeitado/85"
+                className="bg-rejeitado text-on-color hover:bg-rejeitado/85"
               >
                 {enviando ? "Rejeitando…" : "Rejeitar pedido"}
               </Button>

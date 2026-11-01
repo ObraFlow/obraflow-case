@@ -30,7 +30,7 @@ async function carregarPedido(id: number): Promise<PedidoDetalhe> {
  */
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  return { title: `Pedido #${id} — ObraFlow` };
+  return { title: `Pedido #${id}` };
 }
 
 export default async function PedidoPage({ params }: { params: Promise<{ id: string }> }) {

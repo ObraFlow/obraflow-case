@@ -9,10 +9,21 @@ import { registrarDecisaoAction } from "@/server/actions/decisoes";
 
 export type TipoDecisao = "APROVAR" | "REJEITAR";
 
-function mensagemDeSucesso(tipo: TipoDecisao, pedido: PedidoDetalhe): string {
-  if (tipo === "REJEITAR") return `Pedido #${pedido.id} rejeitado.`;
-  if (pedido.status === "APROVADO") return `Pedido #${pedido.id} aprovado. Cadeia concluída.`;
-  return `Pedido #${pedido.id} aprovado. Agora aguarda ${pedido.aprovadorAtualNome}.`;
+/** Título curto e uma segunda linha dizendo o que acontece agora com o pedido. */
+function mensagemDeSucesso(
+  tipo: TipoDecisao,
+  pedido: PedidoDetalhe,
+): { titulo: string; descricao: string } {
+  if (tipo === "REJEITAR") {
+    return { titulo: `Pedido #${pedido.id} rejeitado.`, descricao: "A cadeia foi encerrada." };
+  }
+  if (pedido.status === "APROVADO") {
+    return { titulo: `Pedido #${pedido.id} aprovado.`, descricao: "Cadeia concluída." };
+  }
+  return {
+    titulo: `Pedido #${pedido.id} aprovado.`,
+    descricao: `Agora aguarda ${pedido.aprovadorAtualNome}.`,
+  };
 }
 
 /**
@@ -33,7 +44,8 @@ export function useRegistrarDecisao({
 
   const { execute, isPending } = useAction(registrarDecisaoAction, {
     onSuccess({ data, input }) {
-      toast.success(mensagemDeSucesso(input.tipo, data));
+      const mensagem = mensagemDeSucesso(input.tipo, data);
+      toast.success(mensagem.titulo, { description: mensagem.descricao });
       avisarPendenciasMudaram();
       aoConcluir?.(input.tipo, data);
     },

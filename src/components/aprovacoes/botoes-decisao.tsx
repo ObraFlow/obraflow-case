@@ -31,9 +31,16 @@ export function BotoesDecisao({
 
   return (
     <div className="flex items-center gap-2">
+      {/* Habilitado = faixa amarela: o primário usa a tinta mais forte do tema, não --primary,
+          que no escuro é clara e sumiria no amarelo (docs/design.md > Faixa de decisão). */}
       <Button
         type="button"
-        className={cn("relative", classeBotao)}
+        className={cn(
+          "relative",
+          classeBotao,
+          !desabilitado &&
+            "bg-sinalizacao-acao text-sinalizacao-acao-foreground hover:bg-sinalizacao-acao/85",
+        )}
         disabled={travado}
         onClick={() => aprovar(pedidoId)}
       >

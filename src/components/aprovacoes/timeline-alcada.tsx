@@ -66,11 +66,11 @@ export function TimelineAlcada({
                 >
                   {aprovacao.aprovadorNome}
                 </p>
-                <p className={cn("text-sm", CLASSE_TEXTO[estado])}>
+                <p className={cn("text-sm tabular-nums", CLASSE_TEXTO[estado])}>
                   {descricao(aprovacao, estado, suaVez)}
                 </p>
                 {estado === "rejeitou" && aprovacao.motivo && (
-                  <p className="mt-1 rounded-sm bg-rejeitado-fundo px-3 py-2 text-sm whitespace-pre-line text-rejeitado-texto-escuro">
+                  <p className="mt-1 rounded-sm bg-rejeitado-fundo px-3 py-2 text-sm whitespace-pre-line text-rejeitado-texto">
                     {aprovacao.motivo}
                   </p>
                 )}

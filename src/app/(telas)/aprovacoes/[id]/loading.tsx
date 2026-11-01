@@ -10,7 +10,12 @@ export default function Loading() {
       aria-label="Carregando pedido"
     >
       <div className="flex flex-col gap-3">
-        <Skeleton className="h-4 w-40 rounded-sm" />
+        {/* Trilha "Aprovações / #12". */}
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-4 w-20 rounded-sm" />
+          <Skeleton className="h-4 w-2 rounded-sm" />
+          <Skeleton className="h-4 w-8 rounded-sm" />
+        </div>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="flex flex-col gap-2">
             <Skeleton className="h-7 w-40 rounded-sm" />

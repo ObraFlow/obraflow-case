@@ -13,15 +13,25 @@ export function CabecalhoPedido({ pedido }: { pedido: PedidoDetalhe }) {
     ["Criado por", pedido.criadoPorNome],
   ];
 
+  // Um rejeitado sem nova versão pode ser refeito; a nova versão passa pela alçada do zero.
+  const podeRefazer = pedido.status === "REJEITADO" && pedido.refeitoPor === null;
+
   return (
     <div className="flex flex-col gap-3">
-      <Link
-        href="/aprovacoes"
+      {/* Trilha: onde a pessoa está e o caminho de volta. "/" é caminho, não separador decorativo. */}
+      <nav
+        aria-label="Você está em"
         // 40px de alvo de toque no celular; o -mt compensa para o texto não descer.
-        className="-mt-2 flex min-h-10 w-fit items-center text-sm font-medium text-muted-foreground underline-offset-4 hover:underline sm:mt-0 sm:min-h-0"
+        className="-mt-2 flex min-h-10 items-center gap-2 text-sm text-muted-foreground sm:mt-0 sm:min-h-0"
       >
-        Voltar para aprovações
-      </Link>
+        <Link href="/aprovacoes" className="font-medium underline-offset-4 hover:underline">
+          Aprovações
+        </Link>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page" className="font-medium text-foreground tabular-nums">
+          #{pedido.id}
+        </span>
+      </nav>
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-3">
@@ -38,12 +48,50 @@ export function CabecalhoPedido({ pedido }: { pedido: PedidoDetalhe }) {
               </div>
             ))}
           </dl>
+          {(pedido.refeitoDe || pedido.refeitoPor) && (
+            <p className="text-sm text-muted-foreground tabular-nums">
+              {pedido.refeitoDe && (
+                <>
+                  Nova versão do{" "}
+                  <Link
+                    href={`/aprovacoes/${pedido.refeitoDe.id}`}
+                    className="font-medium text-foreground underline underline-offset-4"
+                  >
+                    pedido #{pedido.refeitoDe.id}
+                  </Link>
+                  , que foi rejeitado.
+                </>
+              )}
+              {pedido.refeitoPor && (
+                <>
+                  Refeito pelo{" "}
+                  <Link
+                    href={`/aprovacoes/${pedido.refeitoPor.id}`}
+                    className="font-medium text-foreground underline underline-offset-4"
+                  >
+                    pedido #{pedido.refeitoPor.id}
+                  </Link>
+                  .
+                </>
+              )}
+            </p>
+          )}
         </div>
-        <div className="flex flex-col sm:items-end">
-          <span className="text-xs font-semibold text-muted-foreground">Total do pedido</span>
-          <span className="text-2xl font-bold tabular-nums">
-            {formatarCentavos(pedido.totalCents)}
-          </span>
+        <div className="flex flex-col gap-2 sm:items-end">
+          <div className="flex flex-col sm:items-end">
+            <span className="text-xs font-semibold text-muted-foreground">Total do pedido</span>
+            <span className="text-2xl font-bold tabular-nums">
+              {formatarCentavos(pedido.totalCents)}
+            </span>
+          </div>
+          {podeRefazer && (
+            <Link
+              href={`/pedidos/novo?refazer=${pedido.id}`}
+              className="inline-flex h-10 items-center rounded-sm border border-foreground px-3 text-sm font-medium hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none sm:h-[38px]"
+            >
+              Refazer o pedido
+            </Link>
+          )}
         </div>
       </div>
     </div>

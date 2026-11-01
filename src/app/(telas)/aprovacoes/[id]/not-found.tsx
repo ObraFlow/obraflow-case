@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export const metadata = { title: "Pedido não encontrado — ObraFlow" };
+export const metadata = { title: "Pedido não encontrado" };
 
 /** Id que não existe (ou que não é número). Fica dentro do layout, com header e navegação. */
 export default function PedidoNaoEncontrado() {
