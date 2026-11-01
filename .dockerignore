@@ -1,0 +1,17 @@
+.git
+.local
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+**/test-results
+**/playwright-report
+**/coverage
+**/*.log
+
+# Documentation and test-only files are not production image inputs.
+docs
+challenge
+apps/*/test
+apps/*/playwright*.ts
+apps/*/tsconfig.test.json

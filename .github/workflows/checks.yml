@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: obraflow
+          POSTGRES_USER: obraflow
+          POSTGRES_PASSWORD: obraflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U obraflow -d obraflow"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # The test runner creates its own disposable database from this connection.
+      DATABASE_URL: postgresql://obraflow:obraflow@127.0.0.1:5432/obraflow
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --no-audit
+      - run: npm run check
+      - run: npm run build
+      - run: npm run typecheck
+      - run: npx playwright install --with-deps chromium
+      # The quick tier: API, unit and the end-to-end journey. The full browser suite is `npm test -- all`.
+      - run: npm test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-failures
+          path: apps/web/test-results
+          if-no-files-found: ignore
+          retention-days: 7

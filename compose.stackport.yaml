@@ -1,0 +1,103 @@
+# Select this file explicitly in Stackport. Route the domain to dokimos:8080.
+
+x-api: &api
+  build:
+    context: .
+    dockerfile: docker/Dockerfile
+    target: api
+  environment: &database-env
+    NODE_ENV: production
+    PGHOST: dokimos-db
+    PGPORT: "5432"
+    PGDATABASE: obraflow
+    PGUSER: obraflow
+    PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the root .env}
+
+services:
+  dokimos-db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: obraflow
+      POSTGRES_USER: obraflow
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the root .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U obraflow -d obraflow"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    <<: *api
+    command: [node, apps/api/dist/db/migrate.js]
+    restart: "no"
+    labels:
+      com.stackport.health.ignore: "true"
+    depends_on:
+      dokimos-db:
+        condition: service_healthy
+
+  api:
+    <<: *api
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
+    environment:
+      <<: *database-env
+      HOST: 0.0.0.0
+      PORT: "4000"
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in the root .env}
+      JWT_TTL: ${JWT_TTL:-30m}
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:4000/healthz').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      start_period: 15s
+      retries: 5
+
+  dokimos:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: web
+    restart: unless-stopped
+    environment:
+      NGINX_TRUSTED_PROXY: ${NGINX_TRUSTED_PROXY:-127.0.0.1}
+    expose: ["8080"]
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, wget, -q, --spider, http://127.0.0.1:8080/healthz]
+      interval: 15s
+      timeout: 5s
+      start_period: 10s
+      retries: 5
+
+  # First-run demo seed: populates an empty database once and skips otherwise, so
+  # redeploys never touch existing data. Force a full (preserving) reseed with:
+  #   docker compose -f compose.stackport.yaml run --rm seed node apps/api/dist/db/seed/index.js
+  seed:
+    <<: *api
+    command: [node, apps/api/dist/db/seed/index.js, --if-empty]
+    restart: "no"
+    labels:
+      com.stackport.health.ignore: "true"
+    environment:
+      <<: *database-env
+      ALLOW_DEMO_SEED: "true"
+      # Public challenge-demo defaults match the frontend persona buttons.
+      # Custom values work with manual login only.
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-demo-admin-2026}
+      SEED_USER_PASSWORD: ${SEED_USER_PASSWORD:-demo-user-2026}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  postgres_data:
