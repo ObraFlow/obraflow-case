@@ -17,9 +17,11 @@ datasource db {
 
 /// Projeto/canteiro. As regras de alçada são por obra.
 model Obra {
-  id       Int      @id @default(autoincrement())
-  nome     String
-  criadoEm DateTime @default(now())
+  id             Int      @id @default(autoincrement())
+  nome           String
+  /// Orçamento de compras da obra, em centavos. 0 = sem orçamento definido (sem percentual nem alerta).
+  orcamentoCents Int      @default(0)
+  criadoEm       DateTime @default(now())
 
   regras  RegraAlcada[]
   pedidos Pedido[]
@@ -105,6 +107,8 @@ model Pedido {
   stepAtual    Int          @default(0)
   /// Qual regra gerou a cadeia (informativo). Se a regra for apagada, o snapshot em `aprovacoes` continua.
   regraId      Int?
+  /// Pedido rejeitado que este refaz. Único: um rejeitado tem no máximo uma nova versão.
+  origemId     Int?         @unique
   criadoEm     DateTime     @default(now())
   atualizadoEm DateTime     @updatedAt
 
@@ -112,6 +116,8 @@ model Pedido {
   fornecedor Fornecedor        @relation(fields: [fornecedorId], references: [id], onDelete: Restrict)
   criadoPor  Usuario           @relation(fields: [criadoPorId], references: [id], onDelete: Restrict)
   regra      RegraAlcada?      @relation(fields: [regraId], references: [id], onDelete: SetNull)
+  origem     Pedido?           @relation("Refazer", fields: [origemId], references: [id], onDelete: SetNull)
+  refeitoPor Pedido?           @relation("Refazer")
   itens      ItemPedido[]
   aprovacoes AprovacaoPedido[]
 
