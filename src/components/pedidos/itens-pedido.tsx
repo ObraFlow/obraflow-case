@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { centavosDeTexto, formatarCentavos, textoDeCentavos } from "@/lib/money";
+import { formatarQuantidade, quantidadeDeTexto } from "@/lib/quantidade";
 import type { PedidoFormInput } from "@/lib/schemas/pedido";
 import { cn } from "@/lib/utils";
 
@@ -28,8 +29,9 @@ const CLASSE_ROTULO = "text-xs font-semibold text-muted-foreground lg:sr-only";
  *
  * O item adicionado depois da primeira renderização entra com `linha-entra` (docs/design.md
  * > Movimento): os ids que existiam ao montar são "conhecidos"; qualquer outro é novo.
- * O preço é reescrito ao sair do campo ("1500" → "1.500,00"), para o valor entendido ficar
- * visível antes de enviar.
+ * Preço e quantidade são reescritos ao sair do campo ("1500" → "1.500,00"; "1.5" → "1,5"),
+ * para o valor entendido ficar visível antes de enviar. Os dois leem o ponto pela mesma
+ * regra (`lib/numero.ts`): "1.000" é mil nos dois.
  */
 export function ItensPedido({
   form,
@@ -54,6 +56,14 @@ export function ItensPedido({
     const cents = centavosDeTexto(texto);
     if (cents === null || cents < 0) return;
     form.setValue(`itens.${indice}.precoUnitario`, textoDeCentavos(cents), {
+      shouldValidate: true,
+    });
+  };
+
+  const formatarQtd = (indice: number, texto: string) => {
+    const canonica = quantidadeDeTexto(texto);
+    if (canonica === null || Number(canonica) <= 0) return;
+    form.setValue(`itens.${indice}.quantidade`, formatarQuantidade(canonica), {
       shouldValidate: true,
     });
   };
@@ -122,7 +132,9 @@ export function ItensPedido({
                 placeholder="Ex.: 2,5"
                 aria-invalid={!!erro?.quantidade || undefined}
                 className="h-[38px] rounded-sm tabular-nums"
-                {...form.register(`itens.${indice}.quantidade` as const)}
+                {...form.register(`itens.${indice}.quantidade` as const, {
+                  onBlur: (evento) => formatarQtd(indice, evento.target.value),
+                })}
               />
               <FieldError errors={[erro?.quantidade]} />
             </Field>
