@@ -1,0 +1,15 @@
+# Scope is code only (ts, tsx, mjs, css); see the `check` and `fix` scripts in package.json.
+# These entries keep editor format-on-save consistent with the CLI and CI.
+node_modules
+dist
+build
+coverage
+test-results
+playwright-report
+.local
+package-lock.json
+*.md
+*.json
+*.yml
+*.yaml
+*.html

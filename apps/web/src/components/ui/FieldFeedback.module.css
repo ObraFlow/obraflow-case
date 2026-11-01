@@ -1,0 +1,19 @@
+.feedback {
+  block-size: 2.2rem;
+  margin-top: 0.25rem;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  color: var(--error);
+  font-size: var(--type-meta);
+  line-height: 1.05rem;
+}
+
+.feedback:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: -3px;
+  border-radius: 0.2rem;
+}
+
+.compact {
+  block-size: 1.2rem;
+}

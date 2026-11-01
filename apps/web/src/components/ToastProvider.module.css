@@ -1,0 +1,133 @@
+.toaster:global([data-sonner-toaster]) {
+  font-family: inherit;
+  z-index: 45;
+}
+.toaster:global([data-sonner-toaster]) .toast:global([data-sonner-toast]) {
+  background: var(--popover);
+  color: var(--foreground);
+  border-color: var(--border);
+  border-radius: 0.75rem;
+  padding: 0.85rem 1rem;
+  box-shadow:
+    0 10px 28px -8px color-mix(in srgb, var(--foreground) 28%, transparent),
+    0 2px 6px color-mix(in srgb, var(--foreground) 10%, transparent);
+  font-size: var(--type-body);
+  transition-duration: 150ms;
+}
+.toaster:global([data-sonner-toaster]) .toast:global([data-sonner-toast]) :global([data-title]) {
+  font-weight: 600;
+}
+.toaster:global([data-sonner-toaster]) .toast:global([data-sonner-toast]) :global([data-description]) {
+  font-size: var(--type-meta);
+  opacity: 0.85;
+}
+.toaster:global([data-sonner-toaster]) .toast:global([data-sonner-toast]) :global([data-content]) {
+  min-width: 0;
+}
+.toaster:global([data-sonner-toaster]) .toast:global([data-sonner-toast]) :global([data-title]),
+.toaster:global([data-sonner-toaster]) .toast:global([data-sonner-toast]) :global([data-description]) {
+  overflow-wrap: anywhere;
+}
+.toaster:global([data-sonner-toaster]) .toast:global([data-sonner-toast]) :global([data-description]) {
+  color: inherit;
+}
+.toaster:global([data-sonner-toaster]) .toast:global([data-sonner-toast]) :global([data-icon]) {
+  color: inherit;
+}
+.toaster:global([data-sonner-toaster]) .toast:global([data-sonner-toast][data-type="success"]) {
+  background: var(--approved-surface);
+  color: var(--approved);
+  border-color: color-mix(in srgb, var(--approved) 35%, var(--approved-surface));
+}
+.toaster:global([data-sonner-toaster]) .toast:global([data-sonner-toast][data-type="error"]) {
+  background: var(--error-surface);
+  color: var(--error);
+  border-color: var(--error-border);
+}
+.toaster:global([data-sonner-toaster]) .toast:global([data-sonner-toast][data-type="warning"]) {
+  background: var(--warning-surface);
+  color: var(--warning);
+  border-color: var(--warning-border);
+}
+.toaster:global([data-sonner-toaster]) .toast:global([data-sonner-toast][data-type="info"]) {
+  background: var(--info-surface);
+  color: var(--info);
+  border-color: var(--info-border);
+}
+.toaster:global([data-sonner-toaster]) .toast:global([data-sonner-toast]) :global([data-button]) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  height: auto;
+  min-height: 2rem;
+  margin-inline-start: 0.5rem;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid color-mix(in srgb, currentColor 40%, transparent);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  color: inherit;
+  font-size: var(--type-meta);
+  font-weight: 600;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+.toaster:global([data-sonner-toaster]) .toast:global([data-sonner-toast]) :global([data-button]):hover {
+  background: color-mix(in srgb, currentColor 22%, transparent);
+  border-color: color-mix(in srgb, currentColor 60%, transparent);
+}
+.toaster:global([data-sonner-toaster]) .toast:global([data-sonner-toast]) :global([data-button]) svg {
+  transition: transform 0.15s;
+}
+.toaster:global([data-sonner-toaster]) .toast:global([data-sonner-toast]) :global([data-button]):hover svg {
+  transform: translate(1px, -1px);
+}
+@media (pointer: coarse) {
+  .toaster:global([data-sonner-toaster]) .toast:global([data-sonner-toast]) :global([data-button]) {
+    min-height: 2.75rem;
+    padding-inline: 0.9rem;
+  }
+}
+.toaster:global([data-sonner-toaster]) .toast:global([data-sonner-toast]) :global([data-close-button]) {
+  background: var(--popover);
+  color: var(--foreground);
+  border-color: var(--border);
+  width: 1.75rem;
+  height: 1.75rem;
+}
+.toaster:global([data-sonner-toaster]) .toast:global([data-sonner-toast]) :global([data-close-button]):hover {
+  background: var(--muted);
+}
+.toastTrigger {
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.toastTrigger::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+}
+.clickable:global([data-sonner-toast]) :global([data-button]) {
+  position: relative;
+  z-index: 1;
+}
+.clickable:global([data-sonner-toast]) :global([data-close-button]) {
+  z-index: 2;
+}
+.toaster:global([data-sonner-toaster]) .toast:focus-visible,
+.toaster:global([data-sonner-toaster]) .toast button:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: -3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .toaster:global([data-sonner-toaster]) .toast,
+  .toaster:global([data-sonner-toaster]) .toast * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

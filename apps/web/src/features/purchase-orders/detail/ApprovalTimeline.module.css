@@ -1,0 +1,59 @@
+.timeline {
+  margin-top: 1.25rem;
+}
+.step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr);
+  column-gap: 0.75rem;
+  padding-bottom: 1.25rem;
+}
+.step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 0.75rem;
+  top: 1.75rem;
+  bottom: 0.25rem;
+  width: 1px;
+  background: var(--border);
+}
+.step:last-child {
+  padding-bottom: 0;
+}
+.marker {
+  width: 1.5rem;
+  height: 1.5rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+.content {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.step[data-state="APPROVED"] .marker {
+  background: var(--approved-surface);
+  color: var(--approved);
+}
+.step[data-state="REJECTED"] .marker {
+  background: var(--rejected-surface);
+  color: var(--rejected);
+}
+.step[data-state="CURRENT"] .marker {
+  background: var(--pending-surface);
+  color: var(--pending);
+  outline: 1px solid var(--pending);
+  outline-offset: 3px;
+}
+.reason {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-size: var(--type-label);
+  color: var(--rejected);
+  background: var(--rejected-surface);
+}

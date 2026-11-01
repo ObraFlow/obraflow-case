@@ -1,0 +1,41 @@
+
+# Local-only project notes and private assessments
+.local/
+
+# Dependencies
+node_modules/
+
+# Build output
+**/dist/
+**/build/
+**/.vite/
+*.tsbuildinfo
+
+# Test output
+coverage/
+**/coverage/
+playwright-report/
+test-results/
+
+# Environment variables and local secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Logs and local runtime files
+*.log
+npm-debug.log*
+*.pid
+*.pid.lock
+
+# Temporary files
+.tmp/
+tmp/
+*.tmp
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

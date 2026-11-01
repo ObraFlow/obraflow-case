@@ -1,0 +1,103 @@
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--input);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--foreground);
+  font-size: var(--type-body);
+  text-align: left;
+  cursor: pointer;
+}
+.trigger:hover:not(:disabled):not([aria-readonly="true"]) {
+  border-color: var(--ring);
+}
+.trigger:disabled {
+  background: var(--disabled-surface);
+  color: var(--disabled-foreground);
+  border-color: var(--disabled-border);
+  cursor: not-allowed;
+}
+.trigger[aria-readonly="true"] {
+  cursor: default;
+}
+.trigger[aria-invalid="true"] {
+  border-color: var(--error);
+}
+.selection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.selection[data-placeholder="true"] {
+  color: var(--muted-foreground);
+}
+.icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--muted-foreground);
+}
+.positioner {
+  z-index: 70;
+  max-width: calc(100vw - 1.5rem);
+}
+.popup {
+  min-width: min(var(--anchor-width), calc(100vw - 1.5rem));
+  max-width: calc(100vw - 1.5rem);
+  max-height: min(20rem, var(--available-height));
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--foreground) 12%, transparent);
+  outline: none;
+}
+.list {
+  padding: 0.3rem;
+}
+.option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 2.4rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.35rem;
+  font-size: var(--type-body);
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  outline: none;
+}
+.option[data-highlighted] {
+  background: var(--muted);
+}
+.option[data-selected] {
+  color: var(--selection-foreground);
+  background: var(--selection-surface);
+}
+.option[data-selected] .indicator {
+  color: var(--selection-indicator);
+}
+.option[data-disabled] {
+  color: var(--disabled-foreground);
+  background: var(--disabled-surface);
+  cursor: not-allowed;
+}
+.indicator {
+  display: inline-flex;
+  flex: none;
+}
+.empty {
+  padding: 0.75rem;
+  color: var(--muted-foreground);
+  font-size: var(--type-body);
+}

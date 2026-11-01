@@ -1,0 +1,17 @@
+.stack {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  padding-left: 0.1rem;
+}
+.avatar,
+.overflow {
+  display: inline-flex;
+  flex: none;
+  border: 2px solid var(--card);
+  border-radius: 50%;
+}
+.avatar + .avatar,
+.overflow {
+  margin-left: -0.55rem;
+}

@@ -1,0 +1,32 @@
+.identifiedHeader {
+  container-type: inline-size;
+}
+.heading {
+  display: grid;
+  gap: 0.25rem 1rem;
+  min-width: 0;
+}
+.headingText {
+  min-width: 0;
+}
+.identifier {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+@container (min-width: 36rem) {
+  .heading {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: end;
+  }
+  .identifier {
+    justify-self: end;
+    max-width: 22rem;
+  }
+}

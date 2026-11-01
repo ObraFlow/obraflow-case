@@ -1,0 +1,108 @@
+.history {
+  min-width: 0;
+}
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+}
+.header p {
+  flex: 1 1 18rem;
+  min-width: 0;
+  color: var(--muted-foreground);
+  font-size: var(--type-meta);
+}
+.refreshControl {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+.refreshLabel {
+  width: 6rem;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--muted-foreground);
+  font-size: var(--type-meta);
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  margin-top: 1rem;
+}
+.selector {
+  flex: 1 1 14rem;
+  min-width: 0;
+  max-width: 22rem;
+}
+.publication {
+  min-width: 0;
+  flex: 1 1 12rem;
+  font-size: var(--type-meta);
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+.publication strong {
+  font-weight: 500;
+}
+.publication time {
+  display: block;
+  margin-top: 0.25rem;
+}
+.revision {
+  min-width: 0;
+  margin-top: 1rem;
+}
+.versionState {
+  display: flex;
+  flex: 1 1 24rem;
+  min-width: min(100%, 24rem);
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--border);
+  border-inline-start: 3px solid var(--selection-indicator);
+  border-radius: 0.5rem;
+  font-size: var(--type-label);
+}
+.versionState p {
+  margin-top: 0.2rem;
+  color: var(--muted-foreground);
+  font-size: var(--type-meta);
+}
+.versionState svg {
+  flex: none;
+  margin-top: 0.15rem;
+}
+.versionState[data-historical="true"] {
+  border-inline-start-color: var(--muted-foreground);
+  border-style: dashed;
+  background: var(--muted);
+}
+.history .viewer {
+  padding: 0;
+  margin-top: 1rem;
+  border: 0;
+  background: transparent;
+}
+@media (max-width: 600px) {
+  .toolbar {
+    gap: 0.5rem;
+  }
+  .selector {
+    flex-basis: 100%;
+    max-width: none;
+  }
+  .publication {
+    flex-basis: 100%;
+  }
+  .publication time {
+    display: inline;
+    margin: 0 0 0 0.5rem;
+  }
+}

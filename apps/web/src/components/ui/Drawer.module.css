@@ -1,0 +1,49 @@
+.drawer {
+  position: fixed;
+  inset: 0 0 0 auto;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: min(38rem, 100vw);
+  height: 100dvh;
+  padding: 1.5rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-left: 1px solid var(--border);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: -8px 0 24px color-mix(in srgb, var(--foreground) 10%, transparent);
+  outline: none;
+  transition:
+    transform 220ms ease,
+    opacity 180ms ease;
+}
+.drawer[data-starting-style],
+.drawer[data-ending-style] {
+  transform: translateX(100%);
+  opacity: 0;
+}
+.drawer[data-ending-style] {
+  transition-duration: 150ms;
+}
+.close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+}
+@media (max-width: 600px), (pointer: coarse) {
+  .drawer [data-slot="dialog-title"] {
+    padding-inline-end: 3rem;
+  }
+}
+@media (max-width: 480px) {
+  .drawer {
+    padding: 1rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .drawer {
+    transition: none;
+  }
+}

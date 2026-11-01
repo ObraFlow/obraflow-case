@@ -1,0 +1,26 @@
+.dialog {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  max-height: calc(100dvh - 2rem);
+  overflow: hidden;
+}
+.wide {
+  height: min(52rem, calc(100dvh - 2rem));
+}
+.dialog > h2,
+.dialog > p {
+  flex-shrink: 0;
+}
+.body {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+.wide .body {
+  flex: 1;
+}

@@ -1,0 +1,153 @@
+/* Equal-height rows (the tallest card sets the size) keep every card the same size, whatever its name or meta wraps to. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 1rem;
+  min-width: 0;
+}
+.card {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 6.5rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--card);
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease;
+}
+.card:hover {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--secondary) 18%, var(--card));
+}
+.header {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+.icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.7rem;
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+.identity {
+  flex: 1;
+  min-width: 0;
+}
+.identity h2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font-size: var(--type-card);
+  font-weight: 600;
+  line-height: 1.25;
+}
+.projectLink {
+  color: inherit;
+  text-decoration: none;
+}
+.projectLink::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 0.75rem;
+  content: "";
+}
+.projectLink:focus-visible {
+  outline: none;
+}
+.projectLink:focus-visible::after {
+  outline: 3px solid var(--ring);
+  outline-offset: -3px;
+}
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.6rem;
+  margin-top: 0.3rem;
+  font-size: var(--type-meta);
+  color: var(--muted-foreground);
+}
+.members {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.coa {
+  padding: 0.1rem 0.45rem;
+  border-radius: 0.35rem;
+  color: var(--pending);
+  background: var(--pending-surface);
+  font-weight: 600;
+}
+.coa[data-configured="true"] {
+  color: var(--approved);
+  background: var(--approved-surface);
+}
+.archived {
+  padding: 0.1rem 0.45rem;
+  border-radius: 0.35rem;
+  color: var(--inactive-foreground);
+  box-shadow: inset 0 0 0 1px var(--inactive-border);
+  font-weight: 600;
+}
+/* A 44px target without growing the card. */
+.favorite {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  margin-block: -0.5rem;
+  margin-right: -0.45rem;
+  color: var(--muted-foreground);
+}
+.favorite[aria-pressed="true"] {
+  color: var(--favorite-outline);
+}
+.favorite[aria-pressed="true"] svg {
+  fill: var(--favorite);
+}
+.filter {
+  flex: 0 1 12rem;
+  min-width: 0;
+}
+/* Phones keep the compact card: one column, so equal rows add nothing. */
+@media (max-width: 599px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: auto;
+    gap: 0.6rem;
+  }
+  .card {
+    min-height: 0;
+    padding: 0.7rem 0.85rem;
+  }
+  .header {
+    gap: 0.7rem;
+  }
+  .icon {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+}

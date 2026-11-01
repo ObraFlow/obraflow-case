@@ -1,0 +1,105 @@
+# The complete application in Docker, with nothing installed but Docker: it builds the API and the frontend,
+# starts its own PostgreSQL, applies the migrations and seeds the demonstration data on the first run.
+#
+#   npm run review                                       # same thing; `npm run review -- down` stops it
+#   docker compose -f compose.review.yaml up --build     # direct, no Node needed
+#
+# Then open http://localhost:8080. Data lives in the review_postgres_data volume and survives `down`; remove it
+# with `docker compose -f compose.review.yaml down -v`. This stack is separate from `npm run dev`, which uses
+# the database of compose.yaml. For a hosted deployment use compose.stackport.yaml instead.
+name: dokimos-review
+
+x-api: &api
+  build:
+    context: .
+    dockerfile: docker/Dockerfile
+    target: api
+  environment: &database-env
+    NODE_ENV: production
+    PGHOST: db
+    PGPORT: "5432"
+    PGDATABASE: obraflow
+    PGUSER: obraflow
+    PGPASSWORD: ${POSTGRES_PASSWORD:-obraflow}
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: obraflow
+      POSTGRES_USER: obraflow
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-obraflow}
+    volumes:
+      - review_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U obraflow -d obraflow"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    <<: *api
+    command: [node, apps/api/dist/db/migrate.js]
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Populates an empty database once and skips otherwise, so restarting never touches existing data.
+  seed:
+    <<: *api
+    command: [node, apps/api/dist/db/seed/index.js, --if-empty]
+    restart: "no"
+    environment:
+      <<: *database-env
+      ALLOW_DEMO_SEED: "true"
+      # The public demo credentials, which the frontend persona buttons use.
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-demo-admin-2026}
+      SEED_USER_PASSWORD: ${SEED_USER_PASSWORD:-demo-user-2026}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  api:
+    <<: *api
+    restart: unless-stopped
+    init: true
+    environment:
+      <<: *database-env
+      HOST: 0.0.0.0
+      PORT: "4000"
+      JWT_SECRET: ${JWT_SECRET:-review-only-jwt-secret-change-me-0123456789abcdef}
+      JWT_TTL: 30m
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:4000/healthz').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      start_period: 15s
+      retries: 5
+
+  # nginx: serves the built SPA and proxies /api/ and Socket.IO to the API, as in a hosted deployment.
+  dokimos:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: web
+    restart: unless-stopped
+    environment:
+      NGINX_TRUSTED_PROXY: ${NGINX_TRUSTED_PROXY:-127.0.0.1}
+    ports:
+      - "127.0.0.1:${REVIEW_PORT:-8080}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, wget, -q, --spider, http://127.0.0.1:8080/healthz]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  review_postgres_data:
