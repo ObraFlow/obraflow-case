@@ -8,13 +8,13 @@
 
 Capturas da demo publicada, agindo como João Mendes (aprovador do pedido #1). O amarelo aparece só onde ele precisa agir.
 
-| Aprovações: lista com filtros, a linha "Sua vez" e a cadeia de cada pedido            | Detalhe do pedido: faixa de decisão, itens e timeline da alçada                                                       |
-| ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| ![Lista de aprovações](.github/screenshots/aprovacoes-1280.png)                       | ![Detalhe do pedido](.github/screenshots/pedido-1280.png)                                                             |
-| **Novo pedido**: itens em tabela, total e cadeia que será aplicada antes de cadastrar | **Regras de alçada**: faixas por obra, aprovadores herdados e simulador                                               |
-| ![Novo pedido](.github/screenshots/novo-pedido-1280.png)                              | ![Regras de alçada](.github/screenshots/regras-1280.png)                                                              |
-| **Acompanhamento**: por obra, fila por aprovador e tempo até decidir                  | **Celular (375px)**: lista em blocos e detalhe com itens compactos                                                    |
-| ![Acompanhamento](.github/screenshots/acompanhamento-1280.png)                        | ![Lista no celular](.github/screenshots/aprovacoes-375.png) ![Detalhe no celular](.github/screenshots/pedido-375.png) |
+| Aprovações: cards de resumo, abas por situação, as linhas "Sua vez" com a caixa para aprovar de uma vez e a cadeia de cada pedido | Detalhe do pedido: faixa de decisão, itens e timeline da alçada                                                       |
+| --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| ![Lista de aprovações](.github/screenshots/aprovacoes-1280.png)                                                                   | ![Detalhe do pedido](.github/screenshots/pedido-1280.png)                                                             |
+| **Novo pedido**: itens em tabela, impacto no orçamento da obra e a cadeia que será aplicada, antes de cadastrar                   | **Regras de alçada**: faixas por obra, aprovadores herdados, lacuna entre faixas e simulador                          |
+| ![Novo pedido](.github/screenshots/novo-pedido-1280.png)                                                                          | ![Regras de alçada](.github/screenshots/regras-1280.png)                                                              |
+| **Acompanhamento**: orçamento por obra, compras aprovadas por mês, fornecedores, fila por aprovador e tempo até decidir           | **Celular (375px)**: lista em blocos e detalhe com itens compactos                                                    |
+| ![Acompanhamento](.github/screenshots/acompanhamento-1280.png)                                                                    | ![Lista no celular](.github/screenshots/aprovacoes-375.png) ![Detalhe no celular](.github/screenshots/pedido-375.png) |
 
 ## Como rodar
 
