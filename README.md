@@ -1,189 +1,257 @@
-![Banner do desafio ObraFlow](assets/banner.png)
+![Banner do ObraFlow](assets/banner.png)
 
-# Desafio Full-stack — ObraFlow
+# ObraFlow · Dokimos
 
-Bem-vindo(a) ao nosso processo seletivo! Estamos buscando alguém com curiosidade técnica, autonomia e, acima de tudo, **visão de produto e criatividade** para transformar problemas reais em soluções.
-## Contexto
+Plataforma full-stack para cadastro de pedidos de compra e aprovação por alçada. A solução reúne execução local, cadastros de referência, regras de alçada por obra, pedidos com itens e um fluxo de aprovação ordenado com histórico. A carga de demonstração fornece dados reproduzíveis para avaliar as telas e os diferentes estados.
 
-O **ObraFlow** é uma plataforma para empresas do setor de construção civil, concebida como parte de um [ERP (*Enterprise Resource Planning*)](https://pt.wikipedia.org/wiki/Sistema_integrado_de_gest%C3%A3o_empresarial).
+As instruções originais do processo seletivo estão em [DESAFIO-INSTRUCOES.md](DESAFIO-INSTRUCOES.md).
 
-O **Dokimos** é o serviço de aprovações do ObraFlow. Ele gerencia **alçadas de aprovação**: regras que definem quem pode autorizar uma decisão e em qual ordem, de acordo com o contexto do pedido — neste caso, a obra e o valor da compra.
+## Executar a aplicação
 
-A gestão de alçadas é necessária para que a empresa mantenha controle financeiro e operacional. Compras de menor impacto podem ser decididas rapidamente por responsáveis próximos à obra; compras de maior valor exigem revisão adicional de pessoas com maior responsabilidade. Isso reduz o risco de gastos indevidos, evita que uma única pessoa aprove decisões além de sua responsabilidade e cria uma trilha auditável de quem aprovou ou rejeitou cada pedido.
+### Requisitos
 
-Também é importante que essas regras sejam configuráveis por obra: projetos diferentes podem ter orçamentos, portes e responsáveis distintos. Assim, o sistema deve identificar a regra aplicável no momento da criação do pedido, formar a cadeia de aprovadores e só avançar para a próxima pessoa depois da aprovação anterior. Em caso de rejeição, o fluxo é interrompido e o motivo fica registrado no histórico.
+- Git;
+- Docker Engine com Docker Compose v2;
+- acesso à internet na primeira execução para baixar as imagens e dependências.
 
-Em produção, uma regra simples seria:
+O fluxo com Docker não exige Java nem Node.js instalados na máquina.
 
-```text
-Obra 1 — valor até R$ 10.000,00
--> Aprovadores: João
-Obra 1 — valor acima de R$ 10.000 
--> Aprovadores: Amanda
+### Subir banco, API e frontend
+
+Na raiz do repositório:
+
+```bash
+cp .env.example .env
+docker compose up --build
 ```
 
-*   Se um pedido na Obra 1 custar **R$ 8.000,00**, basta o clique da João para ser aprovado.
-*   Se custar **R$ 12.500,00**, João precisa aprovar primeiro. Só depois da aprovação dela é que o pedido fica liberado para o Amanda decidir. Se a João (ou o Amanda) rejeitar, o pedido é cancelado na hora e precisa ter um motivo registrado.
+A primeira execução constrói as imagens do backend e do frontend, inicia o PostgreSQL e aplica as migrações Flyway. Aguarde os serviços iniciarem e acesse:
 
-Neste desafio você vai construir a **versão simplificada** desse fluxo: as telas de um sistema de pedidos de compra com aprovação por alçada.
+- Aplicação: <http://localhost:5173>
+- API: <http://localhost:8080>
+- Saúde da API e do banco: <http://localhost:8080/api/health>
+- Saúde operacional: <http://localhost:8080/actuator/health>
 
----
+A aplicação exibe o estado de conexão da API e do banco e oferece o cadastro de pedidos e a configuração das regras de alçada.
 
-# Backend e persistência
+### Popular dados de demonstração
 
-Você deve projetar e implementar a [API](https://pt.wikipedia.org/wiki/Interface_de_programa%C3%A7%C3%A3o_de_aplica%C3%A7%C3%B5es) (ou outro mecanismo de comunicação entre front-end e servidor) e a persistência necessários para suportar o desafio. O contrato, as rotas e o formato dos dados são livres, desde que atendam aos comportamentos abaixo:
+Com os serviços iniciados, carregue os dados de demonstração no PostgreSQL local:
 
-* cadastrar e listar obras, usuários, fornecedores, pedidos e regras de alçada;
-* criar pedidos com cabeçalho e **N itens**; calcular e persistir seus totais;
-* determinar a cadeia de aprovadores conforme a obra e o valor total do pedido;
-* registrar aprovações e rejeições, incluindo o motivo obrigatório de rejeição;
-* impedir decisões fora da ordem da alçada e preservar o histórico;
-* criar, editar, remover e consultar níveis e aprovadores das regras por obra;
-* garantir a consistência das leituras e escritas dos dados.
+```bash
+docker compose run --build --rm backend --spring.profiles.active=demo-data
+```
 
-Inclua dados de demonstração suficientes para avaliar o fluxo: ao menos 2 obras, usuários, regras e pedidos em diferentes estados.
+A carga é opt-in e pode ser executada novamente: obras, usuários e fornecedores usam identificadores naturais estáveis, e os pedidos de demonstração são reconhecidos por marcadores próprios nas observações. Ela não apaga nem altera pedidos existentes. A amostra inclui cinco obras, dez usuários/aprovadores, sete fornecedores, treze faixas de alçada e quatorze pedidos com 28 itens. As três novas obras usam três níveis de valor e cadeias de até três aprovadores. Os pedidos cobrem total zero, valores exatamente nos limites das faixas, pendências em níveis diferentes, aprovações de uma e duas etapas e rejeições no primeiro, segundo e terceiro níveis.
 
-Documente no `README.md` como iniciar a aplicação, popular os dados (quando aplicável) e consumir a API. Se optar por expor uma API HTTP, documente também os principais endpoints e payloads.
+Se o volume já contiver a amostra anterior, execute o comando novamente: ele acrescenta os novos exemplos e preserva os dados existentes. O `--build` garante que o comando use a versão atual do backend.
 
----
+Para começar de novo, remova o volume do PostgreSQL local com `docker compose down -v`, suba os serviços novamente com `docker compose up --build` e execute a carga acima. Esse procedimento remove os dados do banco local mantido pelo Compose.
 
-# Tecnologias
+Para encerrar os serviços, use `Ctrl+C` ou, em outro terminal:
 
-A stack é **livre**. Escolha as tecnologias de front-end, back-end, banco de dados, ORM, biblioteca de estilos, testes e infraestrutura que considerar mais adequadas.
+```bash
+docker compose down
+```
 
-A única exigência é que a aplicação possa ser executada localmente conforme as instruções do seu `README.md`, sem depender de serviços pagos ou de credenciais externas.
+Os dados do PostgreSQL permanecem no volume `obraflow-postgres-data`. Para remover também esse volume e reiniciar com um banco vazio:
 
-Testes são desejáveis, mas não obrigatórios.
+```bash
+docker compose down -v
+```
 
----
+### Desenvolvimento com serviços locais
 
-# O que você vai construir
+Também é possível executar frontend e backend no host. Requer Java 21, Node.js 22.12 ou superior, npm e Docker Compose. Inicie somente o banco:
 
-Três telas. O layout é livre — **não entregamos Figma, API ou implementação de referência**. O desenho das telas e as decisões de produto são parte da avaliação.
+```bash
+cp .env.example .env
+docker compose up -d db
+```
 
-## 1. Cadastro de pedido de compra
+Em um terminal, carregue as variáveis e inicie a API:
 
-Um pedido de compra representa uma solicitação ao fornecedor e deve conter **um ou mais itens**. A alçada é determinada pelo **valor total do pedido**, e não pelo valor isolado de um item.
+```bash
+set -a; source .env; set +a
+./mvnw -f backend/pom.xml spring-boot:run
+```
 
+Em outro terminal, instale as dependências e inicie o Vite:
 
-### Dados gerais
+```bash
+cd frontend
+npm ci
+npm run dev
+```
 
-| Campo | Obrigatório | Comportamento esperado |
-|---|---:|---|
-| Obra | Sim | Lista as obras disponíveis para o pedido. |
-| Fornecedor | Sim | Identifica o fornecedor do pedido. |
-| Data do pedido | Sim | Data de emissão do pedido. |
-| Observações internas | Não | Campo livre para justificar ou complementar a solicitação. |
+Para encerrar o banco, execute `docker compose down` na raiz do projeto.
 
-Não é **obrigatório** criar uma tela de cadastro de fornecedor, obra ou usuário — se quiser, considere que esses dados já existem no sistema. A tela deve apenas permitir selecionar a obra e o fornecedor do pedido.
+## Testes e build
 
-### Itens do pedido
+Backend:
 
-A tela começa com um item em branco e deve permitir **adicionar, editar e remover N itens** antes do envio. Cada item deve ter, no mínimo:
+```bash
+./mvnw -f backend/pom.xml test
+```
 
-| Campo | Obrigatório | Comportamento esperado |
-|---|---:|---|
-| Descrição | Sim | Descreve claramente o material ou serviço. |
-| Quantidade | Sim | Número positivo; pode aceitar decimais. |
-| Unidade | Sim | Por exemplo: `un`, `kg`, `m`, `m²` ou `h`. |
-| Preço unitário | Sim | Valor monetário não negativo. |
-| Total do item | Calculado | `quantidade × preço unitário`; não deve ser editável diretamente. |
+Os testes de integração do backend usam Testcontainers para iniciar PostgreSQL descartável. Eles verificam cadastro e consulta dos dados de referência, persistência e substituição das regras por obra, garantias transacionais de pedidos e a idempotência da carga de demonstração. Mantenha o Docker Engine em execução ao rodar a suíte completa.
 
-O candidato pode definir a experiência de uso mais adequada — por exemplo, uma tabela expansível, um formulário por item ou um drawer — desde que a inclusão de vários itens permaneça clara.
+Frontend:
 
-### Totalização e envio
+```bash
+cd frontend
+npm ci
+npm test
+npm run build
+```
 
-A interface deve exibir o **total do pedido**, calculado pela soma dos totais dos itens. Esse é o valor usado para selecionar a regra de alçada.
+## Tecnologias
 
-O botão **Cadastrar pedido** só deve ficar disponível quando os dados gerais e todos os itens forem válidos. Ao criar o pedido, o back-end deve persistir cabeçalho, itens, total calculado e cadeia inicial de aprovação.
-## 2. Aprovação
+- **Java 21, Spring Boot 4 e Maven:** API REST organizada em controllers, services, repositories JDBC e DTOs validados. O Java oferece tipagem estática e integração direta com as ferramentas de teste e execução do Spring.
+- **Vue 3, TypeScript, Vite e npm:** interface reativa com componentes por fluxo, tipagem nas integrações e servidor de desenvolvimento com atualização rápida.
+- **PostgreSQL 17, JDBC e Flyway:** persistência relacional para manter vínculos entre pedidos, itens, faixas e histórico; migrações versionadas permitem evoluir o esquema de forma reproduzível.
+- **Docker Compose:** inicia banco, API e interface em conjunto sem exigir Java ou Node.js instalados no host. O Maven Wrapper e o `package-lock.json` fixam as ferramentas e dependências do projeto.
 
-A tela deve listar pedidos e permitir abrir os detalhes de cada um. A lista pode ser em tabela, cartões ou outra composição clara, mas deve apresentar pelo menos:
+## Estrutura
 
-| Informação por pedido | Descrição |
-|---|---|
-| Identificador, obra e fornecedor | Contexto rápido do pedido. |
-| Data, quantidade de itens e valor total | Resumo financeiro e operacional. |
-| Situação | Pendente, aprovado ou rejeitado. |
-| Alçada atual | Aprovadores concluídos, aprovador atual e próximas etapas. |
-| Ações | Aprovar ou rejeitar quando houver uma decisão disponível. |
+```text
+backend/
+  src/main/java/com/obraflow/
+    demo/                 carga explícita de dados de demonstração
+    health/               verificação da API e do banco
+    orders/               pedidos, cálculo e decisões de aprovação
+      controller/         endpoints HTTP
+      dto/                contratos de entrada e saída
+      repository/         consultas e persistência JDBC
+      service/            casos de uso e transações
+    reference/            obras, usuários, fornecedores e regras
+      controller/
+      dto/
+      repository/
+      service/
+    rules/                modelo e validação das faixas
+    shared/error/         respostas consistentes para erros da API
+  src/main/resources/db/migration/  migrações Flyway
+  src/test/                         testes unitários e de integração
 
-Nos detalhes, apresente os itens — descrição, quantidade, unidade, preço unitário e total — além do histórico de decisões. A lista de pedidos **pendentes** deve refletir o nível atual da alçada, calculado e persistido pelo back-end. A rejeição exige motivo, interrompe o fluxo e fica registrada no histórico. Quando toda a cadeia for concluída, as ações de decisão devem estar desabilitadas com uma explicação.
+frontend/
+  src/
+    features/             pedidos, aprovações, saúde e regras de alçada
+    shared/api/           cliente HTTP e tratamento de erros
+    App.vue               navegação entre as telas
+    RulesView.vue         configuração de faixas e aprovadores
+    style.css             estilos e regras responsivas
+  package.json            scripts e dependências
+  vite.config.ts          configuração do Vite
 
-## 3. Regras da alçada
+docker-compose.yml        banco, API e frontend
+```
 
-A tela deve permitir selecionar uma obra e configurar as faixas de valor que definem a cadeia de aprovação. Uma representação mínima pode ser uma tabela como esta:
+O backend mantém as regras de negócio e a persistência; o frontend consome os endpoints HTTP JSON.
+O backend inicia na porta `8080`, o frontend na `5173` e o PostgreSQL na `5432` por padrão. As portas e credenciais de desenvolvimento podem ser configuradas no `.env`, criado a partir de `.env.example`. Os valores incluídos são locais e fictícios; não são necessários serviços pagos ou credenciais externas.
 
-| Faixa de valor | Aprovadores, na ordem do fluxo | Ações |
+O Vue consulta `GET /api/health` para exibir o estado dos serviços. A API verifica a conexão ao PostgreSQL e responde com o estado da aplicação e do banco. Flyway aplica as migrações versionadas na inicialização. Os dados de demonstração são carregados somente quando o perfil `demo-data` é ativado explicitamente.
+
+## Capturas de tela
+
+As imagens abaixo foram capturadas com Playwright no Google Chrome instalado localmente, usando os dados de demonstração. O formulário foi preenchido sem enviar um pedido.
+
+### Cadastro de pedido
+
+![Tela de cadastro de pedido com itens e total calculado](assets/screenshots/cadastro-pedido.png)
+
+### Aprovações
+
+![Lista de pedidos e detalhe de um pedido pendente na primeira etapa](assets/screenshots/aprovacoes.png)
+
+### Regras da alçada
+
+![Faixas de valor e aprovadores configurados em ordem](assets/screenshots/regras-alcada.png)
+
+## API resumida
+
+A API usa JSON e está disponível em `http://localhost:8080` no Compose. Os endpoints de leitura retornam `200 OK`; criações retornam `201 Created`; a substituição das regras retorna a lista salva. `GET /api/health` informa a saúde da API e do banco.
+
+| Método | Endpoint | Uso |
 |---|---|---|
-| Até R$ 10.000,00 | Amanda | Editar / remover |
-| Acima de R$ 10.000,00 | Amanda → João | Editar / remover |
+| `GET`, `POST` | `/api/works` | Listar e cadastrar obras (`name`, `code`) |
+| `GET`, `POST` | `/api/users` | Listar e cadastrar aprovadores (`name`, `email`) |
+| `GET`, `POST` | `/api/suppliers` | Listar e cadastrar fornecedores (`name`, `taxId`) |
+| `GET`, `PUT` | `/api/works/{workId}/approval-bands` | Consultar e substituir as faixas completas da obra |
+| `GET` | `/api/orders` | Listar pedidos, totais, estados, cadeia e histórico |
+| `GET` | `/api/orders/{id}` | Consultar um pedido e seus detalhes |
+| `POST` | `/api/orders` | Criar pedido, itens e fotografia da alçada |
+| `POST` | `/api/orders/{id}/decisions` | Aprovar ou rejeitar na etapa atual |
 
-A interface deve listar usuários disponíveis e permitir:
+Exemplo para substituir as regras de uma obra com `PUT /api/works/1/approval-bands`:
 
-* criar, editar e remover níveis/faixas de alçada;
-* definir o limite de valor de cada faixa;
-* adicionar, remover e reordenar aprovadores em cada faixa;
-* listar as regras já salvas para a obra selecionada.
+```json
+[
+  { "minAmount": 0, "maxAmount": 10000, "approverIds": [1] },
+  { "minAmount": 10000, "maxAmount": null, "approverIds": [1, 2] }
+]
+```
 
-O comportamento para valores sem regra aplicável deve ser definido e documentado pelo candidato — por exemplo, impedir o envio do pedido com uma mensagem clara.
+Exemplo de `POST /api/orders`:
 
----
+```json
+{
+  "workId": 1,
+  "supplierId": 1,
+  "orderDate": "2026-11-01",
+  "items": [
+    { "description": "Cimento CP-II", "quantity": 20, "unit": "sc", "unitPrice": 38.9 }
+  ]
+}
+```
 
-# Validações e erros (exigidos)
+Exemplo de decisão:
 
-| Situação | Comportamento esperado |
-|---|---|
-| Quantidade ou preço unitário inválido, negativo ou não numérico | erro no item correspondente, mensagem compreensível, não envia |
-| Pedido sem itens | erro claro; não envia |
-| Campos obrigatórios vazios (obra, fornecedor, data ou descrição de item) | erro no campo correspondente; não envia |
-| Nenhuma obra cadastrada | empty state amigável, não tela branca |
-| API fora do ar / 500 | estado de erro com opção de tentar novamente |
-| Rejeitar sem motivo | validação antes do submit |
-| Cadeia de alçada já concluída | botão de decisão desabilitado + explicação |
+```json
+{ "approverId": 1, "outcome": "APPROVED" }
+```
 
-Loading state é obrigatório em toda lista.
+O retorno dos endpoints de pedido inclui itens e totais calculados, estado, faixa aplicada, aprovadores ordenados e decisões registradas. Para rejeitar, envie `outcome: "REJECTED"` e um `reason` não vazio. O backend confere se `approverId` corresponde ao aprovador atual. Uma requisição inválida retorna `400` com Problem Details, por exemplo `{"title":"Requisição inválida","status":400,"detail":"Adicione pelo menos um item ao pedido."}`. Recursos inexistentes retornam `404`, conflitos de unicidade `409`, e erros inesperados `500` com uma mensagem genérica. Os detalhes técnicos permanecem nos logs do servidor.
 
----
+## Decisões técnicas
 
-# 📦 Como entregar (Prazo: 01/11/2026 às 23:59)
-O repositório deve conter instruções claras para instalar dependências, configurar o ambiente e iniciar a solução completa (front-end, back-end e banco de dados, quando aplicável). O método de execução é livre; `docker compose` é aceito, mas não obrigatório.
+### Modelagem e cálculo da alçada
 
-Repositório deve conter:
+Cada obra tem uma sequência ordenada de faixas de valor. As faixas usam o intervalo `[mínimo, máximo)`: incluem o limite mínimo e excluem o máximo. A configuração começa em R$ 0,00, não permite lacunas nem sobreposições e termina com limite superior aberto (`maxAmount: null`). Assim, qualquer total não negativo corresponde a uma única faixa; um total exatamente igual ao limite passa para a faixa seguinte. A faixa precisa ter ao menos um aprovador ativo, e as posições determinam a ordem de decisão.
 
-* código-fonte do front-e˝nd e do back-end;
-* dados de demonstração e instruções para criá-los ou carregá-los;
-* `README.md` com explicando:
-  * screenshots das telas;
-  * as tecnologias escolhidas e os motivos da escolha;
-  * como a regra de alçada é modelada, calculada e persistida;
-  * como o front-end se comunica com o back-end;
-  * como a consistência e a integridade dos dados são garantidas;
-  * o que mudaria em produção;
-1. Faça um **Fork** deste repositório (`https://github.com/ObraFlow/obraflow-case`).
-2. Abra um **Pull Request (PR)** para este repositório até **01/11/2026 às 23:59**.
-3. **Importante:** Na descrição do seu Pull Request, deixe seu **e-mail e telefone (WhatsApp)** para contato!
+O backend calcula o total do pedido somando os itens já arredondados para centavos com `HALF_UP`; a quantidade aceita até três casas decimais e o preço unitário até duas. O total consolidado seleciona a faixa para a obra informada. O cliente não envia totais nem escolhe a alçada. Se a obra não tiver faixa aplicável, a API rejeita a criação com `400` e uma mensagem para configurar as regras.
 
----
+```mermaid
+flowchart TD
+    A[Pedido e itens recebidos] --> B[Backend recalcula os totais dos itens]
+    B --> C[Soma dos itens arredondados: total do pedido]
+    C --> D[Seleciona uma faixa da obra: mínimo incluso, máximo excluído]
+    D --> E{Faixa aplicável?}
+    E -- Não --> F[Rejeita a criação e orienta configurar as regras]
+    E -- Sim --> G[Salva pedido e fotografia ordenada dos aprovadores]
+    G --> H[Etapa atual decide]
+    H --> I{Resultado}
+    I -- Rejeitado com motivo --> J[Encerra como rejeitado e registra o histórico]
+    I -- Aprovado, há próxima etapa --> K[Avança para o próximo aprovador]
+    K --> H
+    I -- Aprovado, última etapa --> L[Encerra como aprovado]
+```
 
-# Avaliação
+Ao criar o pedido, o backend persiste em uma transação o cabeçalho, os itens, a faixa escolhida e uma fotografia ordenada dos IDs, nomes e e-mails dos aprovadores. Alterações futuras nas regras afetam somente pedidos novos. A aprovação bloqueia a linha do pedido durante a transação, valida o ator e a posição atual, grava a decisão e avança ou encerra o fluxo. Rejeições exigem motivo e terminam a cadeia.
 
-| Critério | Peso |
-|---|---:|
-| Funcionamento completo: front-end, back-end e persistência | 25% |
-| Modelagem e implementação das regras de alçada | 20% |
-| Qualidade de código, organização e decisões técnicas | 15% |
-| **Desenho de UI: hierarquia, clareza, consistência** | 20% |
-| Estados (loading / empty / erro), responsividade e validações | 10% |
-| Documentação (`## Decisões técnicas`) | 10% |
+### Comunicação entre frontend e backend
 
-IA é permitida — mas você precisará explicar cada decisão na entrevista de 30 min.
+O Vue usa HTTP com JSON e os endpoints descritos na seção de API deste README. A URL da API no frontend é configurável por `VITE_API_BASE_URL` (no Compose, por padrão, `http://localhost:8080`). O backend limita CORS à origem configurada em `FRONTEND_ORIGIN`. Respostas de erro seguem Problem Details com `title`, `status` e `detail`; detalhes internos de exceções não são enviados ao cliente.
 
----
+### Consistência e integridade
 
-## Contato
+O PostgreSQL mantém chaves estrangeiras, restrições únicas e tipos decimais para os dados persistidos. Flyway aplica as migrações numeradas na inicialização. A substituição das regras ocorre atomicamente, e pedidos/itens/fotografia da alçada são gravados na mesma transação. Decisões também atualizam estado e histórico na mesma transação, com bloqueio do pedido para serializar atualizações concorrentes. Validações de formato e regras de negócio são repetidas no backend; o frontend complementa essas validações para orientar o preenchimento.
 
+### O que mudaria em produção
 
-**Jonathan Bispo**  
-WhatsApp: [+55 71 99204-4335](https://wa.me/5571992044335)  
-E-mail: [contrato@obraflow.io](mailto:contrato@obraflow.io)
+- Versionaria as regras de alçada: cada alteração registraria autor, data e mudanças, e cada pedido apontaria para a versão usada. Isso permitiria explicar como a aprovação foi definida.
+- Notificaria o próximo aprovador por e-mail ou dentro do sistema e enviaria lembretes para pedidos parados, reduzindo a necessidade de consultar a lista manualmente.
+- Adicionaria paginação e filtros à API de pedidos — por estado, obra, período e aprovador atual — para manter as consultas rápidas conforme o histórico cresce.
+- Cobriria os fluxos de criar, aprovar e rejeitar com testes ponta a ponta; uma pipeline executaria testes e build a cada alteração antes da publicação.
+- Associaria cada decisão à identidade autenticada, removendo o `approverId` informado pela interface demonstrativa, e aplicaria autorização por obra e papel.
+- Manteria credenciais fora do código, usaria conexões protegidas por TLS e limitaria as permissões no banco para reduzir vazamentos e o impacto de acessos indevidos.
