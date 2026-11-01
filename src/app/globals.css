@@ -2,7 +2,18 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+/* Rede de segurança: nenhuma decisão visual usa `dark:` (só tokens mudam, ver abaixo). Se
+   algum componente do shadcn ainda trouxer a variante, ela segue o mesmo critério dos tokens. */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *) {
+      @slot;
+    }
+  }
+}
 
 /* Tokens da identidade "Canteiro". Fonte da verdade: docs/design.md. */
 @theme inline {
@@ -41,14 +52,23 @@
   --color-card: var(--card);
   /* Cores próprias do produto (classes bg-sinalizacao, text-aprovado, border-rejeitado...). */
   --color-sinalizacao: var(--sinalizacao);
+  --color-sinalizacao-foreground: var(--sinalizacao-foreground);
   --color-sinalizacao-fundo: var(--sinalizacao-fundo);
+  --color-sinalizacao-acao: var(--sinalizacao-acao);
+  --color-sinalizacao-acao-foreground: var(--sinalizacao-acao-foreground);
+  --color-skeleton: var(--skeleton);
   --color-aprovado: var(--aprovado);
   --color-aprovado-fundo: var(--aprovado-fundo);
   --color-rejeitado: var(--rejeitado);
   --color-rejeitado-fundo: var(--rejeitado-fundo);
-  --color-rejeitado-texto-escuro: var(--rejeitado-texto-escuro);
+  --color-rejeitado-texto: var(--rejeitado-texto);
   --color-linha: var(--linha);
   --color-cancelado: var(--cancelado);
+  /* Texto sobre preenchimento (--foreground ou --rejeitado), header e backdrop do dialog. */
+  --color-on-color: var(--on-color);
+  --color-header: var(--header);
+  --color-header-foreground: var(--header-foreground);
+  --color-overlay: var(--overlay);
   /* Raio 2px em tudo (docs/design.md): sm e md não encolhem como no shadcn padrão. */
   --radius-sm: var(--radius);
   --radius-md: var(--radius);
@@ -60,6 +80,7 @@
 }
 
 :root {
+  color-scheme: light;
   --background: #e9e7e2;
   --foreground: #23211e;
   --card: #ffffff;
@@ -95,22 +116,153 @@
 
   /* Só onde o usuário atual precisa agir. Nunca decoração. */
   --sinalizacao: #f2b300;
+  /* Texto sobre o amarelo. Nunca --foreground: no tema escuro ele é claro. */
+  --sinalizacao-foreground: #23211e;
   --sinalizacao-fundo: #fff3c4;
+  /* Botão primário sobre a faixa amarela: a tinta mais forte do tema e o texto sobre ela.
+     Não é --primary de propósito: no escuro --primary é claro e sumiria no amarelo. */
+  --sinalizacao-acao: #23211e;
+  --sinalizacao-acao-foreground: #ffffff;
+  /* Skeleton: igual a --muted no claro; no escuro --muted some sobre o card (1,1:1). */
+  --skeleton: #f4f2ee;
   --aprovado: #2f6b3a;
   --aprovado-fundo: #e3efe3;
   --rejeitado: #a33a2a;
   --rejeitado-fundo: #f7e6e2;
-  --rejeitado-texto-escuro: #6e2419;
+  --rejeitado-texto: #6e2419;
   /* Separador de linhas de tabela e texto de nível cancelado (4,6:1 sobre branco). */
   --linha: #e3e0d9;
   --cancelado: #7a746a;
+  /* Texto sobre preenchimento --foreground ou --rejeitado (bloco aprovou/rejeitou, botão). */
+  --on-color: #ffffff;
+  --header: #23211e;
+  --header-foreground: #ffffff;
+  --overlay: rgb(35 33 30 / 0.3);
 }
 
-/* Modo escuro não está desenhado (docs/design.md). Sem bloco .dark de propósito. */
+/*
+ * Tema escuro: só tokens mudam. Regras, classes e keyframes são os mesmos (docs/design.md >
+ * Tema escuro). "Concreto à noite": fundos quase pretos e quentes, texto quase branco, o mesmo
+ * amarelo de sinalização. Contraste AA conferido em cada par texto/fundo.
+ *
+ * O bloco aparece duas vezes, idêntico, de propósito. CSS não tem como escrever em uma regra
+ * só "escuro se data-theme=dark OU (sistema escuro E sem data-theme=light)": a primeira cópia
+ * atende à preferência do sistema quando a pessoa não escolheu nada (e vale antes de qualquer
+ * JavaScript rodar); a segunda atende à escolha explícita no seletor do header. Qualquer
+ * mudança de token vale para as duas.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --background: #1c1b19;
+    --foreground: #ece9e3;
+    --card: #262523;
+    --card-foreground: #ece9e3;
+    --popover: #262523;
+    --popover-foreground: #ece9e3;
+    --primary: #ece9e3;
+    --primary-foreground: #1c1b19;
+    --secondary: #2f2d2a;
+    --secondary-foreground: #ece9e3;
+    --muted: #2f2d2a;
+    --muted-foreground: #a8a196;
+    --accent: #2f2d2a;
+    --accent-foreground: #ece9e3;
+    --destructive: #e8907e;
+    --border: #403d39;
+    --input: #403d39;
+    --ring: #f2b300;
+    --chart-1: #403d39;
+    --chart-2: #625d55;
+    --chart-3: #9a948a;
+    --chart-4: #cfcac1;
+    --chart-5: #ece9e3;
+    --sidebar: #262523;
+    --sidebar-foreground: #ece9e3;
+    --sidebar-primary: #ece9e3;
+    --sidebar-primary-foreground: #1c1b19;
+    --sidebar-accent: #2f2d2a;
+    --sidebar-accent-foreground: #ece9e3;
+    --sidebar-border: #403d39;
+    --sidebar-ring: #f2b300;
+
+    --sinalizacao: #f2b300;
+    --sinalizacao-foreground: #1c1b19;
+    --sinalizacao-fundo: #4a3a08;
+    --sinalizacao-acao: #1c1b19;
+    --sinalizacao-acao-foreground: #ece9e3;
+    --skeleton: #3a3733;
+    --aprovado: #8ccb97;
+    --aprovado-fundo: #1e3323;
+    --rejeitado: #e8907e;
+    --rejeitado-fundo: #3f1f19;
+    --rejeitado-texto: #f3b9ac;
+    --linha: #33312e;
+    --cancelado: #9a9388;
+    --on-color: #1c1b19;
+    --header: #121110;
+    --header-foreground: #ece9e3;
+    --overlay: rgb(0 0 0 / 0.6);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #1c1b19;
+  --foreground: #ece9e3;
+  --card: #262523;
+  --card-foreground: #ece9e3;
+  --popover: #262523;
+  --popover-foreground: #ece9e3;
+  --primary: #ece9e3;
+  --primary-foreground: #1c1b19;
+  --secondary: #2f2d2a;
+  --secondary-foreground: #ece9e3;
+  --muted: #2f2d2a;
+  --muted-foreground: #a8a196;
+  --accent: #2f2d2a;
+  --accent-foreground: #ece9e3;
+  --destructive: #e8907e;
+  --border: #403d39;
+  --input: #403d39;
+  --ring: #f2b300;
+  --chart-1: #403d39;
+  --chart-2: #625d55;
+  --chart-3: #9a948a;
+  --chart-4: #cfcac1;
+  --chart-5: #ece9e3;
+  --sidebar: #262523;
+  --sidebar-foreground: #ece9e3;
+  --sidebar-primary: #ece9e3;
+  --sidebar-primary-foreground: #1c1b19;
+  --sidebar-accent: #2f2d2a;
+  --sidebar-accent-foreground: #ece9e3;
+  --sidebar-border: #403d39;
+  --sidebar-ring: #f2b300;
+
+  --sinalizacao: #f2b300;
+  --sinalizacao-foreground: #1c1b19;
+  --sinalizacao-fundo: #4a3a08;
+  --sinalizacao-acao: #1c1b19;
+  --sinalizacao-acao-foreground: #ece9e3;
+  --skeleton: #3a3733;
+  --aprovado: #8ccb97;
+  --aprovado-fundo: #1e3323;
+  --rejeitado: #e8907e;
+  --rejeitado-fundo: #3f1f19;
+  --rejeitado-texto: #f3b9ac;
+  --linha: #33312e;
+  --cancelado: #9a9388;
+  --on-color: #1c1b19;
+  --header: #121110;
+  --header-foreground: #ece9e3;
+  --overlay: rgb(0 0 0 / 0.6);
+}
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    /* ring-offset-card: sem isso o offset do anel de foco é branco fixo e vira halo no escuro. */
+    @apply border-border ring-offset-card outline-ring/50;
   }
   body {
     /* Corpo 14px / 1.4 (docs/design.md > Tipografia). */
@@ -118,6 +270,8 @@
   }
   html {
     @apply font-sans;
+    /* Espaço da barra de rolagem sempre reservado: a largura não muda entre páginas. */
+    scrollbar-gutter: stable;
   }
   /* Seleção de texto no fundo claro da sinalização: é o usuário agindo. */
   ::selection {
@@ -130,15 +284,15 @@
 @keyframes cadeia-preenche {
   0% {
     background-size: 0 100%;
-    color: var(--foreground);
+    color: var(--sinalizacao-foreground);
     border-color: var(--sinalizacao);
   }
   55% {
-    color: var(--foreground);
+    color: var(--sinalizacao-foreground);
   }
   100% {
     background-size: 100% 100%;
-    color: #ffffff;
+    color: var(--on-color);
     border-color: var(--foreground);
   }
 }
@@ -146,29 +300,29 @@
 @keyframes cadeia-preenche-rejeicao {
   0% {
     background-size: 0 100%;
-    color: var(--foreground);
+    color: var(--sinalizacao-foreground);
     border-color: var(--sinalizacao);
   }
   55% {
-    color: var(--foreground);
+    color: var(--sinalizacao-foreground);
   }
   100% {
     background-size: 100% 100%;
-    color: #ffffff;
+    color: var(--on-color);
     border-color: var(--rejeitado);
   }
 }
 
 @keyframes cadeia-acende {
   0% {
-    background-color: #ffffff;
+    background-color: var(--card);
     border-color: var(--border);
     color: var(--muted-foreground);
   }
   100% {
     background-color: var(--sinalizacao);
     border-color: var(--sinalizacao);
-    color: var(--foreground);
+    color: var(--sinalizacao-foreground);
   }
 }
 

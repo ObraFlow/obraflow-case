@@ -26,7 +26,7 @@ export async function ContadorPendencias() {
   return (
     <span
       title={rotulo}
-      className="rounded-sm bg-sinalizacao px-1.5 text-[11px] leading-[18px] font-bold text-foreground tabular-nums"
+      className="rounded-sm bg-sinalizacao px-1.5 text-[11px] leading-[18px] font-bold text-sinalizacao-foreground tabular-nums"
     >
       <span aria-hidden="true">{pendentes.length}</span>
       <span className="sr-only">{rotulo}</span>

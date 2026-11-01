@@ -21,7 +21,7 @@ export function ErroDeRota({
   }, [error]);
 
   return (
-    <div className="flex flex-col gap-3 rounded-sm border border-rejeitado bg-rejeitado-fundo p-5 text-rejeitado-texto-escuro">
+    <div className="flex flex-col gap-3 rounded-sm border border-rejeitado bg-rejeitado-fundo p-5 text-rejeitado-texto">
       <div>
         {/* O boundary substitui a página inteira, então o título do erro é o h1 da página. */}
         <h1 className="text-2xl font-bold tracking-[-0.015em]">{titulo}</h1>

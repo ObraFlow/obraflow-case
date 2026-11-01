@@ -23,9 +23,9 @@ export async function AgindoComo() {
 export function AgindoComoSkeleton() {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-sm text-white/75 max-sm:sr-only">Agindo como</span>
-      <Skeleton className="h-10 w-40 rounded-sm bg-white/20 sm:h-8 sm:w-44" />
-      <Skeleton className="size-10 rounded-sm bg-white/20 sm:size-8" />
+      <span className="text-sm text-header-foreground/75 max-sm:sr-only">Agindo como</span>
+      <Skeleton className="h-10 w-40 bg-header-foreground/20 sm:h-8 sm:w-44" />
+      <Skeleton className="size-10 bg-header-foreground/20 sm:size-8" />
     </div>
   );
 }
@@ -39,7 +39,7 @@ export async function AvisoSemUsuario() {
   if (atualId !== null) return null;
 
   return (
-    <div className="bg-sinalizacao text-foreground">
+    <div className="bg-sinalizacao text-sinalizacao-foreground">
       <p className="mx-auto max-w-[1200px] px-4 py-2 text-sm font-medium sm:px-8">
         Escolha no seletor &ldquo;Agindo como&rdquo; quem está usando o sistema para ver suas
         pendências e decidir pedidos.

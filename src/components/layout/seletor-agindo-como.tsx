@@ -36,7 +36,7 @@ export function SeletorAgindoComo({
           os 343px, e o seletor já diz o que é pelo nome escolhido. */}
       <label
         htmlFor="agindo-como"
-        className="text-sm whitespace-nowrap text-white/75 max-sm:sr-only"
+        className="text-sm whitespace-nowrap text-header-foreground/75 max-sm:sr-only"
       >
         Agindo como
       </label>
@@ -47,7 +47,7 @@ export function SeletorAgindoComo({
         disabled={isPending}
         aria-busy={isPending}
         onChange={(evento) => execute({ usuarioId: Number(evento.target.value) })}
-        className="h-10 max-w-36 rounded-sm border border-white/30 bg-card pr-7 pl-2 text-sm text-foreground transition-opacity focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-60 sm:h-8 sm:max-w-48"
+        className="h-10 max-w-36 rounded-sm border border-header-foreground/30 bg-card pr-7 pl-2 text-sm text-foreground transition-opacity focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-60 sm:h-8 sm:max-w-48"
       >
         <option value="" disabled>
           Selecione quem você é

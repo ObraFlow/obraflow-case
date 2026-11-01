@@ -109,15 +109,15 @@ export function SinoPendencias({ usuarioAtualId }: { usuarioAtualId: number }) {
         aria-label={rotulo}
         title={falhou ? rotulo : undefined}
         className={cn(
-          "relative flex size-10 items-center justify-center rounded-sm transition-colors hover:text-white focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:size-8",
-          falhou ? "text-white/45" : "text-white/85",
+          "relative flex size-10 items-center justify-center rounded-sm transition-colors hover:text-header-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:size-8",
+          falhou ? "text-header-foreground/45" : "text-header-foreground/85",
         )}
       >
         <Bell className="size-5" aria-hidden="true" />
         {total > 0 && (
           <span
             aria-hidden="true"
-            className="absolute -top-0.5 -right-0.5 min-w-[18px] rounded-sm bg-sinalizacao px-1 text-center text-[11px] leading-[18px] font-bold text-foreground tabular-nums"
+            className="absolute -top-0.5 -right-0.5 min-w-[18px] rounded-sm bg-sinalizacao px-1 text-center text-[11px] leading-[18px] font-bold text-sinalizacao-foreground tabular-nums"
           >
             {total}
           </span>
@@ -140,7 +140,9 @@ export function SinoPendencias({ usuarioAtualId }: { usuarioAtualId: number }) {
                   className="flex items-baseline justify-between gap-3 px-4 py-2.5 hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
                 >
                   <span className="min-w-0">
-                    <span className="font-semibold tabular-nums">#{pedido.id}</span>{" "}
+                    <span className="font-semibold font-stretch-[112%] tabular-nums">
+                      #{pedido.id}
+                    </span>{" "}
                     <span className="block truncate text-xs text-muted-foreground sm:inline">
                       {pedido.obraNome}
                     </span>

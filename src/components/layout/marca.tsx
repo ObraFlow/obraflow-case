@@ -21,12 +21,18 @@ export function SimboloMarca({ className }: { className?: string }) {
   );
 }
 
-/** Símbolo + wordmark "ObraFlow" em Archivo expandida (125% de largura). */
+/**
+ * Símbolo + wordmark "ObraFlow" em Archivo expandida (125% de largura). No celular só o
+ * símbolo: com seletor, sino e tema, o header de 343px não cabe o nome (o link que envolve a
+ * marca já diz "ObraFlow" no aria-label).
+ */
 export function Marca({ className }: { className?: string }) {
   return (
     <span className={cn("inline-flex items-center gap-2", className)}>
       <SimboloMarca />
-      <span className="text-base font-bold tracking-[-0.01em] font-stretch-125%">ObraFlow</span>
+      <span className="text-base font-bold tracking-[-0.01em] font-stretch-125% max-sm:hidden">
+        ObraFlow
+      </span>
     </span>
   );
 }

@@ -14,7 +14,7 @@ const archivo = Archivo({
 export const metadata: Metadata = {
   // URL pública do deploy: transforma o caminho da imagem Open Graph em URL absoluta.
   metadataBase: new URL("https://obraflow-theta.vercel.app"),
-  title: "ObraFlow",
+  title: { default: "ObraFlow", template: "%s — ObraFlow" },
   description: "Pedidos de compra com aprovação por alçada.",
   openGraph: {
     title: "ObraFlow",
@@ -24,9 +24,27 @@ export const metadata: Metadata = {
   },
 };
 
+// Aplica a preferência de tema salva antes do primeiro paint, para a página não piscar clara
+// e depois escurecer. Roda no <head>, antes do CSS pintar; a mesma leitura vive em
+// components/layout/tema.ts. "sistema" não grava nada: o CSS segue prefers-color-scheme.
+const SCRIPT_TEMA = `(function () {
+  try {
+    var tema = localStorage.getItem("obraflow:tema");
+    if (tema === "light" || tema === "dark") document.documentElement.setAttribute("data-theme", tema);
+  } catch (erro) {}
+})();`;
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="pt-BR" className={`${archivo.variable} h-full antialiased`}>
+    // suppressHydrationWarning: o script acima põe data-theme no <html> antes do React hidratar.
+    <html
+      lang="pt-BR"
+      className={`${archivo.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: SCRIPT_TEMA }} />
+      </head>
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );

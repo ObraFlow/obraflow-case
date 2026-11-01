@@ -30,7 +30,7 @@ export function CabecalhoPagina({
           <span
             className={cn(
               "text-2xl leading-none font-bold tabular-nums",
-              destaque.suaVez && "rounded-sm bg-sinalizacao px-1.5",
+              destaque.suaVez && "rounded-sm bg-sinalizacao px-1.5 text-sinalizacao-foreground",
             )}
           >
             {destaque.valor}

@@ -1,8 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
-  <!-- Favicon do ObraFlow: o símbolo da marca (components/layout/marca.tsx) sobre o concreto. -->
-  <rect width="32" height="32" rx="2" fill="#E9E7E2" />
-  <g fill="#23211E" transform="translate(6 6)">
-    <rect x="1" y="8" width="11" height="11" />
-    <rect x="8" y="1" width="11" height="11" fill="none" stroke="#23211E" stroke-width="2" />
+  <!-- Favicon do ObraFlow: o símbolo da marca (components/layout/marca.tsx) sobre o concreto.
+       Segue o tema do sistema (o favicon não vê a escolha feita no header). -->
+  <style>
+    .fundo { fill: #E9E7E2; }
+    .simbolo { fill: #23211E; }
+    .contorno { stroke: #23211E; }
+    @media (prefers-color-scheme: dark) {
+      .fundo { fill: #1C1B19; }
+      .simbolo { fill: #ECE9E3; }
+      .contorno { stroke: #ECE9E3; }
+    }
+  </style>
+  <rect class="fundo" width="32" height="32" rx="2" />
+  <g transform="translate(6 6)">
+    <rect class="simbolo" x="1" y="8" width="11" height="11" />
+    <rect class="contorno" x="8" y="1" width="11" height="11" fill="none" stroke-width="2" />
   </g>
 </svg>

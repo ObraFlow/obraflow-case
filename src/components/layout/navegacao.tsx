@@ -69,8 +69,8 @@ export function ListaNavegacao({
             className={cn(
               "flex items-center gap-2 border-b-[3px] px-3 text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset",
               ativo
-                ? "border-sinalizacao text-white"
-                : "border-transparent text-white/75 hover:text-white",
+                ? "border-sinalizacao text-header-foreground"
+                : "border-transparent text-header-foreground/75 hover:text-header-foreground",
             )}
           >
             {item.rotulo}
