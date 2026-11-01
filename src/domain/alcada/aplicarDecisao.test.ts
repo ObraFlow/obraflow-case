@@ -1,19 +1,30 @@
 import { describe, expect, it } from "vitest";
-import { ConflitoDeDecisao, DecisaoForaDeOrdem, MotivoObrigatorio } from "../erros";
+import {
+  ConflitoDeDecisao,
+  DecisaoForaDeOrdem,
+  MotivoObrigatorio,
+  SegregacaoDeFuncoes,
+} from "../erros";
 import { aplicarDecisao } from "./aplicarDecisao";
 import type { AprovacaoSnapshot, EstadoAprovacao } from "./tipos";
 
 const JOAO = 1;
 const AMANDA = 2;
 const CARLA = 3;
+const RAFAEL = 5;
 
 function pendente(ordem: number, aprovadorId: number): AprovacaoSnapshot {
   return { ordem, aprovadorId, status: "PENDENTE", motivo: null };
 }
 
-/** Pedido recém-criado na faixa alta do enunciado: João → Amanda. */
+/** Pedido recém-criado por Rafael na faixa alta do enunciado: João → Amanda. */
 function pedidoNovo(): EstadoAprovacao {
-  return { status: "PENDENTE", stepAtual: 0, cadeia: [pendente(0, JOAO), pendente(1, AMANDA)] };
+  return {
+    status: "PENDENTE",
+    stepAtual: 0,
+    cadeia: [pendente(0, JOAO), pendente(1, AMANDA)],
+    criadoPorId: RAFAEL,
+  };
 }
 
 const APROVAR = { tipo: "APROVAR" } as const;
@@ -41,6 +52,7 @@ describe("aplicarDecisao — aprovar", () => {
       status: "PENDENTE",
       stepAtual: 0,
       cadeia: [pendente(0, JOAO)],
+      criadoPorId: RAFAEL,
     };
     const depois = aplicarDecisao(estado, APROVAR, JOAO);
     expect(depois.status).toBe("APROVADO");
@@ -135,7 +147,26 @@ describe("aplicarDecisao — conflito (duas decisões ao mesmo tempo)", () => {
       status: "PENDENTE",
       stepAtual: 0,
       cadeia: [{ ...pendente(0, JOAO), status: "APROVADA" }, pendente(1, AMANDA)],
+      criadoPorId: RAFAEL,
     };
     expect(() => aplicarDecisao(estadoVelho, APROVAR, JOAO)).toThrow(ConflitoDeDecisao);
+  });
+});
+
+describe("aplicarDecisao — segregação de funções", () => {
+  it("quem cadastrou o pedido não aprova, mesmo sendo o aprovador da vez", () => {
+    const cadastradoPorJoao: EstadoAprovacao = { ...pedidoNovo(), criadoPorId: JOAO };
+    expect(() => aplicarDecisao(cadastradoPorJoao, APROVAR, JOAO)).toThrow(SegregacaoDeFuncoes);
+    expect(() => aplicarDecisao(cadastradoPorJoao, REJEITAR, JOAO)).toThrow(SegregacaoDeFuncoes);
+  });
+
+  it("quem cadastrou e nem está na cadeia recebe o erro de segregação, não o de ordem", () => {
+    const cadastradoPorCarla: EstadoAprovacao = { ...pedidoNovo(), criadoPorId: CARLA };
+    expect(() => aplicarDecisao(cadastradoPorCarla, APROVAR, CARLA)).toThrow(SegregacaoDeFuncoes);
+  });
+
+  it("outra pessoa da cadeia decide normalmente um pedido cadastrado por terceiro", () => {
+    const cadastradoPorCarla: EstadoAprovacao = { ...pedidoNovo(), criadoPorId: CARLA };
+    expect(aplicarDecisao(cadastradoPorCarla, APROVAR, JOAO).stepAtual).toBe(1);
   });
 });

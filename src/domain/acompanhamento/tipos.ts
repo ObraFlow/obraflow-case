@@ -21,3 +21,13 @@ export type PedidoAcompanhado = {
   criadoEm: number;
   aprovacoes: ReadonlyArray<AprovacaoAcompanhada>;
 };
+
+/**
+ * O mesmo pedido com autoria e fornecedor: o que a lista de movimentações e o ranking de
+ * fornecedores precisam além da cadeia. `origemId` aponta o pedido rejeitado que este refaz.
+ */
+export type PedidoAcompanhadoCompleto = PedidoAcompanhado & {
+  criadoPorId: number;
+  fornecedorId: number;
+  origemId: number | null;
+};

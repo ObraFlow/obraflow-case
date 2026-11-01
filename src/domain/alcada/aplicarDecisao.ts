@@ -1,4 +1,9 @@
-import { ConflitoDeDecisao, DecisaoForaDeOrdem, MotivoObrigatorio } from "../erros";
+import {
+  ConflitoDeDecisao,
+  DecisaoForaDeOrdem,
+  MotivoObrigatorio,
+  SegregacaoDeFuncoes,
+} from "../erros";
 import type { AprovacaoSnapshot, Decisao, EstadoAprovacao } from "./tipos";
 
 /**
@@ -10,7 +15,8 @@ import type { AprovacaoSnapshot, Decisao, EstadoAprovacao } from "./tipos";
  * Regras (decisões de produto 4, 5 e 6):
  * - só o aprovador do step atual decide, e só enquanto o step está PENDENTE;
  * - aprovar avança `stepAtual`; quando passa do último nível, o pedido fica APROVADO;
- * - rejeitar exige motivo, marca o step como REJEITADA, cancela os seguintes e encerra o pedido.
+ * - rejeitar exige motivo, marca o step como REJEITADA, cancela os seguintes e encerra o pedido;
+ * - quem cadastrou o pedido não decide sobre ele, mesmo que esteja na cadeia (segregação de funções).
  */
 export function aplicarDecisao(
   estado: EstadoAprovacao,
@@ -33,6 +39,12 @@ export function aplicarDecisao(
   if (stepAtual.status !== "PENDENTE") {
     // O estado diz que o step é a vez, mas ele já foi decidido: outra decisão chegou antes.
     throw new ConflitoDeDecisao();
+  }
+
+  if (estado.criadoPorId === usuarioId) {
+    throw new SegregacaoDeFuncoes(
+      "O pedido foi cadastrado por você; a decisão cabe a outra pessoa.",
+    );
   }
 
   if (stepAtual.aprovadorId !== usuarioId) {
@@ -58,6 +70,7 @@ function aprovar(estado: EstadoAprovacao, step: AprovacaoSnapshot): EstadoAprova
     status: terminou ? "APROVADO" : "PENDENTE",
     stepAtual: proximoStep,
     cadeia,
+    criadoPorId: estado.criadoPorId,
   };
 }
 
@@ -86,5 +99,6 @@ function rejeitar(
     status: "REJEITADO",
     stepAtual: estado.stepAtual,
     cadeia,
+    criadoPorId: estado.criadoPorId,
   };
 }

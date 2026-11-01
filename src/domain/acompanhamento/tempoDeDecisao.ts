@@ -1,4 +1,5 @@
 import { chegouNaMesa } from "./chegouNaMesa";
+import { instanteDeEncerramento } from "./encerramento";
 import type { PedidoAcompanhado } from "./tipos";
 
 export type TempoAprovador = {
@@ -61,12 +62,8 @@ export function tempoPorObra(pedidos: ReadonlyArray<PedidoAcompanhado>): TempoOb
   const acumulados = new Map<number, Acumulado>();
 
   for (const pedido of pedidos) {
-    if (pedido.status === "PENDENTE") continue;
-    const instantes = pedido.aprovacoes
-      .map((aprovacao) => aprovacao.decididoEm)
-      .filter((instante): instante is number => instante !== null);
-    if (instantes.length === 0) continue;
-    const encerramento = Math.max(...instantes);
+    const encerramento = instanteDeEncerramento(pedido);
+    if (encerramento === null) continue;
     acumular(acumulados, pedido.obraId, Math.max(0, encerramento - pedido.criadoEm));
   }
 

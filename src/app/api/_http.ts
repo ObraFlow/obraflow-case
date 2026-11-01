@@ -25,10 +25,13 @@ const STATUS_POR_CODIGO: Record<CodigoErro, number> = {
   QUANTIDADE_INVALIDA: 422,
   PRECO_INVALIDO: 422,
   VALOR_EXCEDE_LIMITE: 422,
+  SEGREGACAO_DE_FUNCOES: 422,
+  ORIGEM_NAO_REJEITADA: 422,
   // Conflito com o estado atual do servidor.
   FAIXA_SOBREPOSTA: 409,
   DECISAO_FORA_DE_ORDEM: 409,
   CONFLITO_DE_DECISAO: 409,
+  ORIGEM_JA_REFEITA: 409,
 };
 
 export function ok(dados: unknown, status = 200): Response {

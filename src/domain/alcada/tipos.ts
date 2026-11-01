@@ -32,6 +32,8 @@ export type EstadoAprovacao = {
   status: StatusPedido;
   stepAtual: number;
   cadeia: AprovacaoSnapshot[];
+  /** Quem cadastrou o pedido: nunca decide sobre ele (segregação de funções). */
+  criadoPorId: number;
 };
 
 export type Decisao = { tipo: "APROVAR" } | { tipo: "REJEITAR"; motivo: string };

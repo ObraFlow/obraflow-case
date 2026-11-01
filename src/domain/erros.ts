@@ -12,6 +12,9 @@ export type CodigoErro =
   | "QUANTIDADE_INVALIDA"
   | "PRECO_INVALIDO"
   | "VALOR_EXCEDE_LIMITE"
+  | "SEGREGACAO_DE_FUNCOES"
+  | "ORIGEM_NAO_REJEITADA"
+  | "ORIGEM_JA_REFEITA"
   | "NAO_ENCONTRADO";
 
 export class ErroDominio extends Error {
@@ -90,6 +93,36 @@ export class PrecoInvalido extends ErroDominio {
 export class ValorExcedeLimite extends ErroDominio {
   constructor(mensagem: string) {
     super("VALOR_EXCEDE_LIMITE", mensagem);
+  }
+}
+
+/**
+ * Quem cadastra não decide e quem decide não cadastra: a pessoa que criou o pedido está na
+ * cadeia que o aprovaria, ou tenta decidir sobre um pedido que ela mesma cadastrou.
+ */
+export class SegregacaoDeFuncoes extends ErroDominio {
+  constructor(mensagem: string) {
+    super("SEGREGACAO_DE_FUNCOES", mensagem);
+  }
+}
+
+/** Só um pedido rejeitado pode ser refeito; o pedido de origem está pendente ou aprovado. */
+export class OrigemNaoRejeitada extends ErroDominio {
+  constructor(origemId: number, status: "PENDENTE" | "APROVADO") {
+    super(
+      "ORIGEM_NAO_REJEITADA",
+      `Só um pedido rejeitado pode ser refeito. O pedido #${origemId} está ${status === "APROVADO" ? "aprovado" : "pendente"}.`,
+    );
+  }
+}
+
+/** O pedido rejeitado já tem uma nova versão; não cabe uma segunda. */
+export class OrigemJaRefeita extends ErroDominio {
+  constructor(origemId: number, novoId: number) {
+    super(
+      "ORIGEM_JA_REFEITA",
+      `O pedido #${origemId} já foi refeito pelo pedido #${novoId}. Acompanhe a nova versão por lá.`,
+    );
   }
 }
 
