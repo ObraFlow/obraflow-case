@@ -1,0 +1,35 @@
+{
+  "name": "@dokimos/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/main.js",
+    "test": "tsx --test test/*.test.ts",
+    "db:up": "docker compose -f ../../compose.yaml up -d --wait db",
+    "db:down": "docker compose -f ../../compose.yaml down",
+    "db:migrate": "tsx src/db/migrate.ts",
+    "db:seed": "npm run build --workspace @dokimos/shared && npm run db:migrate && tsx src/db/seed/index.ts"
+  },
+  "dependencies": {
+    "@fastify/jwt": "^10.0.0",
+    "@dokimos/shared": "^0.0.0",
+    "argon2": "^0.44.0",
+    "decimal.js": "^10.6.0",
+    "dotenv": "^16.6.0",
+    "fastify": "^5.0.0",
+    "pg": "^8.16.0",
+    "reflect-metadata": "^0.2.2",
+    "socket.io": "^4.8.4",
+    "typeorm": "^0.3.27",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.16.0",
+    "socket.io-client": "^4.8.4",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  }
+}
