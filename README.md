@@ -2,7 +2,7 @@
 
 # ObraFlow · Dokimos
 
-Plataforma full-stack para cadastro de pedidos de compra e aprovação por alçada. As Fases 0 e 1 entregam a fundação local, os cadastros de referência e as regras de alçada; a Fase 2 permite cadastrar pedidos com itens e persiste a cadeia inicial de aprovação; a Fase 3 permite analisar pedidos, decidir na ordem da cadeia e consultar o histórico; a Fase 4 fornece dados reproduzíveis para demonstrar os fluxos.
+Plataforma full-stack para cadastro de pedidos de compra e aprovação por alçada. A solução reúne execução local, cadastros de referência, regras de alçada por obra, pedidos com itens e um fluxo de aprovação ordenado com histórico. A carga de demonstração fornece dados reproduzíveis para avaliar as telas e os diferentes estados.
 
 As instruções originais do processo seletivo estão em [DESAFIO-INSTRUCOES.md](DESAFIO-INSTRUCOES.md).
 
@@ -105,26 +105,85 @@ npm test
 npm run build
 ```
 
-## Tecnologias e estrutura
+## Tecnologias
 
-- **Backend:** Java 21, Spring Boot 4, Maven e API REST com JSON, organizada em controllers, services, repositories JDBC e DTOs validados.
-- **Frontend:** Vue 3, TypeScript, Vite e npm.
-- **Persistência:** PostgreSQL 17, acesso JDBC e migrações Flyway. A substituição das faixas é transacional e as consultas carregam faixas e aprovadores em conjunto.
-- **Execução local:** Docker Compose; Maven Wrapper e `package-lock.json` mantêm os comandos e dependências reproduzíveis.
+- **Java 21, Spring Boot 4 e Maven:** API REST organizada em controllers, services, repositories JDBC e DTOs validados. O Java oferece tipagem estática e integração direta com as ferramentas de teste e execução do Spring.
+- **Vue 3, TypeScript, Vite e npm:** interface reativa com componentes por fluxo, tipagem nas integrações e servidor de desenvolvimento com atualização rápida.
+- **PostgreSQL 17, JDBC e Flyway:** persistência relacional para manter vínculos entre pedidos, itens, faixas e histórico; migrações versionadas permitem evoluir o esquema de forma reproduzível.
+- **Docker Compose:** inicia banco, API e interface em conjunto sem exigir Java ou Node.js instalados no host. O Maven Wrapper e o `package-lock.json` fixam as ferramentas e dependências do projeto.
 
+## Estrutura
+
+```text
+backend/
+  src/main/java/com/obraflow/
+    demo/                 carga explícita de dados de demonstração
+    health/               verificação da API e do banco
+    orders/               pedidos, cálculo e decisões de aprovação
+      controller/         endpoints HTTP
+      dto/                contratos de entrada e saída
+      repository/         consultas e persistência JDBC
+      service/            casos de uso e transações
+    reference/            obras, usuários, fornecedores e regras
+      controller/
+      dto/
+      repository/
+      service/
+    rules/                modelo e validação das faixas
+    shared/error/         respostas consistentes para erros da API
+  src/main/resources/db/migration/  migrações Flyway
+  src/test/                         testes unitários e de integração
+
+frontend/
+  src/
+    features/             pedidos, aprovações, saúde e regras de alçada
+    shared/api/           cliente HTTP e tratamento de erros
+    App.vue               navegação entre as telas
+    RulesView.vue         configuração de faixas e aprovadores
+    style.css             estilos e regras responsivas
+  package.json            scripts e dependências
+  vite.config.ts          configuração do Vite
+
+docker-compose.yml        banco, API e frontend
+```
+
+O backend mantém as regras de negócio e a persistência; o frontend consome os endpoints HTTP JSON.
 O backend inicia na porta `8080`, o frontend na `5173` e o PostgreSQL na `5432` por padrão. As portas e credenciais de desenvolvimento podem ser configuradas no `.env`, criado a partir de `.env.example`. Os valores incluídos são locais e fictícios; não são necessários serviços pagos ou credenciais externas.
 
 O Vue consulta `GET /api/health` para exibir o estado dos serviços. A API verifica a conexão ao PostgreSQL e responde com o estado da aplicação e do banco. Flyway aplica as migrações versionadas na inicialização. Os dados de demonstração são carregados somente quando o perfil `demo-data` é ativado explicitamente.
 
-## Informações da entrega
+## Capturas de tela
 
-### Cadastros e regras de alçada (Fase 1)
+As imagens abaixo foram capturadas com Playwright no Google Chrome instalado localmente, usando os dados de demonstração. O formulário foi preenchido sem enviar um pedido.
 
-A API oferece `GET/POST /api/works`, `GET/POST /api/users` e `GET/POST /api/suppliers` para os cadastros de referência. As regras são consultadas com `GET /api/works/{id}/approval-bands` e substituídas atomicamente com `PUT` no mesmo recurso. O payload contém faixas ordenadas (`minAmount`, `maxAmount`) e `approverIds` na ordem da aprovação; `maxAmount: null` representa o limite superior aberto.
+### Cadastro de pedido
 
-Os valores monetários não negativos usam faixas `[mínimo, máximo)`: o mínimo está incluído e o máximo é excluído. Toda obra configurada deve começar em R$ 0,00, manter faixas contíguas sem sobreposição e terminar em uma faixa sem limite superior. Assim, cada valor sempre encontra uma única regra. Uma obra sem regras não pode ser usada para criar pedido na Fase 2; a API de pedidos deverá retornar validação clara. Cada faixa precisa de pelo menos um usuário ativo como aprovador. A interface permite cadastrar obras e usuários, ordenar os aprovadores e editar ou remover faixas antes de salvar a configuração.
+![Tela de cadastro de pedido com itens e total calculado](assets/screenshots/cadastro-pedido.png)
 
-Exemplo de payload para `PUT /api/works/1/approval-bands`:
+### Aprovações
+
+![Lista de pedidos e detalhe de um pedido pendente na primeira etapa](assets/screenshots/aprovacoes.png)
+
+### Regras da alçada
+
+![Faixas de valor e aprovadores configurados em ordem](assets/screenshots/regras-alcada.png)
+
+## API resumida
+
+A API usa JSON e está disponível em `http://localhost:8080` no Compose. Os endpoints de leitura retornam `200 OK`; criações retornam `201 Created`; a substituição das regras retorna a lista salva. `GET /api/health` informa a saúde da API e do banco.
+
+| Método | Endpoint | Uso |
+|---|---|---|
+| `GET`, `POST` | `/api/works` | Listar e cadastrar obras (`name`, `code`) |
+| `GET`, `POST` | `/api/users` | Listar e cadastrar aprovadores (`name`, `email`) |
+| `GET`, `POST` | `/api/suppliers` | Listar e cadastrar fornecedores (`name`, `taxId`) |
+| `GET`, `PUT` | `/api/works/{workId}/approval-bands` | Consultar e substituir as faixas completas da obra |
+| `GET` | `/api/orders` | Listar pedidos, totais, estados, cadeia e histórico |
+| `GET` | `/api/orders/{id}` | Consultar um pedido e seus detalhes |
+| `POST` | `/api/orders` | Criar pedido, itens e fotografia da alçada |
+| `POST` | `/api/orders/{id}/decisions` | Aprovar ou rejeitar na etapa atual |
+
+Exemplo para substituir as regras de uma obra com `PUT /api/works/1/approval-bands`:
 
 ```json
 [
@@ -133,54 +192,66 @@ Exemplo de payload para `PUT /api/works/1/approval-bands`:
 ]
 ```
 
-Fornecedores podem ser cadastrados pela API usando `POST /api/suppliers` com `name` e `taxId`.
-
-### Cadastro de pedidos (Fase 2)
-
-A tela **Pedidos** carrega obras e fornecedores ativos e permite informar a data, observações e um ou mais itens. Quantidades aceitam até três casas decimais; preços unitários aceitam até duas. O total de cada item é calculado e arredondado para centavos usando arredondamento comercial (*half up*); o total do pedido é a soma dos itens já arredondados. A interface usa aritmética decimal inteira para exibir os valores sem erro de ponto flutuante.
-
-A API recalcula os totais e não recebe valores totais do cliente. Em uma única transação, persiste o pedido, seus itens e uma fotografia ordenada dos aprovadores da faixa aplicável ao total consolidado. A fotografia inclui os identificadores e nomes/e-mails dos aprovadores e não é alterada quando as regras da obra forem substituídas. Um pedido não pode ser criado se a obra não existir, o fornecedor estiver inativo ou não houver uma faixa aplicável; nesse caso, a API retorna `400` com uma mensagem orientando configurar as regras.
-
-Endpoints principais:
-
-- `GET /api/orders`: lista os pedidos com itens, total e cadeia inicial;
-- `GET /api/orders/{id}`: consulta um pedido;
-- `POST /api/orders`: cria um pedido e responde `201 Created`.
-
-Exemplo de corpo para `POST /api/orders`:
+Exemplo de `POST /api/orders`:
 
 ```json
 {
   "workId": 1,
   "supplierId": 1,
-  "orderDate": "2026-10-29",
-  "internalNotes": "Entrega antes da concretagem",
+  "orderDate": "2026-11-01",
   "items": [
-    { "description": "Cimento CP-II", "quantity": 20.5, "unit": "sc", "unitPrice": 38.9 },
-    { "description": "Areia média", "quantity": 2, "unit": "m³", "unitPrice": 140 }
+    { "description": "Cimento CP-II", "quantity": 20, "unit": "sc", "unitPrice": 38.9 }
   ]
 }
 ```
 
-O retorno inclui os itens com `total` calculado, o `total` do pedido, `approvalBandId`, `status` inicial `PENDING` e `approvers` ordenados por `position`. Erros de validação usam Problem Details e mensagens em português.
+Exemplo de decisão:
 
-### Aprovação e histórico (Fase 3)
+```json
+{ "approverId": 1, "outcome": "APPROVED" }
+```
 
-A seção **Aprovações** lista os pedidos com estado e etapa atual. Ao abrir um pedido, a tela mostra os itens, a cadeia ordenada e o histórico cronológico. Somente o aprovador da etapa atual recebe ações. Uma aprovação libera a próxima etapa; a última conclui o pedido. Uma rejeição exige motivo e encerra o fluxo imediatamente.
+O retorno dos endpoints de pedido inclui itens e totais calculados, estado, faixa aplicada, aprovadores ordenados e decisões registradas. Para rejeitar, envie `outcome: "REJECTED"` e um `reason` não vazio. O backend confere se `approverId` corresponde ao aprovador atual. Uma requisição inválida retorna `400` com Problem Details, por exemplo `{"title":"Requisição inválida","status":400,"detail":"Adicione pelo menos um item ao pedido."}`. Recursos inexistentes retornam `404`, conflitos de unicidade `409`, e erros inesperados `500` com uma mensagem genérica. Os detalhes técnicos permanecem nos logs do servidor.
 
-Endpoints principais:
+## Decisões técnicas
 
-- `GET /api/orders` e `GET /api/orders/{id}` retornam o pedido, `currentApproverPosition` (nulo quando o fluxo termina), a cadeia `approvers` e os eventos em `decisions`;
-- `POST /api/orders/{id}/decisions` registra uma decisão. Para aprovar: `{"approverId": 1, "outcome": "APPROVED"}`. Para rejeitar: `{"approverId": 1, "outcome": "REJECTED", "reason": "Pedido fora do orçamento"}`.
+### Modelagem e cálculo da alçada
 
-O backend confere o ator com o aprovador atual e, em uma transação, bloqueia o pedido, grava o evento e atualiza a etapa/estado. Decisões fora da ordem, repetidas ou após o encerramento são recusadas sem alterar o histórico. A tabela de decisões guarda usuário, nome/e-mail congelados, etapa, resultado, instante e motivo.
+Cada obra tem uma sequência ordenada de faixas de valor. As faixas usam o intervalo `[mínimo, máximo)`: incluem o limite mínimo e excluem o máximo. A configuração começa em R$ 0,00, não permite lacunas nem sobreposições e termina com limite superior aberto (`maxAmount: null`). Assim, qualquer total não negativo corresponde a uma única faixa; um total exatamente igual ao limite passa para a faixa seguinte. A faixa precisa ter ao menos um aprovador ativo, e as posições determinam a ordem de decisão.
 
-O desafio não inclui autenticação. Para permitir avaliar o fluxo localmente, a tela envia o `approverId` da etapa atual e o backend valida sua correspondência com a cadeia salva. Essa identificação serve ao fluxo demonstrativo e deve ser substituída pela identidade autenticada do usuário em um ambiente de produção.
+O backend calcula o total do pedido somando os itens já arredondados para centavos com `HALF_UP`; a quantidade aceita até três casas decimais e o preço unitário até duas. O total consolidado seleciona a faixa para a obra informada. O cliente não envia totais nem escolhe a alçada. Se a obra não tiver faixa aplicável, a API rejeita a criação com `400` e uma mensagem para configurar as regras.
 
-Erros da API usam o formato Problem Details (`title`, `status` e `detail`). Dados inválidos retornam `400`, recursos inexistentes retornam `404`, e violações de unicidade retornam `409`; erros internos não expõem detalhes técnicos.
+```mermaid
+flowchart TD
+    A[Pedido e itens recebidos] --> B[Backend recalcula os totais dos itens]
+    B --> C[Soma dos itens arredondados: total do pedido]
+    C --> D[Seleciona uma faixa da obra: mínimo incluso, máximo excluído]
+    D --> E{Faixa aplicável?}
+    E -- Não --> F[Rejeita a criação e orienta configurar as regras]
+    E -- Sim --> G[Salva pedido e fotografia ordenada dos aprovadores]
+    G --> H[Etapa atual decide]
+    H --> I{Resultado}
+    I -- Rejeitado com motivo --> J[Encerra como rejeitado e registra o histórico]
+    I -- Aprovado, há próxima etapa --> K[Avança para o próximo aprovador]
+    K --> H
+    I -- Aprovado, última etapa --> L[Encerra como aprovado]
+```
 
-As capturas finais das telas e as considerações de produção serão consolidadas na revisão de entrega da Fase 6.
+Ao criar o pedido, o backend persiste em uma transação o cabeçalho, os itens, a faixa escolhida e uma fotografia ordenada dos IDs, nomes e e-mails dos aprovadores. Alterações futuras nas regras afetam somente pedidos novos. A aprovação bloqueia a linha do pedido durante a transação, valida o ator e a posição atual, grava a decisão e avança ou encerra o fluxo. Rejeições exigem motivo e terminam a cadeia.
 
-### Estados e acessibilidade (Fase 5)
+### Comunicação entre frontend e backend
 
-As listas e consultas assíncronas exibem carregamento; quando não há registros, a interface apresenta uma orientação para continuar. Falhas de rede ou da API mostram uma mensagem compreensível e uma ação para tentar novamente, inclusive ao consultar detalhes ou trocar a obra das regras. Campos inválidos são identificados junto ao controle correspondente, e a rejeição sem motivo é bloqueada antes do envio. A navegação e os controles podem ser usados por teclado, com foco visível, e os formulários reorganizam os campos em telas estreitas.
+O Vue usa HTTP com JSON e os endpoints descritos na seção de API deste README. A URL da API no frontend é configurável por `VITE_API_BASE_URL` (no Compose, por padrão, `http://localhost:8080`). O backend limita CORS à origem configurada em `FRONTEND_ORIGIN`. Respostas de erro seguem Problem Details com `title`, `status` e `detail`; detalhes internos de exceções não são enviados ao cliente.
+
+### Consistência e integridade
+
+O PostgreSQL mantém chaves estrangeiras, restrições únicas e tipos decimais para os dados persistidos. Flyway aplica as migrações numeradas na inicialização. A substituição das regras ocorre atomicamente, e pedidos/itens/fotografia da alçada são gravados na mesma transação. Decisões também atualizam estado e histórico na mesma transação, com bloqueio do pedido para serializar atualizações concorrentes. Validações de formato e regras de negócio são repetidas no backend; o frontend complementa essas validações para orientar o preenchimento.
+
+### O que mudaria em produção
+
+- Versionaria as regras de alçada: cada alteração registraria autor, data e mudanças, e cada pedido apontaria para a versão usada. Isso permitiria explicar como a aprovação foi definida.
+- Notificaria o próximo aprovador por e-mail ou dentro do sistema e enviaria lembretes para pedidos parados, reduzindo a necessidade de consultar a lista manualmente.
+- Adicionaria paginação e filtros à API de pedidos — por estado, obra, período e aprovador atual — para manter as consultas rápidas conforme o histórico cresce.
+- Cobriria os fluxos de criar, aprovar e rejeitar com testes ponta a ponta; uma pipeline executaria testes e build a cada alteração antes da publicação.
+- Associaria cada decisão à identidade autenticada, removendo o `approverId` informado pela interface demonstrativa, e aplicaria autorização por obra e papel.
+- Manteria credenciais fora do código, usaria conexões protegidas por TLS e limitaria as permissões no banco para reduzir vazamentos e o impacto de acessos indevidos.
