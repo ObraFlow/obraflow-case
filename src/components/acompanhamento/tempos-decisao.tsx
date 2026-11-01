@@ -1,4 +1,4 @@
-import { Barra } from "@/components/acompanhamento/barra";
+import { Barra } from "@/components/graficos/barra";
 import { formatarDuracao } from "@/lib/datas";
 import type { TempoAprovadorDto, TempoObraDto } from "@/lib/dto";
 

@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 export type Segmento = {
   valor: number;
-  /** Classe de fundo (`bg-aprovado`, `bg-rejeitado`, `bg-border`, `bg-foreground`). */
+  /** Classe de fundo (`bg-aprovado`, `bg-rejeitado`, `bg-muted-foreground/60`, `bg-foreground`). */
   classe: string;
   /** Vai no `title`, para o mouse; o número em si fica sempre no texto ao lado da barra. */
   rotulo: string;
@@ -12,7 +12,7 @@ export type Segmento = {
  * Barra horizontal de 8px em CSS puro (docs/design.md: nada decora, cada pedaço codifica
  * um valor). `escala` é o que corresponde a 100%: a soma dos segmentos numa barra empilhada,
  * ou o maior valor da lista numa barra de comparação. `aria-hidden` porque os números estão
- * no texto; a barra só dá a proporção de relance.
+ * no texto; a barra só dá a proporção de relance. Nunca amarela: amarelo é "sua vez".
  */
 export function Barra({
   segmentos,

@@ -1,14 +1,14 @@
 import { connection } from "next/server";
 import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
 import { BotaoNovaFaixa } from "@/components/regras/botao-nova-faixa";
-import { SeletorObra } from "@/components/regras/seletor-obra";
+import { SeletorObra } from "@/components/layout/seletor-obra";
 import { SimuladorAlcada } from "@/components/regras/simulador-alcada";
 import { TabelaFaixas } from "@/components/regras/tabela-faixas";
 import { encontrarLacunas } from "@/domain/alcada/encontrarLacunas";
 import { listarObras, listarUsuarios } from "@/server/services/cadastros";
 import { listarRegras } from "@/server/services/regras";
 
-export const metadata = { title: "Regras de alçada — ObraFlow" };
+export const metadata = { title: "Regras de alçada" };
 
 /**
  * Regras de alçada por obra. A obra vem da URL (`?obra=1`); sem ela, a primeira.
@@ -65,7 +65,7 @@ export default async function RegrasPage({
         }
         acoes={
           <div className="flex flex-wrap items-center gap-3">
-            <SeletorObra obras={obras} obraId={obraEscolhida.id} />
+            <SeletorObra obras={obras} obraId={obraEscolhida.id} rota="/regras" />
             {faixas.length > 0 && (
               <BotaoNovaFaixa obraId={obraEscolhida.id} faixas={faixas} usuarios={usuarios} />
             )}

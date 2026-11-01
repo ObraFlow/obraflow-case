@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Barra } from "@/components/acompanhamento/barra";
+import { Barra } from "@/components/graficos/barra";
 import { descreverIdade } from "@/lib/datas";
 import type { FilaAprovadorDto } from "@/lib/dto";
 import { formatarCentavos } from "@/lib/money";
@@ -50,7 +50,7 @@ export function FilaAprovadores({
                   <h3 className="flex items-center gap-2 font-semibold">
                     {linha.aprovadorNome}
                     {minha && (
-                      <span className="rounded-sm bg-sinalizacao px-1 text-[11px] leading-4 font-bold text-foreground">
+                      <span className="rounded-sm bg-sinalizacao px-1 text-[11px] leading-4 font-bold text-sinalizacao-foreground">
                         Você
                       </span>
                     )}
@@ -82,7 +82,7 @@ export function FilaAprovadores({
                     className="-my-2 inline-flex min-h-10 items-center underline-offset-4 hover:underline sm:my-0 sm:min-h-0"
                   >
                     Mais antigo:&nbsp;
-                    <span className="font-medium text-foreground">
+                    <span className="font-semibold text-foreground font-stretch-[112%] tabular-nums">
                       #{linha.maisAntigo.pedidoId}
                     </span>
                     , &nbsp;{descreverIdade(linha.maisAntigo.desde, geradoEm)} na mesa
