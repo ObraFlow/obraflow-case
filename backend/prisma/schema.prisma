@@ -1,0 +1,114 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id    Int     @id @default(autoincrement())
+  name  String
+  email String  @unique
+  
+  // Relations
+  approvals       ApprovalHistory[]
+  ruleApprovers   RuleLevelApprover[]
+}
+
+model Work {
+  id    Int    @id @default(autoincrement())
+  name  String
+  
+  // Relations
+  orders  PurchaseOrder[]
+  rules   ApprovalRule[]
+}
+
+model Supplier {
+  id    Int    @id @default(autoincrement())
+  name  String
+  
+  // Relations
+  orders  PurchaseOrder[]
+}
+
+model PurchaseOrder {
+  id           Int      @id @default(autoincrement())
+  workId       Int
+  supplierId   Int
+  date         DateTime
+  observations String?
+  total        Float
+  status       String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  
+  // Relations
+  work         Work              @relation(fields: [workId], references: [id])
+  supplier     Supplier          @relation(fields: [supplierId], references: [id])
+  items        OrderItem[]
+  history      ApprovalHistory[]
+  
+  // Current approval state
+  currentLevel Int      @default(0) // 0-based index of the level in the rule
+}
+
+model OrderItem {
+  id          Int           @id @default(autoincrement())
+  orderId     Int
+  description String
+  quantity    Float
+  unit        String
+  unitPrice   Float
+  total       Float
+  
+  // Relations
+  order       PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model ApprovalRule {
+  id        Int    @id @default(autoincrement())
+  workId    Int
+  minValue  Float
+  maxValue  Float? // null means "above X"
+  
+  // Relations
+  work      Work                @relation(fields: [workId], references: [id])
+  levels    ApprovalRuleLevel[]
+}
+
+model ApprovalRuleLevel {
+  id        Int    @id @default(autoincrement())
+  ruleId    Int
+  order     Int    // Sequence: 0, 1, 2...
+  
+  // Relations
+  rule      ApprovalRule        @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  approvers RuleLevelApprover[]
+}
+
+model RuleLevelApprover {
+  id          Int               @id @default(autoincrement())
+  levelId     Int
+  userId      Int
+  
+  // Relations
+  level       ApprovalRuleLevel @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  user        User              @relation(fields: [userId], references: [id])
+}
+
+model ApprovalHistory {
+  id        Int           @id @default(autoincrement())
+  orderId   Int
+  userId    Int
+  action    String        // APPROVE, REJECT
+  reason    String?
+  date      DateTime      @default(now())
+  
+  // Relations
+  order     PurchaseOrder @relation(fields: [orderId], references: [id])
+  user      User          @relation(fields: [userId], references: [id])
+}
