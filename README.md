@@ -99,6 +99,15 @@ POST de pedido também exige `Idempotency-Key` UUID. Mesma chave, solicitante e 
 
 ## Decisões técnicas
 
+| Tecnologia                        | Motivo da escolha                                                                                         |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Next.js e React                   | Interface e endpoints HTTP no mesmo projeto, com um único processo de aplicação para executar localmente. |
+| TypeScript                        | Contratos explícitos e verificação estática entre rotas, serviços e componentes.                          |
+| PostgreSQL e Prisma               | Persistência relacional, transações e constraints com migrations versionadas e acesso tipado.             |
+| Tailwind CSS e componentes locais | Consistência visual e responsividade sem fontes ou serviços externos.                                     |
+| Zod                               | Validação dos dados recebidos em execução, além dos tipos de compilação.                                  |
+| Vitest e Playwright               | Regras e integrações testadas no PostgreSQL, complementadas pelas jornadas reais no navegador.            |
+
 - **Monólito modular:** rotas tratam HTTP; serviços coordenam transações; domínio calcula e valida. Módulos de cadastros, regras e pedidos mantêm responsabilidades claras sem infraestrutura distribuída.
 - **PostgreSQL + Prisma:** migrations, FKs, posições únicas, decisão única por etapa, CHECKs e índice parcial para uma faixa sem teto. O SQL complementar precisa ser preservado nas migrations futuras.
 - **Faixas completas:** escolher o menor teto inclusivo compatível, ou faixa final ilimitada. Sem cobertura, não há pedido. Cada faixa define toda a cadeia, resolvendo a ambiguidade do enunciado.
@@ -115,4 +124,4 @@ Em produção: autenticação e papéis reais, isolamento por empresa se exigido
 
 [Plano](docs/delivery-plan.md) · [Decisões](docs/decisions.md) · [Negócio/modelo](docs/domain-contract.md) · [Fluxos](docs/product-flows.md) · [Agentes](docs/collaboration.md) · [Operação](docs/development.md)
 
-Features são registradas em commits e merges locais na branch de entrega. Consulte `git log --graph --oneline --decorate`.
+Features são registradas em commits e merges na branch `feat/obraflow-delivery`, preservando os nomes das branches usadas. Consulte `git log --graph --oneline --decorate`.
