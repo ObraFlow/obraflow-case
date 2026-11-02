@@ -165,6 +165,9 @@ import { ModalRejeicaoComponent } from '../../shared/components/modal-rejeicao.c
                 </td>
                 <td>
                   <div *ngIf="pedido.status === 'PENDENTE'" style="font-size: 0.8rem;">
+                    <div *ngIf="pedido.aprovadoresConcluidos.length > 0" style="font-size: 0.74rem; color: var(--emerald-700); margin-bottom: 0.1rem;">
+                      Concluídos: {{ pedido.aprovadoresConcluidos.join(' → ') }}
+                    </div>
                     <div style="color: var(--primary-700); font-weight: 600;">
                       Etapa {{ pedido.nivelAtualOrdem }}/{{ pedido.totalEtapas }}: {{ pedido.aprovadorAtual?.nome || 'Aprovador' }}
                     </div>
@@ -174,21 +177,47 @@ import { ModalRejeicaoComponent } from '../../shared/components/modal-rejeicao.c
                   </div>
 
                   <div *ngIf="pedido.status === 'APROVADO'" style="font-size: 0.78rem; color: var(--emerald-700);">
-                    Concluído ({{ pedido.totalEtapas }} etapas)
+                    <div style="font-weight: 600;">Concluído ({{ pedido.totalEtapas }} etapas)</div>
+                    <div *ngIf="pedido.aprovadoresConcluidos.length > 0" style="font-size: 0.74rem; color: var(--slate-500);">
+                      {{ pedido.aprovadoresConcluidos.join(' → ') }}
+                    </div>
                   </div>
 
                   <div *ngIf="pedido.status === 'REJEITADO'" style="font-size: 0.78rem; color: var(--rose-600);">
-                    Interrompido
+                    <div style="font-weight: 600;">Interrompido</div>
+                    <div *ngIf="pedido.aprovadoresConcluidos.length > 0" style="font-size: 0.74rem; color: var(--slate-500);">
+                      Concluídos antes: {{ pedido.aprovadoresConcluidos.join(' → ') }}
+                    </div>
                   </div>
                 </td>
                 <td style="text-align: right;" (click)="$event.stopPropagation()">
-                  <button
-                    type="button"
-                    class="btn btn-secondary btn-sm"
-                    (click)="abrirDetalhes(pedido.id)"
-                  >
-                    Detalhes
-                  </button>
+                  <div style="display: flex; justify-content: flex-end; gap: 0.35rem; flex-wrap: wrap;">
+                    <ng-container *ngIf="podeDecidirPedido(pedido)">
+                      <button
+                        type="button"
+                        class="btn btn-success btn-sm"
+                        (click)="aprovarDaLista(pedido)"
+                        [disabled]="processandoDecisao"
+                      >
+                        Aprovar
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-danger btn-sm"
+                        (click)="rejeitarDaLista(pedido)"
+                        [disabled]="processandoDecisao"
+                      >
+                        Rejeitar
+                      </button>
+                    </ng-container>
+                    <button
+                      type="button"
+                      class="btn btn-secondary btn-sm"
+                      (click)="abrirDetalhes(pedido.id)"
+                    >
+                      Detalhes
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -374,16 +403,34 @@ import { ModalRejeicaoComponent } from '../../shared/components/modal-rejeicao.c
             </button>
 
             <!-- Concluído -->
-            <div *ngIf="pedidoDetalhes.status !== 'PENDENTE'" style="display: flex; align-items: center; gap: 0.5rem;">
-              <span style="font-size: 0.8rem; color: var(--slate-500);">
-                Alçada finalizada ({{ pedidoDetalhes.status }})
+            <div *ngIf="pedidoDetalhes.status !== 'PENDENTE'" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.35rem;">
+              <div style="display: flex; gap: 0.5rem;">
+                <button type="button" class="btn btn-danger btn-sm" disabled>
+                  Rejeitar
+                </button>
+                <button type="button" class="btn btn-success btn-sm" disabled>
+                  Aprovar Etapa
+                </button>
+              </div>
+              <span style="font-size: 0.75rem; color: var(--slate-500);">
+                Cadeia de alçada concluída ({{ pedidoDetalhes.status }}) — decisões desabilitadas.
               </span>
             </div>
 
             <!-- Pendente -->
             <ng-container *ngIf="pedidoDetalhes.status === 'PENDENTE'">
-              <div *ngIf="!podeDecidir" style="font-size: 0.8rem; color: var(--slate-500); display: flex; align-items: center;">
-                Aguardando aprovação de {{ pedidoDetalhes.aprovadorAtual?.nome }}
+              <div *ngIf="!podeDecidir" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.35rem;">
+                <div style="display: flex; gap: 0.5rem;">
+                  <button type="button" class="btn btn-danger btn-sm" disabled>
+                    Rejeitar
+                  </button>
+                  <button type="button" class="btn btn-success btn-sm" disabled>
+                    Aprovar Etapa
+                  </button>
+                </div>
+                <span style="font-size: 0.75rem; color: var(--slate-500);">
+                  Aguardando aprovação de {{ pedidoDetalhes.aprovadorAtual?.nome }} nesta etapa.
+                </span>
               </div>
 
               <div *ngIf="podeDecidir" style="display: flex; gap: 0.5rem;">
@@ -436,6 +483,7 @@ export class PedidosListComponent implements OnInit {
 
   // Modal de Rejeição
   exibindoModalRejeicao: boolean = false;
+  pedidoAlvoRejeicaoId: string | null = null;
 
   constructor(
     private readonly api: ApiService,
@@ -458,6 +506,17 @@ export class PedidosListComponent implements OnInit {
       return false;
     }
     return usuarioLogado.id === this.pedidoDetalhes.aprovadorAtual.id;
+  }
+
+  podeDecidirPedido(pedido: PedidoResumo): boolean {
+    if (pedido.status !== 'PENDENTE') {
+      return false;
+    }
+    const usuarioLogado = this.session.usuarioAtivo();
+    if (!usuarioLogado || !pedido.aprovadorAtual) {
+      return false;
+    }
+    return usuarioLogado.id === pedido.aprovadorAtual.id;
   }
 
   carregarObras() {
@@ -525,6 +584,42 @@ export class PedidosListComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
+  aprovarDaLista(pedido: PedidoResumo) {
+    const usuarioLogado = this.session.usuarioAtivo();
+    if (!usuarioLogado) {
+      alert('Selecione um usuário no menu superior para simular a aprovação.');
+      return;
+    }
+
+    this.processandoDecisao = true;
+    this.cdr.markForCheck();
+    this.api
+      .aprovarPedido(pedido.id, {
+        usuarioId: usuarioLogado.id,
+      })
+      .subscribe({
+        next: () => {
+          this.processandoDecisao = false;
+          if (this.pedidoSelecionadoId === pedido.id) {
+            this.abrirDetalhes(pedido.id);
+          }
+          this.carregarPedidos(false);
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.processandoDecisao = false;
+          this.cdr.markForCheck();
+          alert(err.error?.message || 'Erro ao aprovar a etapa do pedido.');
+        },
+      });
+  }
+
+  rejeitarDaLista(pedido: PedidoResumo) {
+    this.pedidoAlvoRejeicaoId = pedido.id;
+    this.exibindoModalRejeicao = true;
+    this.cdr.markForCheck();
+  }
+
   aprovarPedido() {
     if (!this.pedidoDetalhes) return;
     const usuarioLogado = this.session.usuarioAtivo();
@@ -540,7 +635,7 @@ export class PedidosListComponent implements OnInit {
         usuarioId: usuarioLogado.id,
       })
       .subscribe({
-        next: (atualizado) => {
+        next: () => {
           this.processandoDecisao = false;
           this.abrirDetalhes(this.pedidoDetalhes!.id);
           this.carregarPedidos(false);
@@ -555,17 +650,20 @@ export class PedidosListComponent implements OnInit {
   }
 
   abrirModalRejeicao() {
+    this.pedidoAlvoRejeicaoId = this.pedidoDetalhes?.id || null;
     this.exibindoModalRejeicao = true;
     this.cdr.markForCheck();
   }
 
   fecharModalRejeicao() {
     this.exibindoModalRejeicao = false;
+    this.pedidoAlvoRejeicaoId = null;
     this.cdr.markForCheck();
   }
 
   confirmarRejeicao(motivo: string) {
-    if (!this.pedidoDetalhes) return;
+    const alvoId = this.pedidoAlvoRejeicaoId || this.pedidoDetalhes?.id;
+    if (!alvoId) return;
     const usuarioLogado = this.session.usuarioAtivo();
     if (!usuarioLogado) {
       alert('Selecione um usuário no menu superior para realizar a rejeição.');
@@ -575,7 +673,7 @@ export class PedidosListComponent implements OnInit {
     this.processandoDecisao = true;
     this.cdr.markForCheck();
     this.api
-      .rejeitarPedido(this.pedidoDetalhes.id, {
+      .rejeitarPedido(alvoId, {
         usuarioId: usuarioLogado.id,
         motivo,
       })
@@ -583,7 +681,9 @@ export class PedidosListComponent implements OnInit {
         next: () => {
           this.processandoDecisao = false;
           this.fecharModalRejeicao();
-          this.abrirDetalhes(this.pedidoDetalhes!.id);
+          if (this.pedidoSelecionadoId === alvoId) {
+            this.abrirDetalhes(alvoId);
+          }
           this.carregarPedidos(false);
           this.cdr.markForCheck();
         },

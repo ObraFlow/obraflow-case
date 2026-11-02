@@ -1,313 +1,276 @@
 ![Banner do desafio ObraFlow](assets/banner.png)
 
-# ObraFlow — Dokimos | Serviço de Alçadas de Aprovação
+# ObraFlow
 
-Solução full-stack desenvolvida para o desafio técnico da **ObraFlow**. O **Dokimos** é o serviço responsável pela gestão inteligente de **alçadas de aprovação** de pedidos de compra no setor da construção civil, assegurando conformidade financeira, trilha auditável e autonomia operacional configurável por obra.
-
----
-
-## 📑 Sumário
-
-- [Visão Geral & Telas](#-visão-geral--telas)
-- [Tecnologias Escolhidas & Justificativas](#-tecnologias-escolhidas--justificativas)
-- [Como a Regra de Alçada é Modelada, Calculada e Persistida](#-como-a-regra-de-alçada-é-modelada-calculada-e-persistida)
-- [Comunicação Front-end & Back-end](#-comunicação-front-end--back-end)
-- [Consistência e Integridade de Dados](#-consistência-e-integridade-de-dados)
-- [Como Executar o Projeto Localmente](#-como-executar-o-projeto-localmente)
-- [Documentação da API (Endpoints e Payloads)](#-documentação-da-api-endpoints-e-payloads)
-- [Testes Automatizados](#-testes-automatizados)
-- [O que Mudaria em Produção](#-o-que-mudaria-em-produção)
-- [Identificação do Candidato](#-identificação-do-candidato)
+Solução full-stack desenvolvida para o desafio técnico da **ObraFlow**. O sistema implementa a gestão de pedidos de compra e o serviço de **alçadas de aprovação**, garantindo controle financeiro, trilha de auditoria e regras configuráveis por obra.
 
 ---
 
-## 🖥️ Visão Geral & Telas
+## Sumário
 
-A solução é composta por 3 telas integradas com tratamento completo de estados (*loading*, *empty states*, validações em tempo real e *error banners* com retry):
+- [Visão Geral e Telas](#visão-geral-e-telas)
+- [Decisões técnicas](#decisões-técnicas)
+  - [Tecnologias Escolhidas e Motivos da Escolha](#1-tecnologias-escolhidas-e-motivos-da-escolha)
+  - [Como a Regra de Alçada é Modelada, Calculada e Persistida](#2-como-a-regra-de-alçada-é-modelada-calculada-e-persistida)
+  - [Comunicação Front-end e Back-end](#3-comunicação-front-end-e-back-end)
+  - [Consistência e Integridade dos Dados](#4-consistência-e-integridade-dos-dados)
+  - [O que Mudaria em Produção](#5-o-que-mudaria-em-produção)
+- [Como Executar o Projeto Localmente](#como-executar-o-projeto-localmente)
+- [Documentação da API (Endpoints e Payloads)](#documentação-da-api-endpoints-e-payloads)
+- [Testes Automatizados](#testes-automatizados)
 
-1. **Aprovações & Listagem de Pedidos (`/pedidos`)**:
-   - Tabela responsiva com identificador, obra, fornecedor, quantidade de itens, data, valor total e situação (*Pendente*, *Aprovado*, *Rejeitado*).
-   - Indicador contextual da alçada atual (etapa corrente, aprovadores concluídos e próximos na fila).
-   - Filtros dinâmicos por obra e status.
-   - **Drawer lateral de detalhes**: itens detalhados com preços unitários, linha do tempo (*stepper*) visual da alçada e histórico de auditoria completo.
-   - Ações imediatas de **Aprovar** e **Rejeitar** (com modal de justificativa obrigatória).
+---
+
+## Visão Geral e Telas
+
+A interface foi projetada com foco em hierarquia visual clara, sobriedade e tratamento de todos os estados exigidos (*loading*, *empty state*, validações por campo/item e *error banner* com opção de nova tentativa):
+
+1. **Listagem e Aprovação de Pedidos (`/pedidos`)**:
+   - Tabela com código identificador, obra, fornecedor, data de emissão, quantidade de itens, valor total e situação (*Pendente*, *Aprovado* ou *Rejeitado*).
+   - Coluna **Alçada Atual** exibindo aprovadores concluídos, aprovador da etapa atual e próximos aprovadores na fila.
+   - Ações diretas de **Aprovar** e **Rejeitar** disponíveis para o aprovador da vez, além do botão **Detalhes**.
+   - **Drawer lateral de detalhes**: lista completa dos itens do pedido (descrição, quantidade, unidade, preço unitário e total), *stepper* da cadeia de aprovação e histórico cronológico de decisões. Quando a alçada já foi concluída ou pertence a outro aprovador, os botões de decisão ficam desabilitados acompanhados da explicação contextual.
 
 2. **Cadastro de Pedido de Compra (`/pedidos/novo`)**:
-   - Cabeçalho com obra de destino, fornecedor homologado, data de emissão e observações internas.
-   - Tabela de **N itens dinâmicos**: adição, edição e remoção de materiais/serviços com cálculo automático do total de cada item (`quantidade × preço unitário`).
-   - Painel de totalização em destaque com soma em tempo real.
-   - Validações restritivas que desabilitam o envio até que todos os campos e itens estejam válidos.
-   - Associação imediata da regra de alçada no backend com retorno amigável caso não haja regra cobrindo o valor.
+   - Dados gerais: seleção de obra, fornecedor, data de emissão e observações internas opcionais.
+   - Tabela dinâmica de **N itens**: inicia com um item em branco e permite adicionar, editar e remover itens com cálculo em tempo real do total de cada item (`quantidade × preço unitário`) e do total geral do pedido.
+   - Validações por campo e por item (impedindo quantidades/preços inválidos ou negativos e pedidos sem itens). O botão **Cadastrar Pedido** permanece desabilitado até que o cabeçalho e todos os itens sejam válidos.
 
-3. **Configuração de Regras de Alçada por Obra (`/regras`)**:
-   - Seletor de obra para gestão independente das alçadas Dokimos.
-   - Tabela de faixas cadastradas com visualização em cadeia (`Aprovador 1 → Aprovador 2 → ...`).
-   - Formulário para criar e editar faixas de valor (mínimo e máximo).
-   - Seleção de usuários disponíveis com botões de **reordenação sequencial** (↑ e ↓) e remoção.
+3. **Configuração de Regras de Alçada (`/regras`)**:
+   - Seleção de obra para configuração independente das faixas de valor.
+   - Listagem das regras salvas exibindo a faixa financeira e a sequência de aprovadores (`1º Aprovador → 2º Aprovador`).
+   - Criação, edição e exclusão de faixas de valor, permitindo adicionar, remover e reordenar aprovadores (`Subir` / `Descer`).
 
-> **Destaque de Usabilidade**: No topo da aplicação (navbar), há um seletor rápido **"Simular como: [Usuário]"**. Ele permite alternar instantaneamente entre os aprovadores (João Silva, Amanda Oliveira, Carlos Mendonça, Fernanda Costa) para testar o avanço sequencial da cadeia de alçada com um clique.
+> **Simulação de Aprovadores**: No cabeçalho superior da aplicação, o seletor **Usuário** permite alternar rapidamente entre os usuários cadastrados (João Silva, Amanda Oliveira, Carlos Mendonça e Fernanda Costa) para testar a aprovação sequencial nível a nível.
 
 ---
 
-## 🛠️ Tecnologias Escolhidas & Justificativas
+## Decisões técnicas
+
+### 1. Tecnologias Escolhidas e Motivos da Escolha
 
 | Camada | Tecnologia | Motivo da Escolha |
 |---|---|---|
-| **Backend** | **NestJS (Node.js + TypeScript)** | Framework robusto, arquitetura modular e opinativa (Dependency Injection), excelente tipagem estrita, DTOs com validação em tempo de execução via `class-validator` e documentação nativa com OpenAPI/Swagger. |
-| **Persistência / ORM** | **Prisma ORM** | Type-safety de ponta a ponta, migrações declarativas, manipulação declarativa de transações relacionais (`$transaction`) e prevenção nativa de SQL Injection. |
-| **Banco de Dados** | **PostgreSQL 16** | Banco relacional corporativo de padrão ACID, com suporte robusto a tipos decimais monetários de alta precisão (`DECIMAL(12, 2)`), constraints de unicidade compostas e chaves estrangeiras com integridade referencial. |
-| **Frontend** | **Angular (v21 - Standalone Components)** | Framework completo para aplicações empresariais e ERPs, formulários reativos (`ReactiveFormsModule`), sistema de rotas nativo, injeção de dependência e facilidade de manutenção em arquitetura baseada em componentes. |
-| **Infraestrutura Local** | **Docker Compose** | Sobe o banco de dados PostgreSQL com um único comando sem exigir instalação manual ou configurações de portas externas. |
+| **Back-end** | **NestJS (Node.js + TypeScript)** | Arquitetura modular com injeção de dependência nativa, separação clara de responsabilidades (Controllers, Services, DTOs), validação declarativa via `class-validator` e geração automática de documentação OpenAPI/Swagger. |
+| **ORM** | **Prisma ORM** | Tipagem estática gerada a partir do schema, migrações versionadas e suporte simples e seguro a transações atômicas (`prisma.$transaction`). |
+| **Banco de Dados** | **PostgreSQL 16** | SGBD relacional com suporte ACID completo, tipos numéricos de precisão exata (`DECIMAL(12, 2)` para valores monetários e `DECIMAL(10, 3)` para quantidades) e constraints de integridade referencial. |
+| **Front-end** | **Angular 21 (Standalone + Zoneless)** | Framework estruturado para aplicações corporativas e ERPs, utilizando `ReactiveFormsModule` com `FormArray` para validação dinâmica de múltiplos itens e detecção de mudanças reativa (`provideZonelessChangeDetection`) com locale `pt-BR`. |
+| **Infraestrutura** | **Docker Compose** | Provisionamento isolado e reprodutível do banco PostgreSQL com um único comando, sem depender de serviços externos. |
 
 ---
 
-## ⚖️ Como a Regra de Alçada é Modelada, Calculada e Persistida
+### 2. Como a Regra de Alçada é Modelada, Calculada e Persistida
 
-### 1. Modelagem Relacional
+#### Modelagem
+- **`RegraAlcada`**: Vinculada a uma `Obra`, possui `valorMinimo` (`DECIMAL(12,2)`) e `valorMaximo` (`DECIMAL(12,2)`, anulável para representar faixas sem limite superior, ex.: *"Acima de R$ 50.000,00"*).
+- **`RegraAlcadaAprovador`**: Define os usuários aprovadores de uma regra e sua `ordem` sequencial (`1, 2, ...`). Possui constraints `@@unique([regraAlcadaId, ordem])` e `@@unique([regraAlcadaId, usuarioId])` no banco para impedir ordens duplicadas ou o mesmo usuário repetido na mesma regra.
+- **`PedidoAprovacao`**: Ao criar um pedido, o sistema gera um *snapshot* das etapas de aprovação vinculadas ao pedido. Isso garante que alterações futuras nas regras da obra não corrompam pedidos já emitidos ou em andamento.
+- **`PedidoHistorico`**: Tabela *append-only* que preserva a trilha de auditoria (`CRIADO`, `APROVADO`, `REJEITADO`), registrando usuário, data/hora e motivo/observação.
 
-- **`Obra`**: Unidade central de custo e projeto.
-- **`Usuario`**: Responsáveis com cargos específicos (ex: *Engenheiro Residente*, *Gerente de Obras*, *Diretor de Operações*).
-- **`RegraAlcada`**: Define faixas de valor financeiro pertencentes a uma obra:
-  - `valorMinimo`: Valor inicial da faixa (inclusive).
-  - `valorMaximo`: Valor teto da faixa (se `NULL`, representa faixa sem limite superior — "Acima de R$ X").
-- **`RegraAlcadaAprovador`**: Tabela associativa com constraint de unicidade `@@unique([regraAlcadaId, ordem])` e `@@unique([regraAlcadaId, usuarioId])`, garantindo que:
-  - Não há ordem repetida na mesma regra.
-  - O mesmo aprovador não pode ser duplicado em níveis diferentes da mesma regra.
-- **`Pedido`**: Cabeçalho do pedido, armazenando `valorTotal` calculado, `status` (`PENDENTE`, `APROVADO`, `REJEITADO`), `regraAlcadaId` e `nivelAtualOrdem` (etapa corrente aguardando decisão).
-- **`PedidoAprovacao`**: Snapshot imutável da cadeia de aprovação gerada para o pedido no momento da sua emissão.
-- **`PedidoHistorico`**: Trilha de auditoria imutável registrando cada evento (`CRIADO`, `APROVADO`, `REJEITADO`), com autor, carimbo de data/hora e justificativa.
+#### Cálculo e Determinação da Cadeia
+1. No envio do pedido (`POST /api/pedidos`), o back-end recalcula o total de cada item e a soma total do pedido (`valorTotal`).
+2. O serviço `RegrasAlcadaService.determinarAlcada(obraId, valorTotal)` consulta a regra aplicável para a obra onde:
+   - `valorMinimo <= valorTotal`
+   - `valorMaximo IS NULL OR valorMaximo >= valorTotal`
+3. **Comportamento para valores sem regra aplicável**: Caso a obra não possua regra configurada que cubra o `valorTotal` do pedido, a criação é recusada com `400 Bad Request` e mensagem explicativa informando a obra e o valor sem cobertura, orientando o cadastro da faixa correspondente.
+4. Encontrada a regra, o pedido é salvo com `status = PENDENTE`, `nivelAtualOrdem = 1` e todas as etapas geradas em `PedidoAprovacao`.
 
-### 2. Motor de Decisão (`AlcadaEngine`)
-
-Quando um pedido é submetido:
-1. O backend calcula o total de cada item (`quantidade × precoUnitario`) e totaliza o pedido.
-2. O serviço `RegrasAlcadaService.determinarAlcada(obraId, valorTotal)` executa uma busca ponderada:
-   ```sql
-   WHERE "obraId" = :obraId
-     AND "valorMinimo" <= :valorTotal
-     AND ("valorMaximo" IS NULL OR "valorMaximo" >= :valorTotal)
-   ORDER BY "valorMinimo" DESC
-   ```
-3. **Tratamento de Exceção para Valores sem Regra**: Caso nenhuma regra cubra a faixa, o pedido é rejeitado pelo servidor com `400 Bad Request` e uma mensagem clara: *"Nenhuma regra de alçada configurada na obra [Nome] para o valor total de R$ [Valor]. Cadastre a regra antes de emitir o pedido."*
-4. Havendo regra válida, o pedido é gravado em transação atômica (`$transaction`), gerando as etapas em `PedidoAprovacao` e definindo `nivelAtualOrdem = 1`.
-
-### 3. Execução Sequencial e Bloqueio de Decisões Fora de Ordem
-
-- Ao aprovar uma etapa (`POST /api/pedidos/:id/aprovar`), o backend valida:
-  - Se o pedido está com status `PENDENTE`.
-  - Se o usuário autenticado corresponde **exatamente** ao usuário da etapa indicada por `nivelAtualOrdem`.
-- Se a validação passar:
-  - Marca a etapa como `APROVADO`.
-  - Se houver próxima etapa (`ordem + 1`), avança `nivelAtualOrdem = nivelAtualOrdem + 1`.
-  - Se for a última etapa, atualiza o pedido para `status = APROVADO` e `nivelAtualOrdem = null`.
-- Em caso de **Rejeição** (`POST /api/pedidos/:id/rejeitar`):
-  - O motivo é **estritamente obrigatório** (validação no DTO com `@MinLength(5)`).
-  - O fluxo é **imediatamente interrompido**: `status = REJEITADO`, `nivelAtualOrdem = null` e `motivoRejeicao` persistido no pedido e no histórico.
-  - As etapas seguintes não são executadas.
+#### Avanço de Nível e Rejeição
+- **Aprovação (`POST /api/pedidos/:id/aprovar`)**: Verifica se o pedido está `PENDENTE` e se o `usuarioId` informado corresponde exatamente ao aprovador da etapa `nivelAtualOrdem`. Decisões fora de ordem são bloqueadas com `403 Forbidden`. Quando aprovado, se houver próxima etapa (`ordem + 1`), `nivelAtualOrdem` é incrementado; caso contrário, o pedido passa para `APROVADO` e `nivelAtualOrdem = null`.
+- **Rejeição (`POST /api/pedidos/:id/rejeitar`)**: Exige motivo obrigatório (validado no front-end e no DTO do back-end). Marca a etapa atual como `REJEITADO`, interrompe imediatamente o fluxo (`status = REJEITADO`, `nivelAtualOrdem = null`) e grava o motivo no pedido e no histórico.
 
 ---
 
-## 📡 Comunicação Front-end & Back-end
+### 3. Comunicação Front-end e Back-end
 
-- Comunicação assíncrona orientada a serviços REST via **`HttpClient`** com tipagem estrita via interfaces TypeScript compartilhadas (`models.ts`).
-- **CORS habilitado** no NestJS para permitir chamadas do front-end Angular.
-- **Global Prefix** `/api` para versionamento e organização das rotas.
-- Tratamento de erros HTTP padronizado na camada de serviços do Angular, exibindo mensagens compreensíveis para o operador em banners dedicados e modais de erro.
-
----
-
-## 🔒 Consistência e Integridade de Dados
-
-1. **Atomicidade com Transações ACID (`prisma.$transaction`)**:
-   A criação do pedido, a geração de seus itens, a criação do snapshot da alçada e a primeira entrada na auditoria ocorrem em um único bloco transacional. Se qualquer passo falhar, nenhum dado órfão é gravado.
-2. **Precisão Numérica Decimal**:
-   Campos financeiros e quantitativos utilizam `DECIMAL(12, 2)` e `DECIMAL(10, 3)` para evitar inconsistências de arredondamento inerentes a números de ponto flutuante (*float/double*).
-3. **Cálculo de Totais no Servidor**:
-   O total do pedido é recalculado e validado exclusivamente no backend no momento da persistência, garantindo que valores manipulados no cliente não sejam gravados.
-4. **Trilha Imutável de Auditoria (`PedidoHistorico`)**:
-   Todas as aprovações, rejeições e motivos são gravados de forma append-only, assegurando conformidade e transparência fiscal e corporativa.
+- Comunicação via API REST JSON sobre HTTP consumida pelo `ApiService` do Angular (`HttpClient`).
+- Contratos tipados de ponta a ponta: DTOs validados com `ValidationPipe` (`whitelist: true`, `transform: true`) no NestJS e interfaces TypeScript espelhadas no Angular (`models.ts`).
+- Tratamento centralizado de erros HTTP, exibindo as mensagens de negócio retornadas pela API diretamente nos componentes de feedback visual.
 
 ---
 
-## 🚀 Como Executar o Projeto Localmente
+### 4. Consistência e Integridade dos Dados
+
+1. **Transações Atômicas (`prisma.$transaction`)**:
+   - Criação do pedido + inserção dos N itens + criação das etapas de alçada + registro no histórico executam em uma única transação ACID.
+   - Aprovação e rejeição atualizam a etapa, o cabeçalho do pedido e o histórico de auditoria atomicamente.
+   - Edição de regras substitui a cadeia de aprovadores de forma transacional.
+2. **Recálculo Server-Side**: O back-end nunca confia em totais enviados pelo cliente; todos os subtotais e o valor total do pedido são calculados no servidor antes de determinar a alçada e persistir.
+3. **Integridade Referencial e Precisão Monetária**: Chaves estrangeiras com políticas de deleção apropriadas (`Cascade` para itens/etapas do pedido, `Restrict` para entidades mestras) e uso de `DECIMAL` no PostgreSQL para evitar erros de ponto flutuante.
+
+---
+
+### 5. O que Mudaria em Produção
+
+1. **Autenticação e Autorização Reais**: Substituição do seletor de sessão simulado por autenticação via JWT/OAuth2 (ex.: Keycloak ou Auth0), extraindo a identidade do aprovador diretamente do token assinado em um `Guard` do NestJS.
+2. **Controle de Concorrência Otimista**: Adição de coluna de versão (`version`) na tabela de pedidos para prevenir condições de corrida em aprovações simultâneas.
+3. **Notificações Assíncronas**: Publicação de eventos em fila (RabbitMQ / SQS) a cada mudança de etapa para envio de e-mail ou WhatsApp ao próximo aprovador da fila.
+4. **Versionamento Imutável de Regras**: Em vez de atualizar regras in-place, criar novas revisões de regra para manter rastreabilidade histórica de auditoria das próprias políticas de alçada.
+5. **Paginação Server-Side e Índices Adicionais**: Paginação por cursor/offset na listagem de pedidos e filtros por período e fornecedor.
+
+---
+
+## Como Executar o Projeto Localmente
 
 ### Pré-requisitos
-- **Node.js** (v18 ou superior — testado no Node v24)
-- **Docker & Docker Compose** (para o PostgreSQL)
+- **Node.js** (v18+)
+- **Docker** e **Docker Compose** (para o banco PostgreSQL)
 
----
+### 1. Instalar Dependências
 
-### Passo 1: Clonar o Repositório e Instalar Dependências
+Na raiz do projeto:
 
 ```bash
-# Na raiz do projeto:
 npm install --prefix backend
 npm install --prefix frontend
 ```
 
----
+### 2. Iniciar o Banco de Dados PostgreSQL
 
-### Passo 2: Subir o Banco de Dados PostgreSQL
-
-Execute o Docker Compose na raiz do projeto:
+Na raiz do projeto:
 
 ```bash
 docker compose up -d
 ```
-*(Caso não possua o Docker ativo, você pode apontar o `DATABASE_URL` no arquivo `backend/.env` para qualquer instância PostgreSQL de sua preferência).*
 
----
+> O arquivo `backend/.env` já está configurado por padrão apontando para `postgresql://postgres:postgres@127.0.0.1:5432/obraflow?schema=public`. Caso não esteja presente, copie `backend/.env.example` para `backend/.env`.
 
-### Passo 3: Executar Migrações e Carregar Dados de Demonstração (Seed)
-
-Dentro da pasta `backend`:
+### 3. Executar Migrações e Popular Dados de Demonstração (Seed)
 
 ```bash
 cd backend
 npx prisma generate
-npx prisma migrate dev --name init
+npx prisma migrate deploy
 npm run seed
 ```
 
-O comando de seed carrega automaticamente:
-- **2 Obras**: Residencial Horizonte Azul e Edifício Metrópole Tower.
-- **4 Usuários com cargos reais**: João Silva (*Engenheiro*), Amanda Oliveira (*Gerente*), Carlos Mendonça (*Diretor*) e Fernanda Costa (*Suprimentos*).
-- **3 Fornecedores**: Votorantim Cimentos, Gerdau Aços, Tigre Materiais.
-- **5 Regras de alçada** cobrindo diferentes faixas de valor por obra.
-- **3 Pedidos de compra em estados reais**:
-  - `PED-2026-0001`: **Pendente** (aguardando João na etapa 1).
-  - `PED-2026-0002`: **Aprovado** (aprovado por João e Amanda com cadeia concluída).
-  - `PED-2026-0003`: **Rejeitado** (interrompido por Amanda com motivo e justificativa registrados).
+O seed cria dados completos para avaliação imediata:
+- **2 Obras**: *Residencial Horizonte Azul* e *Edifício Metrópole Tower*.
+- **4 Usuários**: *João Silva* (Engenheiro Residente), *Amanda Oliveira* (Gerente de Obras), *Carlos Mendonça* (Diretor de Operações) e *Fernanda Costa* (Coordenadora de Suprimentos).
+- **3 Fornecedores**: *Votorantim Cimentos*, *Gerdau Aços Longos* e *Tigre Materiais e Tubulações*.
+- **5 Regras de Alçada** distribuídas entre as duas obras (faixas até R$ 10.000, de R$ 10.000 a R$ 50.000 e acima de R$ 50.000).
+- **3 Pedidos de Compra em estados distintos**:
+  - `PED-2026-0001`: **PENDENTE** (R$ 13.300,00 — aguardando João Silva na Etapa 1/2, seguido por Amanda Oliveira).
+  - `PED-2026-0002`: **APROVADO** (R$ 7.450,00 — cadeia concluída).
+  - `PED-2026-0003`: **REJEITADO** (R$ 49.000,00 — aprovado na 1ª etapa por João Silva e rejeitado na 2ª etapa por Amanda Oliveira com motivo registrado).
 
----
+### 4. Iniciar o Back-end
 
-### Passo 4: Iniciar o Backend (NestJS)
-
-```bash
-# Na pasta backend:
-npm run start:dev
-```
-- API disponível em: `http://localhost:3000/api`
-- Documentação interativa Swagger: `http://localhost:3000/api/docs`
-
----
-
-### Passo 5: Iniciar o Frontend (Angular)
-
-Em outro terminal, na pasta `frontend`:
+Em um terminal (na raiz ou dentro de `backend/`):
 
 ```bash
-# Na pasta frontend:
-npm start
+npm run start:backend
+# ou dentro de backend/: npm run start:dev
 ```
-- Aplicação web disponível em: `http://localhost:4200`
+- **API**: `http://localhost:3000/api`
+- **Swagger UI**: `http://localhost:3000/api/docs`
+
+### 5. Iniciar o Front-end
+
+Em outro terminal (na raiz ou dentro de `frontend/`):
+
+```bash
+npm run start:frontend
+# ou dentro de frontend/: npm start
+```
+- **Aplicação Web**: `http://localhost:4200`
 
 ---
 
-## 📚 Documentação da API (Endpoints e Payloads)
+## Documentação da API (Endpoints e Payloads)
 
-O Swagger interativo está disponível em `http://localhost:3000/api/docs`. Abaixo estão os principais endpoints:
+A documentação interativa completa pode ser consultada no Swagger em `http://localhost:3000/api/docs`.
 
-### Obras & Fornecedores & Usuários
-- `GET /api/obras`: Lista todas as obras cadastradas.
-- `GET /api/usuarios`: Lista os usuários disponíveis para aprovação.
-- `GET /api/fornecedores`: Lista fornecedores homologados.
+### Cadastros Base (Obras, Usuários e Fornecedores)
 
-### Regras de Alçada
-- `GET /api/regras-alcada?obraId={obraId}`: Lista regras e cadeia de aprovadores da obra.
-- `POST /api/regras-alcada`: Cria nova faixa de alçada com aprovadores ordenados.
+- `GET /api/obras` | `GET /api/obras/:id` | `POST /api/obras`
   ```json
   {
-    "obraId": "uuid-obra",
-    "descricao": "Até R$ 10.000,00",
-    "valorMinimo": 0,
-    "valorMaximo": 10000,
+    "nome": "Residencial Parque das Águas",
+    "localizacao": "Curitiba - PR",
+    "orcamento": 8500000
+  }
+  ```
+- `GET /api/usuarios` | `GET /api/usuarios/:id` | `POST /api/usuarios`
+  ```json
+  {
+    "nome": "Roberto Almeida",
+    "email": "roberto.almeida@obraflow.com.br",
+    "cargo": "Engenheiro Orçamentista"
+  }
+  ```
+- `GET /api/fornecedores` | `GET /api/fornecedores/:id` | `POST /api/fornecedores`
+  ```json
+  {
+    "razaoSocial": "Amanco Wavin Brasil",
+    "cnpj": "11.222.333/0001-44",
+    "contato": "comercial@amanco.com.br"
+  }
+  ```
+
+### Regras de Alçada
+
+- `GET /api/regras-alcada?obraId={obraId}`: Lista as regras configuradas para a obra ordenadas por faixa de valor.
+- `GET /api/regras-alcada/:id`: Consulta detalhes de uma regra específica.
+- `POST /api/regras-alcada`: Cria uma nova regra de alçada com cadeia ordenada de aprovadores.
+  ```json
+  {
+    "obraId": "uuid-da-obra",
+    "descricao": "Compras acima de R$ 10.000,00",
+    "valorMinimo": 10000.01,
+    "valorMaximo": null,
     "aprovadores": [
-      { "usuarioId": "uuid-usuario-joao", "ordem": 1 }
+      { "usuarioId": "uuid-joao", "ordem": 1 },
+      { "usuarioId": "uuid-amanda", "ordem": 2 }
     ]
   }
   ```
-- `PUT /api/regras-alcada/{id}`: Atualiza faixa e reordena aprovadores.
-- `DELETE /api/regras-alcada/{id}`: Exclui uma regra.
+- `PUT /api/regras-alcada/:id`: Atualiza limites de valor, descrição e reordenação de aprovadores.
+- `DELETE /api/regras-alcada/:id`: Remove uma regra de alçada.
 
-### Pedidos de Compra
-- `GET /api/pedidos`: Lista pedidos com filtros opcionais (`obraId`, `status`) e contexto resumido da alçada.
-- `GET /api/pedidos/{id}`: Detalhes completos do pedido, itens, cadeia e histórico.
-- `POST /api/pedidos`: Cadastra novo pedido de compra com itens.
+### Pedidos de Compra e Fluxo de Aprovação
+
+- `GET /api/pedidos?obraId={obraId}&status={PENDENTE|APROVADO|REJEITADO}`: Lista pedidos com resumo da alçada (`aprovadoresConcluidos`, `aprovadorAtual`, `proximosAprovadores`).
+- `GET /api/pedidos/:id`: Retorna o pedido com todos os itens, etapas de aprovação e histórico de auditoria.
+- `POST /api/pedidos`: Cria um pedido com N itens, calcula os totais e gera a cadeia inicial de aprovação.
   ```json
   {
-    "obraId": "uuid-obra",
-    "fornecedorId": "uuid-fornecedor",
+    "obraId": "uuid-da-obra",
+    "fornecedorId": "uuid-do-fornecedor",
     "dataPedido": "2026-11-01",
-    "observacoes": "Compra urgente para concretagem",
+    "observacoes": "Material para etapa de fundação",
     "itens": [
       {
         "descricao": "Cimento CP II 50kg",
         "quantidade": 100,
         "unidade": "sc",
-        "precoUnitario": 38.00
+        "precoUnitario": 38.50
       }
     ]
   }
   ```
-- `POST /api/pedidos/{id}/aprovar`: Aprova a etapa atual da alçada.
+- `POST /api/pedidos/:id/aprovar`: Registra aprovação da etapa atual e avança o nível da alçada.
   ```json
   {
-    "usuarioId": "uuid-usuario-aprovador",
-    "observacao": "Aprovado conforme memorial de cálculo"
+    "usuarioId": "uuid-do-aprovador-atual",
+    "observacao": "Valores dentro do orçamento previsto."
   }
   ```
-- `POST /api/pedidos/{id}/rejeitar`: Rejeita o pedido com motivo obrigatório.
+- `POST /api/pedidos/:id/rejeitar`: Rejeita o pedido com motivo obrigatório e encerra o fluxo.
   ```json
   {
-    "usuarioId": "uuid-usuario-aprovador",
-    "motivo": "Preço unitário 15% acima da cotação de referência"
+    "usuarioId": "uuid-do-aprovador-atual",
+    "motivo": "Fornecedor sem prazo de entrega compatível com o cronograma."
   }
   ```
 
 ---
 
-## 🧪 Testes Automatizados
+## Testes Automatizados
 
-Foram implementados testes unitários cobrindo o motor de regras de alçada e a máquina de estados de pedidos:
+O back-end conta com testes unitários automatizados via **Jest** cobrindo o motor de regras de alçada, o fluxo sequencial de aprovação/rejeição e o health check da API:
 
 ```bash
-# Na pasta backend:
-npm test
+npm run test:backend
+# ou dentro de backend/: npm test
 ```
-
-**Cenários testados**:
-- Determinação da regra correta de acordo com a faixa de valor.
-- Retorno nulo e bloqueio quando não há regra aplicável.
-- Validação de faixas de valores (máximo menor que mínimo).
-- Rejeição de duplicação do mesmo usuário na mesma regra.
-- Bloqueio de aprovação por usuário incorreto (tentativa de aprovação fora de ordem).
-- Bloqueio de decisão em pedidos já finalizados ou rejeitados.
-- Rejeição de submissão sem motivo obrigatório.
-
----
-
-## 📈 O que Mudaria em Produção
-
-Para escalar a solução em um ambiente enterprise com alto volume:
-
-1. **Autenticação & RBAC (Role-Based Access Control)**:
-   - Substituição do simulador de sessão por **Keycloak** ou **Auth0** com autenticação via JWT (*JSON Web Tokens*).
-   - Validação de permissões por obra no nível do token/claim do usuário.
-2. **Mensageria e Notificações Assíncronas**:
-   - Integração com **RabbitMQ** ou **AWS SQS** para disparo de notificações em tempo real (e-mail, WhatsApp, push) para o próximo aprovador assim que uma etapa for concluída.
-3. **Controle de Concorrência Otimista**:
-   - Inclusão de campo `@version` no pedido para evitar condições de corrida (*race conditions*) caso dois aprovadores tentem submeter decisões concorrentes no mesmo milissegundo.
-4. **Cache Distribuído**:
-   - Uso de **Redis** para cache das regras de alçada por obra, invalidando o cache apenas sob mutações de regras.
-5. **Observabilidade & Telemetria**:
-   - Rastreamento distribuído com **OpenTelemetry**, logs estruturados em formato JSON com **Pino/Winston**, e monitoramento de métricas no **Prometheus/Grafana**.
-
----
-
-## 👤 Identificação do Candidato
-
-- **Candidato**: Landerson
-- **Vaga**: Desenvolvedor Full-stack (ObraFlow)
-- **Data da Entrega**: 01/11/2026
-- **Contato / WhatsApp**: Disponível no descritivo do Pull Request.

@@ -60,7 +60,7 @@ import { ErrorBannerComponent } from '../../shared/components/error-banner.compo
 
       <!-- Loading State -->
       <app-loading-spinner
-        *ngIf="loadingRegras"
+        *ngIf="loadingObras || loadingRegras"
         mensagem="Carregando regras de alçada..."
       ></app-loading-spinner>
 
@@ -68,12 +68,21 @@ import { ErrorBannerComponent } from '../../shared/components/error-banner.compo
       <app-error-banner
         *ngIf="erro"
         [mensagem]="erro"
-        (retry)="carregarRegrasObra()"
+        (retry)="tentarNovamente()"
       ></app-error-banner>
+
+      <!-- Empty State se nenhuma obra cadastrada no sistema -->
+      <app-empty-state
+        *ngIf="!loadingObras && !erro && obras.length === 0"
+        titulo="Nenhuma obra cadastrada"
+        mensagem="Não há obras cadastradas no sistema para configurar regras de alçada."
+        botaoTexto="Recarregar"
+        (acao)="carregarObrasEUsuarios()"
+      ></app-empty-state>
 
       <!-- Empty State se nenhuma obra selecionada -->
       <app-empty-state
-        *ngIf="!obraSelecionadaId && !loadingRegras"
+        *ngIf="!loadingObras && !erro && obras.length > 0 && !obraSelecionadaId && !loadingRegras"
         titulo="Selecione uma obra"
         mensagem="Escolha uma obra no seletor para gerenciar as regras de aprovação."
       ></app-empty-state>
@@ -304,6 +313,7 @@ export class RegrasAlcadaComponent implements OnInit {
   regras: RegraAlcada[] = [];
 
   obraSelecionadaId: string = '';
+  loadingObras: boolean = true;
   loadingRegras: boolean = false;
   erro: string | null = null;
 
@@ -341,14 +351,34 @@ export class RegrasAlcadaComponent implements OnInit {
     return this.usuarios.filter((u) => !jaAdicionados.has(u.id));
   }
 
+  tentarNovamente() {
+    if (this.obras.length === 0) {
+      this.carregarObrasEUsuarios();
+    } else {
+      this.carregarRegrasObra();
+    }
+  }
+
   carregarObrasEUsuarios() {
+    this.loadingObras = true;
+    this.erro = null;
+    this.cdr.markForCheck();
+
     this.api.getObras().subscribe({
       next: (obras) => {
         this.obras = obras;
+        this.loadingObras = false;
         if (obras.length > 0 && !this.obraSelecionadaId) {
           this.obraSelecionadaId = obras[0].id;
           this.carregarRegrasObra();
         }
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.loadingObras = false;
+        this.erro =
+          err.error?.message ||
+          'Não foi possível carregar as obras. Verifique se o backend está ativo.';
         this.cdr.markForCheck();
       },
     });

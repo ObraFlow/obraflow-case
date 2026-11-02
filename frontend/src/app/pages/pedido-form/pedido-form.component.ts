@@ -160,8 +160,8 @@ import { ErrorBannerComponent } from '../../shared/components/error-banner.compo
           </div>
 
           <div class="card-body" style="padding: 0.85rem;">
-            <div *ngIf="itensArray.length === 0" class="alert alert-warning" style="margin-bottom: 0;">
-              O pedido precisa de pelo menos 1 item.
+            <div *ngIf="itensArray.length === 0" class="alert alert-danger" style="margin-bottom: 0;">
+              O pedido não possui itens. Adicione pelo menos um item válido para cadastrar o pedido.
             </div>
 
             <div *ngIf="itensArray.length > 0" class="table-responsive">
@@ -169,9 +169,9 @@ import { ErrorBannerComponent } from '../../shared/components/error-banner.compo
                 <thead>
                   <tr>
                     <th style="min-width: 240px;">Descrição <span class="req">*</span></th>
-                    <th style="width: 100px;">Qtd <span class="req">*</span></th>
+                    <th style="width: 120px;">Qtd <span class="req">*</span></th>
                     <th style="width: 90px;">Unidade <span class="req">*</span></th>
-                    <th style="width: 130px;">Preço Unit. (R$) <span class="req">*</span></th>
+                    <th style="width: 150px;">Preço Unit. (R$) <span class="req">*</span></th>
                     <th style="width: 130px; text-align: right;">Total</th>
                     <th style="width: 70px; text-align: center;">Ação</th>
                   </tr>
@@ -181,7 +181,7 @@ import { ErrorBannerComponent } from '../../shared/components/error-banner.compo
                     *ngFor="let itemGroup of itensArray.controls; let i = index"
                     [formGroupName]="i"
                   >
-                    <td>
+                    <td style="vertical-align: top;">
                       <input
                         type="text"
                         class="form-control form-control-sm"
@@ -189,8 +189,11 @@ import { ErrorBannerComponent } from '../../shared/components/error-banner.compo
                         placeholder="Ex: Cimento CP II 50kg"
                         [class.is-invalid]="isItemInvalido(i, 'descricao')"
                       />
+                      <div *ngIf="isItemInvalido(i, 'descricao')" class="invalid-feedback">
+                        Informe a descrição do item.
+                      </div>
                     </td>
-                    <td>
+                    <td style="vertical-align: top;">
                       <input
                         type="number"
                         step="0.01"
@@ -200,8 +203,11 @@ import { ErrorBannerComponent } from '../../shared/components/error-banner.compo
                         placeholder="0"
                         [class.is-invalid]="isItemInvalido(i, 'quantidade')"
                       />
+                      <div *ngIf="isItemInvalido(i, 'quantidade')" class="invalid-feedback">
+                        Quantidade deve ser positiva.
+                      </div>
                     </td>
-                    <td>
+                    <td style="vertical-align: top;">
                       <select class="form-select form-select-sm" formControlName="unidade">
                         <option value="un">un</option>
                         <option value="kg">kg</option>
@@ -213,7 +219,7 @@ import { ErrorBannerComponent } from '../../shared/components/error-banner.compo
                         <option value="h">h</option>
                       </select>
                     </td>
-                    <td>
+                    <td style="vertical-align: top;">
                       <input
                         type="number"
                         step="0.01"
@@ -223,17 +229,19 @@ import { ErrorBannerComponent } from '../../shared/components/error-banner.compo
                         placeholder="0,00"
                         [class.is-invalid]="isItemInvalido(i, 'precoUnitario')"
                       />
+                      <div *ngIf="isItemInvalido(i, 'precoUnitario')" class="invalid-feedback">
+                        Valor unitário inválido ou negativo.
+                      </div>
                     </td>
-                    <td style="text-align: right; font-weight: 600; font-family: monospace; font-size: 0.9rem; color: var(--slate-800);">
+                    <td style="vertical-align: top; text-align: right; font-weight: 600; font-family: monospace; font-size: 0.9rem; color: var(--slate-800); padding-top: 0.85rem;">
                       {{ calcularTotalItem(i) | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
                     </td>
-                    <td style="text-align: center;">
+                    <td style="vertical-align: top; text-align: center; padding-top: 0.65rem;">
                       <button
                         type="button"
                         class="btn btn-secondary btn-sm"
                         style="color: var(--rose-600); font-size: 0.75rem; padding: 0.2rem 0.4rem;"
                         (click)="removerItem(i)"
-                        [disabled]="itensArray.length <= 1"
                       >
                         Remover
                       </button>
@@ -332,7 +340,7 @@ export class PedidoFormComponent implements OnInit {
       fornecedorId: ['', [Validators.required]],
       dataPedido: [hoje, [Validators.required]],
       observacoes: [''],
-      itens: this.fb.array([]),
+      itens: this.fb.array([], [Validators.required]),
     });
 
     // Iniciar com 1 item em branco por padrão conforme requisito
@@ -353,16 +361,15 @@ export class PedidoFormComponent implements OnInit {
   }
 
   removerItem(index: number) {
-    if (this.itensArray.length > 1) {
-      this.itensArray.removeAt(index);
-    }
+    this.itensArray.removeAt(index);
   }
 
   calcularTotalItem(index: number): number {
     const item = this.itensArray.at(index);
     if (!item) return 0;
-    const qtd = Number(item.get('quantidade')?.value) || 0;
-    const preco = Number(item.get('precoUnitario')?.value) || 0;
+    const qtd = Number(item.get('quantidade')?.value);
+    const preco = Number(item.get('precoUnitario')?.value);
+    if (isNaN(qtd) || isNaN(preco) || qtd <= 0 || preco < 0) return 0;
     return qtd * preco;
   }
 
