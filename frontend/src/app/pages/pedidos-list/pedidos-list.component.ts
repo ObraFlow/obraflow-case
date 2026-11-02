@@ -80,11 +80,41 @@ import { ModalRejeicaoComponent } from '../../shared/components/modal-rejeicao.c
         (retry)="carregarPedidos(true)"
       ></app-error-banner>
 
-      <!-- Loading State -->
-      <app-loading-spinner
-        *ngIf="loading"
-        mensagem="Carregando pedidos de compra..."
-      ></app-loading-spinner>
+      <!-- Table Skeleton on Initial Load -->
+      <div *ngIf="loading && pedidos.length === 0" class="card">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Obra / Fornecedor</th>
+                <th>Data</th>
+                <th>Itens / Total</th>
+                <th>Situação</th>
+                <th>Alçada Atual</th>
+                <th style="text-align: right;">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let s of [1, 2, 3]">
+                <td><span class="skeleton" style="width: 85px; height: 16px;"></span></td>
+                <td>
+                  <span class="skeleton" style="width: 150px; height: 14px; display: block; margin-bottom: 4px;"></span>
+                  <span class="skeleton" style="width: 110px; height: 11px; display: block;"></span>
+                </td>
+                <td><span class="skeleton" style="width: 75px; height: 14px;"></span></td>
+                <td>
+                  <span class="skeleton" style="width: 85px; height: 14px; display: block; margin-bottom: 4px;"></span>
+                  <span class="skeleton" style="width: 50px; height: 11px; display: block;"></span>
+                </td>
+                <td><span class="skeleton" style="width: 70px; height: 20px;"></span></td>
+                <td><span class="skeleton" style="width: 160px; height: 14px;"></span></td>
+                <td style="text-align: right;"><span class="skeleton" style="width: 65px; height: 26px;"></span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       <!-- Empty State -->
       <app-empty-state
@@ -96,7 +126,7 @@ import { ModalRejeicaoComponent } from '../../shared/components/modal-rejeicao.c
       ></app-empty-state>
 
       <!-- Orders Table -->
-      <div *ngIf="!loading && !erro && pedidos.length > 0" class="card">
+      <div *ngIf="pedidos.length > 0" class="card">
         <div class="table-responsive">
           <table class="table">
             <thead>

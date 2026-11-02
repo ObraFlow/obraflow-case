@@ -20,7 +20,13 @@ export class App implements OnInit {
   constructor(
     private readonly api: ApiService,
     readonly session: SessionService,
-  ) {}
+  ) {
+    const ativo = this.session.usuarioAtivo();
+    if (ativo) {
+      this.usuarios = [ativo];
+      this.usuarioSelecionadoId = ativo.id;
+    }
+  }
 
   ngOnInit() {
     this.carregarUsuarios();

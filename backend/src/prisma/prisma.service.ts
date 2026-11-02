@@ -8,6 +8,8 @@ export class PrismaService
 {
   async onModuleInit() {
     await this.$connect();
+    // Pre-warm query to establish PostgreSQL connection pool immediately
+    await this.$queryRaw`SELECT 1`;
   }
 
   async onModuleDestroy() {
