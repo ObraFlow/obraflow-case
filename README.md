@@ -1,22 +1,62 @@
-# ObraFlow · Dokimos
+<div align="center">
 
-Pedidos de compra com aprovação sequencial por obra e valor. O solicitante acompanha cada etapa; o aprovador encontra o que precisa decidir; as regras mudam sem reescrever a história dos pedidos existentes.
+# ObraFlow
 
-Implementação do [desafio original](docs/challenge.md), preservado integralmente. Stack: Next.js, React, TypeScript, Tailwind, PostgreSQL e Prisma. Execução local sem serviços pagos ou credenciais externas.
+**Dokimos · Pedidos de compra e aprovações por alçada**
 
-## Iniciar
+Uma aplicação full-stack para solicitar compras, configurar responsáveis e acompanhar cada decisão.
 
-Com Docker Engine ativo e Docker Compose instalado, na raiz do projeto:
+[Executar](#executar) · [Telas](#telas) · [Demonstração](#demonstração) · [Decisões técnicas](#decisões-técnicas) · [Testes](#testes) · [API](#api)
+
+</div>
+
+---
+
+## Sobre o projeto
+
+O Dokimos organiza a aprovação de pedidos de compra conforme a **obra** e o **valor total**. Cada pedido recebe uma cadeia de aprovadores, que decidem em sequência até a aprovação final ou a rejeição.
+
+A entrega reúne três fluxos:
+
+- **Solicitar uma compra:** incluir vários itens, acompanhar os totais e visualizar a alçada prevista antes do envio.
+- **Aprovar e acompanhar:** consultar itens e histórico, aprovar a etapa atual ou rejeitar com justificativa.
+- **Configurar alçadas:** definir faixas por obra e adicionar, remover ou reordenar aprovadores.
+
+Inclui busca por identificador, fila pessoal de aprovações, interface responsiva e tratamento de carregamento, listas vazias e falhas de comunicação.
+
+O [enunciado original](docs/challenge.md) está preservado na documentação.
+
+## Executar
+
+### Com Docker — caminho recomendado
+
+**Pré-requisitos:** Docker Engine ativo e Docker Compose. As portas **3000** e **5432** precisam estar disponíveis.
+
+Na raiz do projeto:
 
 ```sh
 docker compose up --build --wait
 ```
 
-Abrir [localhost:3000](http://localhost:3000). O Compose aguarda o banco, aplica migrations, executa o seed e inicia a aplicação. Portas 3000 e 5432 publicadas apenas no loopback.
+| Acesso             | Endereço                                                             |
+| ------------------ | -------------------------------------------------------------------- |
+| Aplicação          | [http://localhost:3000](http://localhost:3000)                       |
+| Prontidão do banco | [http://localhost:3000/api/health](http://localhost:3000/api/health) |
 
-O seed repetível cria duas obras, três usuários, dois fornecedores, três faixas e quatro pedidos em estados diferentes. Não reseta configurações nem decisões existentes. Credenciais locais: usuário `obraflow`, senha `obraflow_local`, banco `obraflow`. `docker compose down` para os serviços sem apagar o volume.
+O comando inicia o PostgreSQL, aplica as migrations, carrega os dados de demonstração e aguarda a aplicação ficar pronta. **Não é necessário configurar contas externas ou serviços pagos.**
 
-Para desenvolvimento no host: Node.js 24.11+ da linha 24 e npm 11. Copiar `.env.example` para `.env` e executar:
+Para parar os serviços e preservar os dados:
+
+```sh
+docker compose down
+```
+
+<details>
+<summary><strong>Desenvolvimento com Node.js no host</strong></summary>
+
+Use **Node.js 24.11 ou superior da linha 24** e **npm 11**.
+
+Na primeira execução, copie `.env.example` para `.env`. Se o arquivo já estiver configurado, preserve seus valores.
 
 ```sh
 npm ci
@@ -27,44 +67,175 @@ npm run db:seed
 npm run dev
 ```
 
-## Experimentar
+As credenciais de demonstração estão em `.env.example`: usuário `obraflow`, senha `obraflow_local` e banco `obraflow`.
 
-1. Em **Aprovações**, explore pedidos e históricos.
-2. Como **Lucas**, crie um pedido na Obra Centro com um ou mais itens.
-3. Até R$ 10.000,00, Amanda é a única aprovadora. Acima disso, Amanda decide antes de João.
-4. Troque para Amanda e aprove; depois para João para concluir uma cadeia de duas pessoas.
-5. Rejeite outro pedido com motivo e confira o encerramento.
-6. Edite uma regra e compare um pedido antigo com um novo: a cadeia antiga permanece.
+Configuração de portas, logs e diagnóstico estão em [Desenvolvimento e operação](docs/development.md).
 
-Na Obra Norte, até R$ 5.000,00 basta João; valores acima não têm cobertura e o cadastro é bloqueado. Preço zero é permitido. O total usa todos os itens, arredondados individualmente.
-
-O seletor de usuário demonstra a autorização por etapa. **Não é autenticação segura.** Cadastros básicos podem ser criados pela API, sem telas administrativas adicionais.
+</details>
 
 ## Telas
 
-![Pedidos e alçadas](docs/screenshots/orders.png)
+### Aprovações
 
-| Novo pedido                                           | Regras por obra                                  |
-| ----------------------------------------------------- | ------------------------------------------------ |
-| ![Cadastro com itens](docs/screenshots/new-order.png) | ![Editor de alçadas](docs/screenshots/rules.png) |
+Lista de pedidos com obra, fornecedor, situação e andamento da cadeia. Os filtros permitem consultar todos os pedidos ou apenas os que aguardam a decisão do usuário selecionado.
 
-[Detalhes e histórico](docs/screenshots/order-detail.png) · [Versão móvel](docs/screenshots/mobile.png)
+![Lista de pedidos e etapas de aprovação](docs/screenshots/orders.png)
 
-## Testar
+<details>
+<summary><strong>Novo pedido · itens, totais e prévia da alçada</strong></summary>
+
+Cadastro com inclusão de vários itens, cálculo dos valores e identificação dos responsáveis pela aprovação.
+
+![Cadastro de pedido com itens e resumo da alçada](docs/screenshots/new-order.png)
+
+</details>
+
+<details>
+<summary><strong>Detalhes do pedido · decisões e histórico</strong></summary>
+
+Itens da compra, etapas concluídas, responsável atual e registro das decisões com autor, horário e justificativa.
+
+![Detalhes do pedido e histórico de decisões](docs/screenshots/order-detail.png)
+
+</details>
+
+<details>
+<summary><strong>Regras de alçada · faixas e ordem dos aprovadores</strong></summary>
+
+Configuração independente por obra, com prévia dos intervalos e confirmação antes de salvar as alterações.
+
+![Editor de faixas e aprovadores por obra](docs/screenshots/rules.png)
+
+</details>
+
+<details>
+<summary><strong>Versão móvel</strong></summary>
+
+<img src="docs/screenshots/mobile.png" alt="Lista de pedidos adaptada para celular" width="360">
+
+</details>
+
+## Demonstração
+
+O seed prepara **duas obras, três usuários, dois fornecedores e quatro pedidos**: dois pendentes em etapas diferentes, um aprovado e um rejeitado.
+
+### Regras iniciais
+
+| Obra        | Valor do pedido       | Cadeia de aprovação                   |
+| ----------- | --------------------- | ------------------------------------- |
+| Obra Centro | Até R$ 10.000,00      | Amanda                                |
+| Obra Centro | Acima de R$ 10.000,00 | Amanda → João                         |
+| Obra Norte  | Até R$ 5.000,00       | João                                  |
+| Obra Norte  | Acima de R$ 5.000,00  | Sem cobertura; o cadastro é bloqueado |
+
+### Roteiro de avaliação
+
+1. Como **Lucas**, cadastre um pedido acima de R$ 10.000,00 na Obra Centro.
+2. Confira os itens, o total e a cadeia **Amanda → João** nos detalhes.
+3. Selecione **João** e observe que a decisão ainda pertence a Amanda.
+4. Troque para **Amanda** e aprove a primeira etapa. Depois, selecione **João** e conclua a aprovação.
+5. Em outro pedido, rejeite com uma justificativa e confira o encerramento do fluxo.
+6. Altere uma regra e crie um novo pedido: os pedidos anteriores mantêm suas cadeias originais.
+
+O seletor de usuário permite percorrer a demonstração; ele **não representa autenticação de produção**.
+
+<details>
+<summary><strong>Executar o seed novamente</strong></summary>
+
+Com o ambiente Docker preparado:
 
 ```sh
+docker compose run --rm seed
+```
+
+Para execução pelo Node.js, com `.env` configurado:
+
+```sh
+npm run db:seed
+```
+
+O seed adiciona os cenários ausentes. Repetir o comando não duplica os pedidos de demonstração nem desfaz decisões ou configurações já alteradas.
+
+</details>
+
+## Decisões técnicas
+
+### Tecnologias
+
+| Tecnologia                            | Papel e motivo da escolha                                                                |
+| ------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **Next.js e React**                   | Interface e API HTTP no mesmo projeto, simplificando a execução e a implantação.         |
+| **TypeScript**                        | Contratos explícitos e verificação estática entre componentes, rotas e serviços.         |
+| **PostgreSQL**                        | Persistência relacional com transações, chaves estrangeiras e restrições de integridade. |
+| **Prisma**                            | Acesso tipado ao banco e evolução do schema por migrations versionadas.                  |
+| **Tailwind CSS e componentes locais** | Consistência visual e adaptação das telas sem fontes ou serviços externos.               |
+| **Zod**                               | Validação dos dados recebidos pela API em tempo de execução.                             |
+| **Vitest e Playwright**               | Testes de domínio, integração com PostgreSQL e jornadas no navegador.                    |
+| **Docker Compose**                    | Preparação reproduzível da aplicação, do banco e dos dados de demonstração.              |
+
+### Arquitetura e comunicação
+
+A aplicação é um **monólito modular**, organizado por capacidades de negócio: cadastros, regras de alçada e pedidos.
+
+```text
+Interface React
+     ↓ HTTP / JSON
+Route Handlers do Next.js
+     ↓
+Serviços e regras de negócio
+     ↓
+Prisma → PostgreSQL
+```
+
+As rotas validam a requisição e traduzem os resultados para HTTP. Os serviços coordenam as operações e suas transações. A interface consome a API, apresenta erros por campo e consulta novamente o estado após uma alteração.
+
+### Modelagem e cálculo das alçadas
+
+Cada obra possui faixas com **teto inclusivo** e uma lista ordenada de aprovadores. A faixa aplicável é a de menor teto que comporte o total do pedido; a última pode ser ilimitada. Sem uma faixa compatível, o pedido não é criado.
+
+No cadastro, o backend calcula os itens, seleciona a faixa e persiste o pedido com uma **cópia da cadeia**, o teto escolhido e a versão da configuração. As etapas pertencem ao pedido: editar ou remover a regra depois não altera um fluxo em andamento.
+
+Dinheiro é calculado com aritmética decimal no servidor. Cada item é arredondado para centavos com **HALF_UP**, e o total do pedido é a soma dos itens arredondados. A prévia da interface usa inteiros de precisão fixa; o backend sempre recalcula os valores.
+
+### Consistência e integridade
+
+- **Criação atômica:** cabeçalho, itens, etapas e registro de idempotência são confirmados juntos ou revertidos.
+- **Configuração coerente:** alterar regras e criar pedidos bloqueiam a mesma obra durante a transação, evitando uma cadeia montada com configurações parciais.
+- **Decisões em ordem:** o servidor verifica o aprovador atual, a versão e a situação antes de registrar uma decisão.
+- **Concorrência:** uma atualização condicional por versão e a unicidade da decisão por etapa impedem gravações duplicadas.
+- **Rejeição rastreável:** exige motivo, encerra o fluxo e preserva o registro de quem decidiu e quando.
+- **Repetição segura:** a criação usa uma chave de idempotência para recuperar o resultado após falha de rede sem gerar outro pedido.
+- **Leituras consistentes:** consultas compostas usam um mesmo snapshot do banco. FKs, CHECKs e índices únicos complementam a validação da aplicação.
+
+O [registro de decisões](docs/decisions.md) detalha os custos e limites dessas escolhas.
+
+## Testes
+
+| Camada     | Quantidade | Cobertura principal                                                                             |
+| ---------- | ---------: | ----------------------------------------------------------------------------------------------- |
+| Unitários  |     **62** | Validações, limites, cálculos, normalização e equivalência dos totais entre cliente e servidor. |
+| Integração |     **23** | Transações, constraints, snapshots, idempotência, concorrência e seed atômico no PostgreSQL.    |
+| Navegador  |      **7** | Cadastro, aprovação, rejeição, resposta perdida, edição de regras e responsividade.             |
+
+Para executar os checks, use Node.js/npm, instale as dependências e configure `.env` a partir de `.env.example`:
+
+```sh
+npm ci
 npm run check
 ```
 
-Executa geração do client, lint, tipos, testes unitários e build. Integração e navegador usam banco separado terminado em `_test`; o runner recusa o banco de desenvolvimento antes de migrations.
+`check` executa geração do Prisma Client, formatação, lint, tipos, testes unitários e build de produção.
 
-Criar o banco de testes uma vez, caso ainda não exista:
+<details>
+<summary><strong>Testes de integração e jornadas no navegador</strong></summary>
+
+Com o PostgreSQL ativo, crie o banco de testes uma única vez, caso ainda não exista:
 
 ```sh
 docker compose exec -T db createdb -U obraflow obraflow_test
 ```
 
-Confirmar `TEST_DATABASE_URL` em `.env`, conforme `.env.example`:
+Confirme `TEST_DATABASE_URL` em `.env`, conforme o exemplo do projeto. Depois:
 
 ```sh
 npm run test:integration
@@ -72,56 +243,60 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-E2E prepara dados, gera o build e inicia servidor temporário na porta 3100. Não executar integração e E2E simultaneamente no mesmo banco. Diagnósticos de falha em `test-results/`. CI repete os checks em PostgreSQL efêmero; execução remota depende do envio ao repositório.
+Os runners verificam o isolamento antes de aplicar migrations. O banco deve terminar em `_test` e ser diferente do banco de desenvolvimento.
+
+E2E prepara os dados, gera o build e inicia um servidor temporário na porta **3100**. Execute integração e E2E em sequência quando usarem o mesmo banco. Traces e diagnósticos ficam em `test-results/`.
+
+</details>
+
+O workflow de CI executa os checks com PostgreSQL efêmero e Chromium. Os cenários e limites da validação estão no [relatório de verificação](docs/verification.md).
 
 ## API
 
-Header obrigatório: `X-Demo-User-Id`. Lucas no seed: `66666666-6666-4666-8666-666666666666`.
+A comunicação usa **HTTP e JSON**. Os endpoints de negócio recebem `X-Demo-User-Id` com o UUID do usuário de demonstração. Valores monetários e quantidades são enviados como strings decimais.
 
-| Método     | Rota                                                           | Uso                                    |
-| ---------- | -------------------------------------------------------------- | -------------------------------------- |
-| GET / POST | `/api/projects`, `/api/users`, `/api/suppliers`                | Listar/cadastrar referências           |
-| GET        | `/api/projects/{id}`, `/api/users/{id}`, `/api/suppliers/{id}` | Consulta individual                    |
-| GET / PUT  | `/api/projects/{id}/approval-rules`                            | Ler/substituir configuração com versão |
-| GET / POST | `/api/orders`                                                  | Listar/cadastrar pedidos               |
-| GET        | `/api/orders/{id}`                                             | Itens, etapas, permissões e histórico  |
-| POST       | `/api/orders/{id}/decisions`                                   | Aprovar/rejeitar etapa atual           |
-| GET        | `/api/health`                                                  | Prontidão operacional, sem header demo |
+| Método        | Endpoint                                                       | Finalidade                                                        |
+| ------------- | -------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `GET`, `POST` | `/api/projects`, `/api/users`, `/api/suppliers`                | Listar e cadastrar obras, usuários e fornecedores.                |
+| `GET`         | `/api/projects/{id}`, `/api/users/{id}`, `/api/suppliers/{id}` | Consultar um cadastro.                                            |
+| `GET`, `PUT`  | `/api/projects/{id}/approval-rules`                            | Consultar e salvar a configuração completa de alçadas.            |
+| `GET`, `POST` | `/api/orders`                                                  | Listar e criar pedidos.                                           |
+| `GET`         | `/api/orders/{id}`                                             | Consultar itens, etapas, permissões e histórico.                  |
+| `POST`        | `/api/orders/{id}/decisions`                                   | Aprovar ou rejeitar a etapa atual.                                |
+| `GET`         | `/api/health`                                                  | Verificar prontidão da aplicação e do banco, sem identidade demo. |
 
-Exemplo PowerShell:
+<details>
+<summary><strong>Exemplo de consulta em PowerShell</strong></summary>
 
 ```powershell
 $headers = @{ 'X-Demo-User-Id' = '66666666-6666-4666-8666-666666666666' }
 Invoke-RestMethod 'http://localhost:3000/api/orders?page=1&pageSize=20' -Headers $headers
 ```
 
-POST de pedido também exige `Idempotency-Key` UUID. Mesma chave, solicitante e conteúdo não criam outro pedido. Dinheiro e quantidades são strings decimais. [Payloads, paginação e erros](docs/api-contract.md).
+O UUID do exemplo corresponde a Lucas no seed. Para criar pedidos, envie também o header `Idempotency-Key` com um UUID gerado para a solicitação.
 
-## Decisões técnicas
+</details>
 
-| Tecnologia                        | Motivo da escolha                                                                                         |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Next.js e React                   | Interface e endpoints HTTP no mesmo projeto, com um único processo de aplicação para executar localmente. |
-| TypeScript                        | Contratos explícitos e verificação estática entre rotas, serviços e componentes.                          |
-| PostgreSQL e Prisma               | Persistência relacional, transações e constraints com migrations versionadas e acesso tipado.             |
-| Tailwind CSS e componentes locais | Consistência visual e responsividade sem fontes ou serviços externos.                                     |
-| Zod                               | Validação dos dados recebidos em execução, além dos tipos de compilação.                                  |
-| Vitest e Playwright               | Regras e integrações testadas no PostgreSQL, complementadas pelas jornadas reais no navegador.            |
+Payloads, paginação, filtros e respostas de erro estão no [contrato da API](docs/api-contract.md).
 
-- **Monólito modular:** rotas tratam HTTP; serviços coordenam transações; domínio calcula e valida. Módulos de cadastros, regras e pedidos mantêm responsabilidades claras sem infraestrutura distribuída.
-- **PostgreSQL + Prisma:** migrations, FKs, posições únicas, decisão única por etapa, CHECKs e índice parcial para uma faixa sem teto. O SQL complementar precisa ser preservado nas migrations futuras.
-- **Faixas completas:** escolher o menor teto inclusivo compatível, ou faixa final ilimitada. Sem cobertura, não há pedido. Cada faixa define toda a cadeia, resolvendo a ambiguidade do enunciado.
-- **Histórico:** pedido guarda versão, teto e etapas próprias com nomes copiados. Editar/remover regras não altera pedidos existentes; decisões não são editáveis pela API.
-- **Integridade:** configuração e criação bloqueiam a mesma obra. Decisão usa versão/estado condicionais e histórico na mesma transação. Leituras compostas usam snapshot consistente. Testes exercitam concorrência real.
-- **Dinheiro:** Decimal no servidor e inteiros de precisão fixa na prévia. HALF_UP por item, seguido da soma. Totais são recalculados no backend.
-- **Comunicação:** HTTP JSON com erros por campo, retry de leitura e atualização após mutações. Cadastro incerto mantém corpo, ator e chave. Decisões conflitantes exigem nova leitura.
-- **UI:** componentes locais e formulários controlados por React, com Tailwind/CSS e Zod no servidor. O escopo não exigiu design system externo, gerenciador global de estado ou biblioteca adicional de formulários.
-- **Manutenção/escala:** paginação, filtros no servidor, índices, pool limitado, transações curtas e dependências fixadas. Busca por prefixo de UUID é uma conveniência; maior volume exigiria avaliar índice/plano específico.
+## Evolução para produção
 
-Em produção: autenticação e papéis reais, isolamento por empresa se exigido, backups com restauração testada, métricas, gestão de conexões/segredos, migrations compatíveis com deploy e retenção de idempotência/histórico. Notificações exigiriam jobs/outbox; não há necessidade demonstrada de microserviços. Auditoria da aplicação não protege contra administradores do banco.
+Antes de disponibilizar a aplicação em produção, as principais mudanças seriam:
 
-## Organização
+- Substituir a identidade demo por autenticação e autorização com papéis definidos.
+- Definir isolamento por empresa, caso o produto atenda múltiplas organizações.
+- Gerenciar segredos e conexões, automatizar backups e testar a restauração.
+- Adicionar métricas, alertas e migrations compatíveis com a estratégia de deploy.
+- Definir retenção para histórico e chaves de idempotência.
+- Medir consultas e volume antes de introduzir cache ou separar serviços. Notificações assíncronas exigiriam jobs e uma estratégia de entrega confiável.
 
-[Plano](docs/delivery-plan.md) · [Decisões](docs/decisions.md) · [Negócio/modelo](docs/domain-contract.md) · [Fluxos](docs/product-flows.md) · [Agentes](docs/collaboration.md) · [Operação](docs/development.md)
+## Documentação
 
-Features são registradas em commits e merges na branch `feat/obraflow-delivery`, preservando os nomes das branches usadas. Consulte `git log --graph --oneline --decorate`.
+| Documento                                         | Conteúdo                                             |
+| ------------------------------------------------- | ---------------------------------------------------- |
+| [Desenvolvimento e operação](docs/development.md) | Ambiente, variáveis, portas, comandos e diagnóstico. |
+| [Contrato da API](docs/api-contract.md)           | Endpoints, exemplos de payloads e erros.             |
+| [Negócio e modelo](docs/domain-contract.md)       | Invariantes, estados, limites e transações.          |
+| [Decisões técnicas](docs/decisions.md)            | Escolhas de arquitetura e suas consequências.        |
+| [Verificação](docs/verification.md)               | Cenários testados e limites da avaliação.            |
+| [Enunciado original](docs/challenge.md)           | Requisitos do desafio.                               |
