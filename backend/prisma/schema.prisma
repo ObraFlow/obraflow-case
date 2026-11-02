@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PedidoStatus {
+  PENDENTE
+  APROVADO
+  REJEITADO
+}
+
+enum AprovacaoStatus {
+  PENDENTE
+  APROVADO
+  REJEITADO
+}
+
+enum HistoricoAcao {
+  CRIADO
+  APROVADO
+  REJEITADO
+}
+
+model Obra {
+  id           String        @id @default(uuid())
+  nome         String
+  endereco     String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  regrasAlcada RegraAlcada[]
+  pedidos      Pedido[]
+
+  @@map("obras")
+}
+
+model Usuario {
+  id               String                 @id @default(uuid())
+  nome             String
+  email            String                 @unique
+  cargo            String
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  regraAprovadores RegraAlcadaAprovador[]
+  aprovacoes       PedidoAprovacao[]
+  historicos       PedidoHistorico[]
+
+  @@map("usuarios")
+}
+
+model Fornecedor {
+  id          String   @id @default(uuid())
+  razaoSocial String
+  cnpj        String   @unique
+  email       String?
+  telefone    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  pedidos     Pedido[]
+
+  @@map("fornecedores")
+}
+
+model RegraAlcada {
+  id          String                 @id @default(uuid())
+  obraId      String
+  obra        Obra                   @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  descricao   String?
+  valorMinimo Decimal                @default(0.00) @db.Decimal(12, 2)
+  valorMaximo Decimal?               @db.Decimal(12, 2)
+  aprovadores RegraAlcadaAprovador[]
+  pedidos     Pedido[]
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+
+  @@map("regras_alcada")
+}
+
+model RegraAlcadaAprovador {
+  id            String      @id @default(uuid())
+  regraAlcadaId String
+  regraAlcada   RegraAlcada @relation(fields: [regraAlcadaId], references: [id], onDelete: Cascade)
+  usuarioId     String
+  usuario       Usuario     @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  ordem         Int
+
+  @@unique([regraAlcadaId, ordem])
+  @@unique([regraAlcadaId, usuarioId])
+  @@map("regras_alcada_aprovadores")
+}
+
+model Pedido {
+  id              String            @id @default(uuid())
+  numero          String            @unique
+  obraId          String
+  obra            Obra              @relation(fields: [obraId], references: [id], onDelete: Restrict)
+  fornecedorId    String
+  fornecedor      Fornecedor        @relation(fields: [fornecedorId], references: [id], onDelete: Restrict)
+  dataPedido      DateTime
+  observacoes     String?
+  valorTotal      Decimal           @db.Decimal(12, 2)
+  status          PedidoStatus      @default(PENDENTE)
+  regraAlcadaId   String?
+  regraAlcada     RegraAlcada?      @relation(fields: [regraAlcadaId], references: [id], onDelete: SetNull)
+  nivelAtualOrdem Int?
+  motivoRejeicao  String?
+  itens           PedidoItem[]
+  aprovacoes      PedidoAprovacao[]
+  historico       PedidoHistorico[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@map("pedidos")
+}
+
+model PedidoItem {
+  id            String   @id @default(uuid())
+  pedidoId      String
+  pedido        Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  descricao     String
+  quantidade    Decimal  @db.Decimal(10, 3)
+  unidade       String
+  precoUnitario Decimal  @db.Decimal(12, 2)
+  totalItem     Decimal  @db.Decimal(12, 2)
+  createdAt     DateTime @default(now())
+
+  @@map("pedidos_itens")
+}
+
+model PedidoAprovacao {
+  id         String          @id @default(uuid())
+  pedidoId   String
+  pedido     Pedido          @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  usuarioId  String
+  usuario    Usuario         @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  ordem      Int
+  status     AprovacaoStatus @default(PENDENTE)
+  decididoEm DateTime?
+  motivo     String?
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  @@unique([pedidoId, ordem])
+  @@map("pedidos_aprovacoes")
+}
+
+model PedidoHistorico {
+  id        String        @id @default(uuid())
+  pedidoId  String
+  pedido    Pedido        @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  usuarioId String?
+  usuario   Usuario?      @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+  acao      HistoricoAcao
+  descricao String
+  criadoEm  DateTime      @default(now())
+
+  @@map("pedidos_historico")
+}
