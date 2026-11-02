@@ -1,0 +1,109 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Obra {
+  idObra  Int      @id @default(autoincrement())
+  nome    String
+  pedidos Pedido[]
+  regras  Regra[]
+}
+
+model Usuario {
+  idUsuario       Int              @id @default(autoincrement())
+  nome            String
+  email           String           @unique
+  regrasAprovador RegraAprovador[]
+  etapas          EtapaAprovacao[]
+}
+
+model Fornecedor {
+  idFornecedor Int      @id @default(autoincrement())
+  nome         String
+  cnpj         String   @unique
+  pedidos      Pedido[]
+}
+
+enum StatusPedido {
+  PENDENTE
+  APROVADO
+  REJEITADO
+}
+
+model Pedido {
+  idPedido      Int          @id @default(autoincrement())
+  idObra        Int
+  idFornecedor  Int
+  dataPedido    DateTime     @default(now())
+  observacoes   String?
+  totalCentavos Int
+  status        StatusPedido @default(PENDENTE)
+  etapaAtual    Int?
+
+  obra       Obra             @relation(fields: [idObra], references: [idObra])
+  fornecedor Fornecedor       @relation(fields: [idFornecedor], references: [idFornecedor])
+  itens      ItemPedido[]
+  etapas     EtapaAprovacao[]
+}
+
+model ItemPedido {
+  idItemPedido          Int    @id @default(autoincrement())
+  idPedido              Int
+  descricao             String
+  quantidade            Float
+  unidade               String
+  precoUnitarioCentavos Int
+  totalCentavos         Int
+
+  pedido Pedido @relation(fields: [idPedido], references: [idPedido])
+}
+
+model Regra {
+  idRegra             Int  @id @default(autoincrement())
+  idObra              Int
+  valorMaximoCentavos Int?
+
+  obra        Obra             @relation(fields: [idObra], references: [idObra])
+  aprovadores RegraAprovador[]
+}
+
+model RegraAprovador {
+  idRegraAprovador Int @id @default(autoincrement())
+  idRegra          Int
+  idUsuario        Int
+  ordem            Int
+
+  regra   Regra   @relation(fields: [idRegra], references: [idRegra], onDelete: Cascade)
+  usuario Usuario @relation(fields: [idUsuario], references: [idUsuario])
+
+  @@unique([idRegra, ordem])
+}
+
+enum StatusEtapa {
+  AGUARDANDO
+  APROVADO
+  REJEITADO
+}
+
+model EtapaAprovacao {
+  idEtapaAprovacao Int         @id @default(autoincrement())
+  idPedido         Int
+  idUsuario        Int
+  ordem            Int
+  status           StatusEtapa @default(AGUARDANDO)
+  motivo           String?
+  decididoEm       DateTime?
+
+  pedido  Pedido  @relation(fields: [idPedido], references: [idPedido])
+  usuario Usuario @relation(fields: [idUsuario], references: [idUsuario])
+
+  @@unique([idPedido, ordem])
+}
