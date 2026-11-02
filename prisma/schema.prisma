@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Project {
+  id           String          @id @default(uuid()) @db.Uuid
+  name         String          @db.VarChar(120)
+  rulesVersion Int             @default(0)
+  createdAt    DateTime        @default(now()) @db.Timestamptz(3)
+  bands        ApprovalBand[]
+  orders       PurchaseOrder[]
+
+  @@index([name, id])
+}
+
+model User {
+  id              String             @id @default(uuid()) @db.Uuid
+  name            String             @db.VarChar(120)
+  createdAt       DateTime           @default(now()) @db.Timestamptz(3)
+  bands           BandApprover[]
+  requestedOrders PurchaseOrder[]
+  steps           OrderStep[]
+  decisions       Decision[]
+  idempotencies   OrderIdempotency[]
+
+  @@index([name, id])
+}
+
+model Supplier {
+  id        String          @id @default(uuid()) @db.Uuid
+  name      String          @db.VarChar(120)
+  createdAt DateTime        @default(now()) @db.Timestamptz(3)
+  orders    PurchaseOrder[]
+
+  @@index([name, id])
+}
+
+model ApprovalBand {
+  id         String         @id @default(uuid()) @db.Uuid
+  projectId  String         @db.Uuid
+  position   Int
+  upperLimit Decimal?       @db.Decimal(11, 2)
+  project    Project        @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  approvers  BandApprover[]
+
+  @@unique([projectId, position])
+  @@unique([projectId, upperLimit])
+}
+
+model BandApprover {
+  bandId   String       @db.Uuid
+  userId   String       @db.Uuid
+  position Int
+  band     ApprovalBand @relation(fields: [bandId], references: [id], onDelete: Cascade)
+  user     User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@id([bandId, position])
+  @@unique([bandId, userId])
+}
+
+enum OrderStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum DecisionOutcome {
+  APPROVE
+  REJECT
+}
+
+model PurchaseOrder {
+  id                  String            @id @default(uuid()) @db.Uuid
+  projectId           String            @db.Uuid
+  supplierId          String            @db.Uuid
+  requesterId         String            @db.Uuid
+  orderDate           DateTime          @db.Date
+  notes               String?           @db.VarChar(2000)
+  total               Decimal           @db.Decimal(11, 2)
+  status              OrderStatus       @default(PENDING)
+  version             Int               @default(1)
+  currentStepPosition Int?
+  rulesVersion        Int
+  selectedUpperLimit  Decimal?          @db.Decimal(11, 2)
+  createdAt           DateTime          @default(now()) @db.Timestamptz(3)
+  project             Project           @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  supplier            Supplier          @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  requester           User              @relation(fields: [requesterId], references: [id], onDelete: Restrict)
+  items               OrderItem[]
+  steps               OrderStep[]
+  idempotency         OrderIdempotency?
+
+  @@index([createdAt(sort: Desc), id(sort: Desc)])
+  @@index([projectId, status, createdAt(sort: Desc)])
+}
+
+model OrderItem {
+  id          String        @id @default(uuid()) @db.Uuid
+  orderId     String        @db.Uuid
+  position    Int
+  description String        @db.VarChar(200)
+  quantity    Decimal       @db.Decimal(10, 3)
+  unit        String        @db.VarChar(16)
+  unitPrice   Decimal       @db.Decimal(9, 2)
+  lineTotal   Decimal       @db.Decimal(11, 2)
+  order       PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@unique([orderId, position])
+}
+
+model OrderStep {
+  id                   String        @id @default(uuid()) @db.Uuid
+  orderId              String        @db.Uuid
+  userId               String        @db.Uuid
+  approverNameSnapshot String        @db.VarChar(120)
+  position             Int
+  order                PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  user                 User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  decision             Decision?
+
+  @@unique([orderId, position])
+  @@index([userId, orderId, position])
+}
+
+model Decision {
+  id        String          @id @default(uuid()) @db.Uuid
+  stepId    String          @unique @db.Uuid
+  actorId   String          @db.Uuid
+  outcome   DecisionOutcome
+  reason    String?         @db.VarChar(2000)
+  decidedAt DateTime        @default(now()) @db.Timestamptz(3)
+  step      OrderStep       @relation(fields: [stepId], references: [id], onDelete: Restrict)
+  actor     User            @relation(fields: [actorId], references: [id], onDelete: Restrict)
+}
+
+model OrderIdempotency {
+  requesterId      String         @db.Uuid
+  key              String         @db.Uuid
+  requestHash      String         @db.VarChar(64)
+  contractVersion  String         @default("v1") @db.VarChar(16)
+  orderId          String?        @unique @db.Uuid
+  originalResponse Json?
+  createdAt        DateTime       @default(now()) @db.Timestamptz(3)
+  requester        User           @relation(fields: [requesterId], references: [id], onDelete: Restrict)
+  order            PurchaseOrder? @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@id([requesterId, key])
+}
