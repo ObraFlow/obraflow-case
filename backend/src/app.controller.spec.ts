@@ -15,8 +15,12 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+    it('should return API health status', () => {
+      const status = appController.getStatus();
+      expect(status.status).toBe('ok');
+      expect(status.service).toBe('ObraFlow API');
+      expect(status.version).toBe('1.0.0');
+      expect(status.timestamp).toBeDefined();
     });
   });
 });
