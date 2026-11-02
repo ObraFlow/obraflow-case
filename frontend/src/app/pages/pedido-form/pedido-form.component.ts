@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormArray,
@@ -303,6 +303,7 @@ export class PedidoFormComponent implements OnInit {
     private readonly fb: FormBuilder,
     private readonly api: ApiService,
     private readonly router: Router,
+    private readonly cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit() {
@@ -379,6 +380,7 @@ export class PedidoFormComponent implements OnInit {
   carregarDadosAuxiliares() {
     this.loadingAuxiliares = true;
     this.erroAuxiliares = null;
+    this.cdr.markForCheck();
 
     this.api.getObras().subscribe({
       next: (obras) => {
@@ -387,11 +389,13 @@ export class PedidoFormComponent implements OnInit {
           next: (fornecedores) => {
             this.fornecedores = fornecedores;
             this.loadingAuxiliares = false;
+            this.cdr.markForCheck();
           },
           error: (err) => {
             this.loadingAuxiliares = false;
             this.erroAuxiliares =
               err.error?.message || 'Erro ao carregar lista de fornecedores.';
+            this.cdr.markForCheck();
           },
         });
       },
@@ -400,6 +404,7 @@ export class PedidoFormComponent implements OnInit {
         this.erroAuxiliares =
           err.error?.message ||
           'Erro ao carregar lista de obras. Verifique o backend.';
+        this.cdr.markForCheck();
       },
     });
   }
@@ -408,16 +413,19 @@ export class PedidoFormComponent implements OnInit {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.erroEnvio = 'Por favor, corrija os campos com erros antes de enviar.';
+      this.cdr.markForCheck();
       return;
     }
 
     if (this.totalGeralCalculado <= 0) {
       this.erroEnvio = 'O valor total do pedido deve ser maior que zero.';
+      this.cdr.markForCheck();
       return;
     }
 
     this.enviando = true;
     this.erroEnvio = null;
+    this.cdr.markForCheck();
 
     const formValue = this.form.value;
     const payload = {
@@ -436,6 +444,7 @@ export class PedidoFormComponent implements OnInit {
     this.api.criarPedido(payload).subscribe({
       next: (criado) => {
         this.enviando = false;
+        this.cdr.markForCheck();
         this.router.navigate(['/pedidos']);
       },
       error: (err) => {
@@ -443,6 +452,7 @@ export class PedidoFormComponent implements OnInit {
         this.erroEnvio =
           err.error?.message ||
           'Falha ao cadastrar pedido de compra. Verifique se a obra possui regra de alçada configurada para esta faixa de valor.';
+        this.cdr.markForCheck();
       },
     });
   }

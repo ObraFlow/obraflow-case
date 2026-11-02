@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -441,6 +441,7 @@ export class PedidosListComponent implements OnInit {
     private readonly api: ApiService,
     readonly session: SessionService,
     private readonly router: Router,
+    private readonly cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit() {
@@ -461,7 +462,10 @@ export class PedidosListComponent implements OnInit {
 
   carregarObras() {
     this.api.getObras().subscribe({
-      next: (dados) => (this.obras = dados),
+      next: (dados) => {
+        this.obras = dados;
+        this.cdr.markForCheck();
+      },
       error: () => {},
     });
   }
@@ -471,6 +475,7 @@ export class PedidosListComponent implements OnInit {
       this.loading = true;
     }
     this.erro = null;
+    this.cdr.markForCheck();
 
     this.api
       .getPedidos({
@@ -481,12 +486,14 @@ export class PedidosListComponent implements OnInit {
         next: (dados) => {
           this.pedidos = dados;
           this.loading = false;
+          this.cdr.markForCheck();
         },
         error: (err) => {
           this.loading = false;
           this.erro =
             err.error?.message ||
             'Não foi possível carregar a lista de pedidos. Verifique se o backend está ativo.';
+          this.cdr.markForCheck();
         },
       });
   }
@@ -494,14 +501,17 @@ export class PedidosListComponent implements OnInit {
   abrirDetalhes(id: string) {
     this.pedidoSelecionadoId = id;
     this.loadingDetalhes = true;
+    this.cdr.markForCheck();
 
     this.api.getPedidoById(id).subscribe({
       next: (dados) => {
         this.pedidoDetalhes = dados;
         this.loadingDetalhes = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.loadingDetalhes = false;
+        this.cdr.markForCheck();
         alert(
           err.error?.message || 'Erro ao carregar os detalhes do pedido.',
         );
@@ -512,6 +522,7 @@ export class PedidosListComponent implements OnInit {
   fecharDetalhes() {
     this.pedidoSelecionadoId = null;
     this.pedidoDetalhes = null;
+    this.cdr.markForCheck();
   }
 
   aprovarPedido() {
@@ -523,6 +534,7 @@ export class PedidosListComponent implements OnInit {
     }
 
     this.processandoDecisao = true;
+    this.cdr.markForCheck();
     this.api
       .aprovarPedido(this.pedidoDetalhes.id, {
         usuarioId: usuarioLogado.id,
@@ -532,9 +544,11 @@ export class PedidosListComponent implements OnInit {
           this.processandoDecisao = false;
           this.abrirDetalhes(this.pedidoDetalhes!.id);
           this.carregarPedidos(false);
+          this.cdr.markForCheck();
         },
         error: (err) => {
           this.processandoDecisao = false;
+          this.cdr.markForCheck();
           alert(err.error?.message || 'Erro ao aprovar a etapa do pedido.');
         },
       });
@@ -542,10 +556,12 @@ export class PedidosListComponent implements OnInit {
 
   abrirModalRejeicao() {
     this.exibindoModalRejeicao = true;
+    this.cdr.markForCheck();
   }
 
   fecharModalRejeicao() {
     this.exibindoModalRejeicao = false;
+    this.cdr.markForCheck();
   }
 
   confirmarRejeicao(motivo: string) {
@@ -557,6 +573,7 @@ export class PedidosListComponent implements OnInit {
     }
 
     this.processandoDecisao = true;
+    this.cdr.markForCheck();
     this.api
       .rejeitarPedido(this.pedidoDetalhes.id, {
         usuarioId: usuarioLogado.id,
@@ -568,9 +585,11 @@ export class PedidosListComponent implements OnInit {
           this.fecharModalRejeicao();
           this.abrirDetalhes(this.pedidoDetalhes!.id);
           this.carregarPedidos(false);
+          this.cdr.markForCheck();
         },
         error: (err) => {
           this.processandoDecisao = false;
+          this.cdr.markForCheck();
           alert(err.error?.message || 'Erro ao registrar a rejeição.');
         },
       });

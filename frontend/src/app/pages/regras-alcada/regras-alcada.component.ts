@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
@@ -327,7 +327,10 @@ export class RegrasAlcadaComponent implements OnInit {
 
   novoUsuarioId: string = '';
 
-  constructor(private readonly api: ApiService) {}
+  constructor(
+    private readonly api: ApiService,
+    private readonly cdr: ChangeDetectorRef,
+  ) {}
 
   ngOnInit() {
     this.carregarObrasEUsuarios();
@@ -346,32 +349,40 @@ export class RegrasAlcadaComponent implements OnInit {
           this.obraSelecionadaId = obras[0].id;
           this.carregarRegrasObra();
         }
+        this.cdr.markForCheck();
       },
     });
 
     this.api.getUsuarios().subscribe({
-      next: (usuarios) => (this.usuarios = usuarios),
+      next: (usuarios) => {
+        this.usuarios = usuarios;
+        this.cdr.markForCheck();
+      },
     });
   }
 
   carregarRegrasObra() {
     if (!this.obraSelecionadaId) {
       this.regras = [];
+      this.cdr.markForCheck();
       return;
     }
 
     this.loadingRegras = true;
     this.erro = null;
+    this.cdr.markForCheck();
 
     this.api.getRegrasPorObra(this.obraSelecionadaId).subscribe({
       next: (dados) => {
         this.regras = dados;
         this.loadingRegras = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.loadingRegras = false;
         this.erro =
           err.error?.message || 'Erro ao consultar regras de alçada da obra.';
+        this.cdr.markForCheck();
       },
     });
   }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -20,6 +20,7 @@ export class App implements OnInit {
   constructor(
     private readonly api: ApiService,
     readonly session: SessionService,
+    private readonly cdr: ChangeDetectorRef,
   ) {
     const ativo = this.session.usuarioAtivo();
     if (ativo) {
@@ -45,6 +46,7 @@ export class App implements OnInit {
             this.selecionarUsuario(dados[0].id);
           }
         }
+        this.cdr.markForCheck();
       },
       error: () => {},
     });
@@ -56,5 +58,6 @@ export class App implements OnInit {
     if (user) {
       this.session.setUsuarioAtivo(user);
     }
+    this.cdr.markForCheck();
   }
 }
