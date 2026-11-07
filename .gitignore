@@ -1,0 +1,75 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+/specreviewerlionlab.md
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+# .env.test e versionado: e configuracao da suite, nao segredo.
+!.env.test
+# .env.example e versionado: o README manda copia-lo, e sem ele o passo nao existe no clone.
+!.env.example
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# prisma
+prisma/*.db
+prisma/*.db-journal
+prisma/test.db
+
+# banco local
+/dev.db
+/dev.db-journal
+
+# documentos de processo (ciclo coder–evaluator): ficam no disco, fora do repositório
+/AGENTS.md
+/docs/PRD.md
+/docs/PRD-TEMPLATE.md
+/docs/PROGRESS.md
+/docs/SPEC.md
+/docs/SPEC-TEMPLATE.*
+/docs/jira/
+/docs/spec/
+/docs/specs/
+/docs/sprints/
+/docs/plano-incremental.md
+/docs/plano-testes-etapa2.md
+/docs/ciclo-coder-evaluator.md
+/docs/checklist.md
+/scripts/spec-md.mjs
+/docs/enunciado.md
+/docs/criterios-do-enunciado.md
+/docs/pull-request.md
+/site/archetypes/

@@ -1,0 +1,154 @@
+// ObraFlow — aprovações por alçada
+// Convenções: dinheiro sempre em centavos (Int), quantidade sempre em milésimos (Int).
+// Nenhum ponto flutuante participa de cálculo monetário.
+// SQLite não suporta enum no Prisma: campos de domínio fechado são String validada no domínio.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Usuario {
+  id    String @id @default(cuid())
+  nome  String
+  email String @unique
+  // admin | aprovador | comprador | visualizador
+  papel String
+
+  faixaAprovadores FaixaAprovador[]
+  etapas           Etapa[]
+  pedidosCriados   Pedido[]         @relation("PedidoCriadoPor")
+
+  criadoEm DateTime @default(now())
+}
+
+model Obra {
+  id     String @id @default(cuid())
+  nome   String
+  cidade String
+
+  faixas  Faixa[]
+  pedidos Pedido[]
+
+  criadoEm DateTime @default(now())
+}
+
+model Fornecedor {
+  id        String   @id @default(cuid())
+  nome      String
+  documento String?
+  pedidos   Pedido[]
+
+  criadoEm DateTime @default(now())
+}
+
+/// Uma faixa de valor da alçada de uma obra.
+/// Guarda apenas o limite superior, inclusivo (ADR 0002). `limiteCentavos` nulo = faixa aberta,
+/// cobrindo todo valor acima da faixa anterior. O intervalo inferior é implícito pela ordenação.
+model Faixa {
+  id             String @id @default(cuid())
+  obraId         String
+  limiteCentavos Int?
+
+  obra         Obra             @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  aprovadores  FaixaAprovador[]
+  pedidos      Pedido[]
+
+  criadoEm DateTime @default(now())
+
+  @@index([obraId, limiteCentavos])
+}
+
+model FaixaAprovador {
+  id        String @id @default(cuid())
+  faixaId   String
+  usuarioId String
+  ordem     Int
+
+  faixa   Faixa   @relation(fields: [faixaId], references: [id], onDelete: Cascade)
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+
+  @@unique([faixaId, ordem])
+  @@unique([faixaId, usuarioId])
+}
+
+/// Pedido de compra. Nasce rascunho, com campos obrigatórios ainda vazios.
+/// A submissão resolve a faixa e grava a cadeia de etapas (ADR 0001).
+model Pedido {
+  /// Identificador visível ao usuário: o pedido é citado como "#1002".
+  id            Int      @id @default(autoincrement())
+  /// Nulo apenas enquanto rascunho: o contrato de `POST /api/pedidos` declara a obra opcional no
+  /// rascunho, e a submissão a exige. Um rascunho sem obra é estado legítimo, não falta.
+  obraId        String?
+  fornecedorId  String?
+  dataPedido    DateTime?
+  observacoes   String?
+  // rascunho | pendente | aprovado | rejeitado
+  situacao      String   @default("rascunho")
+  totalCentavos Int      @default(0)
+
+  criadoPorId String
+  submetidoEm DateTime?
+
+  /// Snapshot da regra aplicada na submissão: a faixa pode ser editada ou removida depois,
+  /// e o pedido continua exibindo o limite sob o qual foi submetido.
+  faixaId             String?
+  faixaLimiteCentavos Int?
+  faixaSemTeto        Boolean @default(false)
+
+  obra       Obra?       @relation(fields: [obraId], references: [id], onDelete: Restrict)
+  fornecedor Fornecedor? @relation(fields: [fornecedorId], references: [id], onDelete: Restrict)
+  criadoPor  Usuario     @relation("PedidoCriadoPor", fields: [criadoPorId], references: [id], onDelete: Restrict)
+  faixa      Faixa?      @relation(fields: [faixaId], references: [id], onDelete: SetNull)
+
+  itens  ItemPedido[]
+  etapas Etapa[]
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@index([situacao, obraId])
+}
+
+model ItemPedido {
+  id                   String @id @default(cuid())
+  pedidoId             Int
+  descricao            String
+  /// Quantidade em milésimos: 2,5 kg = 2500. Mantém o cálculo inteiro de ponta a ponta.
+  quantidadeMilesimos  Int
+  unidade              String
+  /// Nulo só no rascunho, quando o preço ainda não foi informado. Zero é preço válido (o enunciado
+  /// pede "valor monetário não negativo"), e por isso ausente não pode ser gravado como zero.
+  precoUnitarioCentavos Int?
+  /// round(quantidadeMilesimos * precoUnitarioCentavos / 1000), calculado no domínio.
+  totalCentavos        Int
+  ordem                Int
+
+  pedido Pedido @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+
+  @@unique([pedidoId, ordem])
+}
+
+/// Uma posição da cadeia de aprovação, gravada na submissão.
+/// A decisão vive na própria etapa: há no máximo uma por posição, e é ela o alvo do UPDATE
+/// condicional que impede decisão fora de ordem e decisão concorrente (ADR 0004).
+model Etapa {
+  id        String @id @default(cuid())
+  pedidoId  Int
+  ordem     Int
+  usuarioId String
+  // pendente | aprovada | rejeitada
+  situacao  String @default("pendente")
+
+  decididoEm DateTime?
+  motivo     String?
+
+  pedido  Pedido  @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+
+  @@unique([pedidoId, ordem])
+  @@index([usuarioId, situacao])
+}

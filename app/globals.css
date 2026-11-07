@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+/* Tokens do ObraFlow, iguais aos de site/assets/css/obraflow.css.
+   A aplicação e o site de documentação compartilham a mesma identidade. */
+@theme {
+  --color-marca-15: #fff3f5;
+  --color-marca-25: #ffeff1;
+  --color-marca-50: #ffe0e6;
+  --color-marca-100: #ffc6d3;
+  --color-marca-200: #ff97ae;
+  --color-marca-300: #ff5d83;
+  --color-marca-400: #ff245e;
+  --color-marca-500: #ff004d;
+  --color-marca-600: #d70041;
+  --color-marca-700: #b4003f;
+  --color-marca-800: #99023c;
+  --color-marca-950: #430318;
+
+  --color-neutro-25: #fafafa;
+  --color-neutro-50: #f5f5f7;
+  --color-neutro-100: #f0f0f1;
+  --color-neutro-200: #ececed;
+  --color-neutro-300: #cecfd2;
+  --color-neutro-400: #94969c;
+  --color-neutro-500: #85888e;
+  --color-neutro-600: #61646c;
+  --color-neutro-700: #333741;
+  --color-neutro-800: #1f242f;
+  --color-neutro-900: #161b26;
+  --color-neutro-950: #0c111d;
+
+  --color-pagina: #fafafa;
+  --color-cartao: #ffffff;
+  --color-forte: #1d1d1f;
+
+  /* Acrescentados na Sprint 3, lidos dos artboards TrocarConta, Login e Perfis.
+     O mockup é especificação visual (SPEC § Mockups) e usa estas cores fora das três
+     rampas da Sprint 1: a faixa âmbar do modo demonstração, o rosa de linha selecionada,
+     o azul informativo das etiquetas e o jogo de avatares. */
+  --color-marca-5: #fff8fa;
+  --color-neutro-350: #b9bbc0;
+
+  --color-demo-fundo: #fff8e6;
+  --color-demo-borda: #ffe0a3;
+  --color-demo-texto: #7a4d00;
+  --color-demo-codigo-fundo: #fff3d6;
+  --color-demo-codigo-texto: #6b4200;
+
+  --color-info-fundo: #eff4ff;
+  --color-info-borda: #b2ccff;
+  --color-info-texto: #194185;
+
+  --color-avatar-rosa-fundo: #ffe0e6;
+  --color-avatar-rosa-texto: #99023c;
+  --color-avatar-roxo-fundo: #ece0ff;
+  --color-avatar-roxo-texto: #5b21b6;
+  --color-avatar-azul-fundo: #e0f0ff;
+  --color-avatar-azul-texto: #0b4a86;
+  --color-avatar-cinza-fundo: #f0f0f1;
+  --color-avatar-cinza-texto: #61646c;
+  --color-avatar-verde-fundo: #dff3e6;
+  --color-avatar-verde-texto: #05603a;
+
+  /* Acrescentados na Sprint 4, lidos do artboard `Alcadas` e da faixa de estados do artboard
+     `Estados`: o rosa escuro do aviso de regra, o âmbar do aviso de valor sem faixa e o
+     vermelho de ação destrutiva. Nenhum deles pertence às três rampas da Sprint 1, e a SPEC
+     proíbe hexadecimal cru na tela. */
+  --color-marca-850: #7a1030;
+
+  --color-aviso-fundo: #fff8e6;
+  --color-aviso-borda: #ffeab8;
+  --color-aviso-texto: #7a4d00;
+
+  --color-erro-fundo: #fef3f2;
+  --color-erro-papel: #fffbfa;
+  --color-erro-borda: #fee4e2;
+  --color-erro-borda-forte: #fecdca;
+  --color-erro-borda-acao: #fda29b;
+  --color-erro-texto: #b42318;
+
+  /* Acrescentados na Sprint 6, lidos dos artboards `Aprovacoes`, `AprovacoesC` e
+     `PedidoDetalhe`: o verde da etapa aprovada e do botão de aprovar, que nenhuma tela anterior
+     usou, e a borda âmbar forte da etiqueta "Pendente". A SPEC § Mockups proíbe hexadecimal cru
+     na tela, e estes não pertencem às três rampas da Sprint 1. */
+  --color-sucesso-fundo: #ecfdf3;
+  --color-sucesso-borda: #d1fadf;
+  --color-sucesso-borda-forte: #abefc6;
+  --color-sucesso-texto: #05603a;
+  --color-sucesso-acao: #06603a;
+  --color-sucesso-acao-forte: #044c2e;
+
+  --color-aviso-borda-forte: #ffe0a3;
+
+  /* Acrescentados no painel da administração, lidos do artboard `Dashboard`: o azul da segunda
+     série do gráfico de linhas (a primeira é `marca-700`, que já existia) e o âmbar escuro que o
+     artboard usa no ícone do KPI de alerta e na barra do gargalo. Nenhum dos dois pertence às
+     rampas existentes, e a SPEC proíbe hexadecimal cru na tela. */
+  --color-serie-azul: #175cd3;
+  --color-alerta-texto: #b54708;
+
+  /* O azul-marinho do botão "Ver mais" do artboard `Aprovacoes` (`.btn-more`). */
+  --color-info-escuro: #062460;
+  --color-info-escuro-forte: #041a46;
+
+  /* A cor de sombra dos artboards (#101828) não pertence a nenhuma rampa: entra como token
+     para não ficar escrita à mão em cada elevação. */
+  --sombra-forte: rgb(16 24 40 / 0.28);
+  --sombra-suave: rgb(16 24 40 / 0.14);
+
+  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-serif: Lora, ui-serif, Georgia, serif;
+
+  --radius-cartao: 14px;
+}
+
+body {
+  background: var(--color-pagina);
+  color: var(--color-neutro-700);
+  letter-spacing: -0.008em;
+}

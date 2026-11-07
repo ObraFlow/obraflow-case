@@ -1,0 +1,30 @@
+{{- /* "Comece rápido": instalação local e a chamada da API de decisões, lado a lado. */ -}}
+{{- $repo := "https://github.com/Carolbalbs/obraflow-case/blob/resolucao-obraflow" -}}
+<section class="of-comece">
+  <div class="of-comece-inner">
+    <div>
+      <h2>Comece rápido</h2>
+      <p>Rode localmente com Node 20 — sem container, sem credencial:</p>
+<pre class="of-code">git clone -b resolucao-obraflow https://github.com/Carolbalbs/obraflow-case.git
+cd obraflow-case &amp;&amp; npm install
+cp .env.example .env
+npx prisma migrate dev &amp;&amp; npm run seed
+npm run dev</pre>
+      <p>Abra <code>localhost:3000</code> e entre como Amanda — a sessão é de demonstração, sem senha. Veja o <a href="{{ $repo }}/docs/adr/0005-sessao-de-demonstracao-sem-senha.md">ADR 0005</a>.</p>
+      <p class="of-comece-links"><a href="{{ "docs/getting-started" | relLangURL }}">Primeiros passos ⇒</a></p>
+    </div>
+    <div>
+      <h3>API que recusa fora da vez</h3>
+      <p>Quem decide a ordem é o back-end. Aprovar uma etapa:</p>
+<pre class="of-code">curl -X POST localhost:3000/api/pedidos/<span class="of-code-hole">{id}</span>/decisoes \
+  -H <span class="of-code-str">'Cookie: obraflow_sessao=cseedusuarioamanda0002'</span> \
+  -H <span class="of-code-str">'Content-Type: application/json'</span> \
+  -d <span class="of-code-str">'{"tipo":"aprovar"}'</span></pre>
+      <p>Fora da vez, a resposta é <code>409 NAO_E_SUA_VEZ</code>; sem permissão, <code>403</code>; sem faixa aplicável, <code>422</code>.</p>
+      <p class="of-comece-links">
+        <a href="{{ "docs/guia/comunicacao" | relLangURL }}">Contrato front ↔ back</a>
+        <a href="{{ $repo }}/scripts/verificar.sh">Prova por curl</a>
+      </p>
+    </div>
+  </div>
+</section>

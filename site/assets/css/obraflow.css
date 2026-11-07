@@ -1,0 +1,832 @@
+/* ==========================================================================
+   ObraFlow · Aprovações — tema derivado do design system de obraflow.io
+   Fontes: Inter (sans) + Lora italic (acento), como no site de referência.
+   ========================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Lora:ital,wght@1,400..700&display=swap");
+
+:root {
+  /* ---- marca ---- */
+  --of-brand-15:  #fff3f5;
+  --of-brand-25:  #ffeff1;
+  --of-brand-50:  #ffe0e6;
+  --of-brand-100: #ffc6d3;
+  --of-brand-200: #ff97ae;
+  --of-brand-300: #ff5d83;
+  --of-brand-400: #ff245e;
+  --of-brand-500: #ff004d;
+  --of-brand-600: #d70041;
+  --of-brand-700: #b4003f;
+  --of-brand-800: #99023c;
+  --of-brand-950: #430318;
+
+  /* ---- neutros ---- */
+  --of-levels-25:  #fafafa;
+  --of-levels-50:  #f5f5f7;
+  --of-levels-100: #f0f0f1;
+  --of-levels-200: #ececed;
+  --of-levels-300: #cecfd2;
+  --of-levels-400: #94969c;
+  --of-levels-500: #85888e;
+  --of-levels-600: #61646c;
+  --of-levels-700: #333741;
+  --of-levels-800: #1f242f;
+  --of-levels-900: #161b26;
+  --of-levels-950: #0c111d;
+
+  /* ---- semântico ---- */
+  --of-surface-page: var(--of-levels-25);
+  --of-surface-card: #ffffff;
+  --of-surface-muted: var(--of-levels-100);
+  --of-text-strong: #1d1d1f;
+  --of-text-heading: var(--of-levels-700);
+  --of-text-body: var(--of-levels-600);
+  --of-text-muted: var(--of-levels-400);
+  --of-border-default: var(--of-levels-200);
+  --of-border-hairline: rgba(51, 55, 65, 0.12);
+  --of-border-subtle: rgba(51, 55, 65, 0.06);
+
+  /* ---- tipografia ---- */
+  --of-font-sans: "Inter", "Inter Fallback", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  --of-font-serif-italic: "Lora", "Lora Fallback", "Times New Roman", serif;
+  --of-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --of-tracking-display: -0.0325em;
+  --of-tracking-display-tight: -0.04em;
+  --of-tracking-tight: -0.025em;
+  --of-tracking-snug: -0.015em;
+  --of-tracking-body: -0.008em;
+
+  /* ---- forma e sombra ---- */
+  --of-radius-xs: 4px;
+  --of-radius-sm: 6px;
+  --of-radius-md: 8px;
+  --of-radius-lg: 12px;
+  --of-shadow-gray: 0 0 0 1px #ebecee inset, 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --of-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --of-shadow-lg: 0 4px 6px -2px rgba(16, 24, 40, 0.03), 0 12px 16px -4px rgba(16, 24, 40, 0.08);
+
+  /* ---- gradientes ---- */
+  --of-gradient-cta: linear-gradient(90deg, #161b26, #430318 31.97%, #161b26);
+  --of-gradient-eyebrow: linear-gradient(90deg, #ff004d 0%, #b485ff 77%, #9747ff 100%);
+  --of-gradient-headline: linear-gradient(90deg, #333741 0%, #99023c 97.41%);
+
+  /* ---- paleta primária do Hextra, puxada para a marca ---- */
+  --primary-hue: 342deg;
+  --primary-saturation: 100%;
+  --primary-lightness: 50%;
+}
+
+.dark {
+  --primary-hue: 342deg;
+  --primary-saturation: 100%;
+  --primary-lightness: 58%;
+
+  --of-surface-page: var(--of-levels-950);
+  --of-surface-card: var(--of-levels-900);
+  --of-surface-muted: var(--of-levels-800);
+  --of-text-strong: #ffffff;
+  --of-text-heading: #f0f0f1;
+  --of-text-body: var(--of-levels-400);
+  --of-text-muted: var(--of-levels-500);
+  --of-border-default: var(--of-levels-800);
+  --of-border-hairline: rgba(255, 255, 255, 0.12);
+  --of-border-subtle: rgba(255, 255, 255, 0.06);
+  --of-shadow-gray: 0 0 0 1px #1f242f inset, 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* --------------------------------------------------------------------------
+   Base
+   -------------------------------------------------------------------------- */
+
+html {
+  font-family: var(--of-font-sans);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+body {
+  background: var(--of-surface-page);
+  color: var(--of-text-body);
+  letter-spacing: var(--of-tracking-body);
+}
+
+.dark body {
+  background: var(--of-surface-page);
+}
+
+code, kbd, pre, samp { font-family: var(--of-font-mono); }
+
+/* --------------------------------------------------------------------------
+   Tipografia do conteúdo — espelha obraflow.io/docs
+   h1 40/46 -0.04em · h2 24 -0.0325em · corpo 15/24
+   -------------------------------------------------------------------------- */
+
+.content h1, article h1 {
+  font-size: 2.5rem;
+  line-height: 2.875rem;
+  font-weight: 600;
+  letter-spacing: var(--of-tracking-display-tight);
+  color: var(--of-text-heading);
+}
+
+.content h2, article h2 {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 600;
+  letter-spacing: var(--of-tracking-display);
+  color: var(--of-text-heading);
+  border-bottom: 1px solid var(--of-border-subtle);
+  padding-bottom: 0.5rem;
+}
+
+.content h3, article h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: var(--of-tracking-tight);
+  color: var(--of-text-heading);
+}
+
+.content h4, .content h5, .content h6 {
+  letter-spacing: var(--of-tracking-snug);
+  color: var(--of-text-heading);
+}
+
+.content p, article p, .content li {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--of-text-body);
+}
+
+.content strong { color: var(--of-text-heading); font-weight: 600; }
+
+.content a:not(.hextra-card):not([class*="hextra"]) {
+  color: var(--of-brand-600);
+  text-decoration-color: var(--of-brand-200);
+  text-underline-offset: 3px;
+}
+.content a:not(.hextra-card):not([class*="hextra"]):hover { color: var(--of-brand-700); }
+.dark .content a:not(.hextra-card):not([class*="hextra"]) { color: var(--of-brand-300); }
+
+.content blockquote {
+  border-inline-start-color: var(--of-brand-500);
+  font-family: var(--of-font-serif-italic);
+  font-style: italic;
+  color: var(--of-text-body);
+}
+
+/* tabelas */
+.content table { font-size: 0.875rem; }
+.content thead tr { background: var(--of-surface-muted); }
+.content th {
+  font-weight: 600;
+  letter-spacing: var(--of-tracking-snug);
+  color: var(--of-text-heading);
+}
+.content td, .content th { border-color: var(--of-border-default); }
+
+/* --------------------------------------------------------------------------
+   Navbar — 56px, vidro fosco, como na referência
+   -------------------------------------------------------------------------- */
+
+.hextra-nav-container {
+  background: color-mix(in srgb, var(--of-surface-page) 72%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.hextra-nav-container-blur {
+  background: transparent;
+  box-shadow: 0 1px 0 0 var(--of-border-subtle);
+}
+
+.hextra-navbar-menu a,
+.hamburger-menu + nav a { letter-spacing: var(--of-tracking-snug); }
+
+/* título com o "Flow" na cor da marca */
+.hextra-navbar-title { font-weight: 650; letter-spacing: var(--of-tracking-tight); }
+.of-logo-accent { color: var(--of-brand-500); }
+
+/* --------------------------------------------------------------------------
+   Sidebar — 220px, links 14px, raio 6px
+   -------------------------------------------------------------------------- */
+
+.sidebar-container { font-size: 0.875rem; }
+
+.sidebar-container a,
+.sidebar-container button {
+  border-radius: var(--of-radius-sm);
+  letter-spacing: var(--of-tracking-body);
+}
+
+.sidebar-active-item {
+  color: var(--of-brand-600) !important;
+  background: var(--of-brand-15) !important;
+  font-weight: 500;
+}
+.dark .sidebar-active-item {
+  color: var(--of-brand-300) !important;
+  background: rgba(255, 0, 77, 0.12) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Cards
+   -------------------------------------------------------------------------- */
+
+.hextra-card {
+  border-radius: var(--of-radius-lg);
+  border-color: var(--of-border-default);
+  background: var(--of-surface-card);
+  box-shadow: var(--of-shadow-sm);
+  transition: box-shadow 200ms cubic-bezier(0, 0, 0.2, 1),
+              border-color 200ms cubic-bezier(0, 0, 0.2, 1),
+              transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.hextra-card:hover {
+  border-color: var(--of-brand-200);
+  box-shadow: var(--of-shadow-lg);
+  transform: translateY(-1px);
+}
+
+.hextra-card-icon { letter-spacing: var(--of-tracking-snug); color: var(--of-text-heading); }
+.hextra-card-icon svg { color: var(--of-brand-500); }
+.hextra-card-subtitle { color: var(--of-text-muted); }
+
+.hextra-feature-card {
+  border-radius: var(--of-radius-lg);
+  background: var(--of-surface-card);
+  border: 1px solid var(--of-border-default);
+  box-shadow: var(--of-shadow-sm);
+}
+.hextra-feature-card:hover { border-color: var(--of-brand-200); box-shadow: var(--of-shadow-lg); }
+
+/* --------------------------------------------------------------------------
+   Callouts, badges, steps
+   -------------------------------------------------------------------------- */
+
+.hextra-callout { border-radius: var(--of-radius-md); }
+.hextra-badge { border-radius: var(--of-radius-full, 9999px); letter-spacing: var(--of-tracking-snug); }
+
+.content .steps > div > h3::before,
+.hextra-steps h3::before {
+  background: var(--of-brand-15);
+  color: var(--of-brand-600);
+  border-color: var(--of-brand-100);
+}
+
+/* --------------------------------------------------------------------------
+   Código
+   -------------------------------------------------------------------------- */
+
+.content pre, .hextra-code-block pre {
+  border-radius: var(--of-radius-md);
+  border: 1px solid var(--of-border-default);
+  font-size: 0.8125rem;
+}
+
+.content :not(pre) > code {
+  background: var(--of-surface-muted);
+  border: 1px solid var(--of-border-subtle);
+  border-radius: var(--of-radius-xs);
+  font-size: 0.85em;
+  padding: 0.15em 0.35em;
+}
+
+/* --------------------------------------------------------------------------
+   Busca
+   -------------------------------------------------------------------------- */
+
+.search-wrapper input {
+  border-radius: var(--of-radius-sm);
+  border-color: var(--of-border-default);
+  background: var(--of-surface-card);
+}
+.search-wrapper input:focus { box-shadow: 0 0 0 3px var(--of-brand-100); border-color: var(--of-brand-300); }
+
+/* --------------------------------------------------------------------------
+   Capa — degradê aurora claro (rosa → lavanda → branco), como a seção
+   "Como funciona" de obraflow.io
+   -------------------------------------------------------------------------- */
+
+.of-hero {
+  position: relative;
+  margin-inline: calc(50% - 50vw);
+  padding: 4.5rem max(1.5rem, calc(50vw - var(--hextra-max-page-width) / 2)) 5rem;
+  color: var(--of-text-heading);
+  overflow: hidden;
+  isolation: isolate;
+  background-color: #ffffff;
+  background-image:
+    radial-gradient(1100px 520px at 8% -8%, rgba(255, 138, 160, 0.38), transparent 62%),
+    radial-gradient(900px 560px at 92% 4%, rgba(167, 139, 250, 0.34), transparent 64%),
+    radial-gradient(760px 420px at 52% 112%, rgba(255, 0, 204, 0.10), transparent 70%),
+    linear-gradient(173deg,
+      rgba(255, 36, 94, 0.12) 17.37%,
+      rgba(98, 0, 255, 0.12) 52.59%,
+      rgba(255, 0, 204, 0.12) 89.98%);
+  border-bottom: 1px solid var(--of-border-subtle);
+}
+
+/* véu branco subindo do rodapé, para a capa dissolver no conteúdo */
+.of-hero::before {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 45%;
+  z-index: -1;
+  background: linear-gradient(to top, var(--of-surface-page) 4%, transparent 100%);
+}
+
+.of-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(to right, rgba(51, 55, 65, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(51, 55, 65, 0.045) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(72% 72% at 50% 0%, #000 25%, transparent 100%);
+  -webkit-mask-image: radial-gradient(72% 72% at 50% 0%, #000 25%, transparent 100%);
+}
+
+.dark .of-hero {
+  background-color: var(--of-levels-950);
+  background-image:
+    radial-gradient(1100px 520px at 8% -8%, rgba(255, 0, 77, 0.20), transparent 62%),
+    radial-gradient(900px 560px at 92% 4%, rgba(151, 71, 255, 0.18), transparent 64%),
+    var(--of-gradient-cta);
+  border-bottom-color: var(--of-border-subtle);
+}
+.dark .of-hero::before { background: linear-gradient(to top, var(--of-surface-page) 4%, transparent 100%); }
+.dark .of-hero::after {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+}
+
+.of-hero-inner {
+  display: grid;
+  gap: 3rem;
+  align-items: center;
+  max-width: var(--hextra-max-page-width);
+  margin-inline: auto;
+}
+
+@media (min-width: 1064px) {
+  .of-hero-inner { grid-template-columns: 1.05fr 0.95fr; gap: 4rem; }
+}
+
+.of-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.85rem 0.35rem 0.6rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--of-shadow-sm);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: var(--of-tracking-snug);
+  color: var(--of-text-heading);
+}
+.dark .of-eyebrow {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.of-eyebrow-dot {
+  width: 0.5rem; height: 0.5rem; border-radius: 9999px;
+  background: var(--of-gradient-eyebrow);
+}
+
+.of-hero h1 {
+  margin: 1.5rem 0 0;
+  font-size: clamp(2.25rem, 1.2rem + 3.6vw, 3.5rem);
+  line-height: 1.06;
+  font-weight: 600;
+  letter-spacing: var(--of-tracking-display-tight);
+  color: var(--of-text-heading);
+}
+.dark .of-hero h1 { color: #fff; }
+
+/* segunda linha com o degradê de título da referência */
+.of-hero h1 em {
+  font-family: var(--of-font-serif-italic);
+  font-style: italic;
+  font-weight: 500;
+  background: var(--of-gradient-headline);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.dark .of-hero h1 em {
+  background: linear-gradient(90deg, #ffffff 0%, var(--of-brand-400) 97.41%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.of-hero-sub {
+  margin-top: 1.25rem;
+  max-width: 34rem;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: var(--of-text-body);
+  letter-spacing: var(--of-tracking-body);
+}
+.dark .of-hero-sub { color: rgba(255, 255, 255, 0.68); }
+
+.of-hero-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
+
+.of-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.625rem 1rem;
+  border-radius: var(--of-radius-sm);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: var(--of-tracking-snug);
+  text-decoration: none;
+  transition: background 200ms cubic-bezier(0, 0, 0.2, 1), border-color 200ms, transform 150ms;
+}
+.of-btn:hover { transform: translateY(-1px); }
+
+.of-btn-brand { background: var(--of-brand-500); color: #fff; box-shadow: var(--of-shadow-sm); }
+.of-btn-brand:hover { background: var(--of-brand-600); }
+
+.of-btn-ghost {
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--of-text-heading);
+  border: 1px solid var(--of-border-default);
+  backdrop-filter: blur(8px);
+}
+.of-btn-ghost:hover { background: #fff; border-color: var(--of-border-strong, #cecfd2); }
+.dark .of-btn-ghost {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+.dark .of-btn-ghost:hover { background: rgba(255, 255, 255, 0.12); }
+
+.of-hero-meta {
+  margin-top: 2.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.75rem;
+  font-size: 0.8125rem;
+  color: var(--of-text-muted);
+}
+.of-hero-meta strong {
+  display: block;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--of-text-heading);
+  letter-spacing: var(--of-tracking-tight);
+}
+.dark .of-hero-meta { color: rgba(255, 255, 255, 0.5); }
+.dark .of-hero-meta strong { color: #fff; }
+
+/* cartão de demonstração da cadeia de aprovação */
+.of-chain {
+  border-radius: var(--of-radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(12px);
+  padding: 1.25rem;
+  box-shadow: 0 4px 6px -2px rgba(16, 24, 40, 0.04), 0 20px 28px -8px rgba(67, 3, 24, 0.12);
+}
+.dark .of-chain {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.35);
+}
+
+.of-chain-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding-bottom: 0.875rem; margin-bottom: 0.875rem;
+  border-bottom: 1px solid var(--of-border-subtle);
+}
+.of-chain-head span { font-size: 0.75rem; color: var(--of-text-muted); }
+.of-chain-head b {
+  font-size: 1.25rem; font-weight: 600;
+  color: var(--of-text-heading); letter-spacing: var(--of-tracking-tight);
+}
+.dark .of-chain-head span { color: rgba(255, 255, 255, 0.5); }
+.dark .of-chain-head b { color: #fff; }
+
+.of-step {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.6rem 0.25rem;
+  font-size: 0.875rem;
+  color: var(--of-text-heading);
+}
+.of-step + .of-step { border-top: 1px solid var(--of-border-subtle); }
+.of-step i {
+  flex: none;
+  width: 1.5rem; height: 1.5rem; border-radius: 9999px;
+  display: grid; place-items: center;
+  font-style: normal; font-size: 0.6875rem; font-weight: 600;
+}
+.of-step-done i { background: #defae4; color: #1a7b32; }
+.of-step-now  i { background: var(--of-brand-500); color: #fff; }
+.of-step-next i { background: var(--of-surface-muted); color: var(--of-text-muted); }
+.of-step-next { color: var(--of-text-muted); }
+.of-step em { margin-left: auto; font-style: normal; font-size: 0.75rem; color: var(--of-text-muted); }
+.of-step-now em { color: var(--of-brand-600); font-weight: 500; }
+
+.dark .of-step { color: rgba(255, 255, 255, 0.78); }
+.dark .of-step-done i { background: rgba(48, 209, 88, 0.16); color: #8beaa2; }
+.dark .of-step-next i { background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.45); }
+.dark .of-step-next { color: rgba(255, 255, 255, 0.4); }
+.dark .of-step em { color: rgba(255, 255, 255, 0.4); }
+.dark .of-step-now em { color: var(--of-brand-300); }
+
+/* O contêiner da home é flex com items-start, que encolhe cada seção até o
+   próprio conteúdo: as faixas de largura total precisam esticar. */
+.of-hero, .of-aurora { align-self: stretch; box-sizing: border-box; }
+
+/* a capa encosta na navbar: anula o padding superior do <main> */
+main:has(> div > .of-hero:first-child),
+main:has(> div > .of-aurora:first-child) { padding-top: 0 !important; }
+.of-hero { margin-top: 0; }
+
+/* --------------------------------------------------------------------------
+   Ícones na cor da marca, em todo lugar
+   -------------------------------------------------------------------------- */
+
+.hextra-card-icon svg,
+.hextra-feature-card h3 > span:first-child svg,
+.content .hextra-callout svg {
+  color: var(--of-brand-500);
+}
+.dark .hextra-card-icon svg,
+.dark .hextra-feature-card h3 > span:first-child svg {
+  color: var(--of-brand-400);
+}
+
+
+/* --------------------------------------------------------------------------
+   Capa — arte das telas: recortes reais sobre o degradê escuro da marca,
+   com o fundo aurora claro da capa continuando por trás
+   -------------------------------------------------------------------------- */
+
+/* 100vw conta a barra de rolagem: corta o excedente para não abrir rolagem
+   lateral. O corte fica no body, que tem a largura da tela; no <main> (máx.
+   80rem) ele cortaria os fundos em telas largas. */
+html:has(.of-aurora),
+body:has(.of-aurora) { overflow-x: clip; }
+
+.of-aurora {
+  margin-inline: calc(50% - 50vw);
+  padding-inline: max(1.5rem, calc(50vw - var(--hextra-max-page-width) / 2));
+}
+
+/* Um só fundo, da capa até os cards (como docs.helix.ml): o hero perde o
+   fundo próprio e as manchas de cor seguem pela página sem emenda. */
+.of-aurora {
+  padding-block: 0 5rem;
+  background-color: #ffffff;
+  background-image:
+    radial-gradient(1100px 520px at 8% 0, rgba(255, 138, 160, 0.38), transparent 62%),
+    radial-gradient(900px 560px at 92% 120px, rgba(167, 139, 250, 0.34), transparent 64%),
+    radial-gradient(900px 620px at 4% 1250px, rgba(255, 138, 160, 0.24), transparent 64%),
+    radial-gradient(900px 620px at 96% 1700px, rgba(167, 139, 250, 0.24), transparent 64%),
+    radial-gradient(900px 620px at 30% 2300px, rgba(255, 0, 204, 0.10), transparent 70%),
+    radial-gradient(900px 620px at 90% 2800px, rgba(255, 138, 160, 0.22), transparent 64%),
+    linear-gradient(173deg,
+      rgba(255, 36, 94, 0.10) 10%,
+      rgba(98, 0, 255, 0.10) 52.59%,
+      rgba(255, 0, 204, 0.10) 89.98%);
+}
+.dark .of-aurora {
+  background-color: var(--of-levels-950);
+  background-image:
+    radial-gradient(1100px 520px at 8% 0, rgba(255, 0, 77, 0.20), transparent 62%),
+    radial-gradient(900px 560px at 92% 120px, rgba(151, 71, 255, 0.18), transparent 64%),
+    radial-gradient(900px 620px at 4% 1250px, rgba(255, 0, 77, 0.12), transparent 64%),
+    radial-gradient(900px 620px at 96% 1700px, rgba(151, 71, 255, 0.12), transparent 64%);
+}
+.of-aurora .of-hero,
+.dark .of-aurora .of-hero {
+  background: none;
+  border-bottom: 0;
+}
+.of-aurora .of-hero::before { display: none; }
+.of-aurora .hextra-feature-grid { max-width: var(--hextra-max-page-width); margin-inline: auto; }
+
+.of-arte { margin-bottom: 4rem; }
+
+.of-arte-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1.5rem;
+  max-width: var(--hextra-max-page-width);
+  margin: 0 auto 2rem;
+}
+.of-arte-eyebrow {
+  display: inline-block;
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background-image: var(--of-gradient-eyebrow);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.of-arte h2 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  line-height: 1.08;
+  letter-spacing: var(--of-tracking-display);
+  font-weight: 600;
+  color: var(--of-text-strong);
+}
+.of-arte h2 em {
+  font-family: var(--of-font-serif-italic);
+  font-weight: 500;
+  color: var(--of-brand-500);
+}
+.dark .of-arte h2 { color: #fff; }
+.dark .of-arte h2 em { color: var(--of-brand-300); }
+.of-arte-more {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--of-text-heading);
+  border-bottom: 1px solid var(--of-levels-300);
+  padding-bottom: 2px;
+}
+.dark .of-arte-more { color: rgba(255, 255, 255, 0.78); border-color: rgba(255, 255, 255, 0.24); }
+
+.of-arte-panel {
+  position: relative;
+  max-width: var(--hextra-max-page-width);
+  margin-inline: auto;
+  min-height: 40rem;
+  padding: 3.5rem 3rem 4rem;
+  box-sizing: border-box;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  background-color: var(--of-levels-950);
+  background-image:
+    radial-gradient(1100px 520px at 8% -8%, rgba(255, 0, 77, 0.20), transparent 62%),
+    radial-gradient(900px 560px at 92% 4%, rgba(151, 71, 255, 0.18), transparent 64%),
+    var(--of-gradient-cta);
+}
+.of-arte-panel figure { margin: 0; }
+.of-arte-panel img { display: block; width: 100%; height: auto; }
+
+.of-arte-tag {
+  position: absolute;
+  top: 1.125rem;
+  left: 3rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--of-brand-100);
+  background: rgba(255, 0, 77, 0.16);
+  border-radius: 999px;
+  padding: 0.25rem 0.625rem;
+}
+
+.of-arte-window,
+.of-arte-card {
+  background: #fff;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 24px 48px -16px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+.of-arte-window { position: relative; width: 66%; }
+.of-arte-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  background: var(--of-levels-100);
+  border-bottom: 1px solid var(--of-levels-200);
+}
+.of-arte-bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--of-levels-300); }
+.of-arte-bar span {
+  margin-left: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--of-levels-600);
+  background: #fff;
+  border-radius: 6px;
+  padding: 0.1875rem 0.75rem;
+}
+
+.of-arte-card { position: absolute; }
+.of-arte-regra {
+  top: 2.5rem;
+  right: 3rem;
+  width: 24%;
+  outline: 2px solid var(--of-brand-500);
+  outline-offset: 4px;
+}
+.of-arte-historico { left: 34%; bottom: 7.5rem; width: 44%; }
+.of-arte-decisao { left: 3rem; right: 30%; bottom: 2.5rem; }
+
+.of-arte-phone {
+  position: absolute;
+  right: 1.5rem;
+  bottom: -9rem;
+  width: 170px;
+  padding: 8px;
+  border-radius: 28px;
+  background: var(--of-levels-950);
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+.of-arte-phone img { border-radius: 22px; }
+
+.of-arte-points {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+  max-width: var(--hextra-max-page-width);
+  margin: 1.5rem auto 0;
+}
+.of-arte-points p { margin: 0; font-size: 0.875rem; line-height: 1.6; color: var(--of-text-body); }
+.of-arte-points b { font-weight: 600; color: var(--of-text-heading); }
+.dark .of-arte-points p { color: rgba(255, 255, 255, 0.6); }
+.dark .of-arte-points b { color: #fff; }
+
+/* Telas estreitas: a composição vira pilha, sem sobreposição. */
+@media (max-width: 900px) {
+  .of-arte-panel { min-height: 0; padding: 3rem 1rem 1rem; display: grid; gap: 1rem; }
+  .of-arte-tag { left: 1rem; }
+  .of-arte-window, .of-arte-card { position: static; width: auto; }
+  .of-arte-regra { display: none; }
+  .of-arte-phone { display: none; }
+  .of-arte-points { grid-template-columns: 1fr; }
+}
+
+/* --------------------------------------------------------------------------
+   Capa — "Comece rápido": instalação e API, dentro do mesmo fundo aurora
+   -------------------------------------------------------------------------- */
+
+.of-comece {
+  margin-top: 6rem;
+  padding-top: 4rem;
+  border-top: 1px solid var(--of-border-hairline);
+  color: var(--of-text-body);
+}
+.of-comece-inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4rem;
+  max-width: var(--hextra-max-page-width);
+  margin-inline: auto;
+}
+.of-comece-inner > div { flex: 1 1 28rem; min-width: 0; }
+.of-comece h2,
+.of-comece h3 {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+  color: var(--of-text-strong);
+  letter-spacing: var(--of-tracking-display);
+}
+.of-comece h2 { font-size: clamp(2rem, 4vw, 2.75rem); line-height: 1.1; }
+.of-comece h3 { font-size: 2rem; line-height: 1.2; }
+.of-comece p { margin: 0 0 1.5rem; font-size: 1rem; line-height: 1.7; color: var(--of-text-body); }
+.of-comece p code {
+  font-family: var(--of-font-mono);
+  font-size: 0.875rem;
+  color: var(--of-text-strong);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--of-border-subtle);
+  border-radius: var(--of-radius-xs);
+  padding: 0.1em 0.35em;
+}
+.of-comece a { color: var(--of-brand-600); font-weight: 500; }
+.of-comece a:hover { color: var(--of-brand-700); }
+.of-comece-links { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: 1.5rem; }
+
+.dark .of-comece { border-top-color: rgba(255, 255, 255, 0.08); }
+.dark .of-comece h2, .dark .of-comece h3 { color: #fff; }
+.dark .of-comece p { color: var(--of-levels-300); }
+.dark .of-comece p code { color: #fff; background: rgba(255, 255, 255, 0.08); border-color: transparent; }
+.dark .of-comece a { color: var(--of-brand-300); }
+.dark .of-comece a:hover { color: var(--of-brand-200); }
+
+.of-code {
+  margin: 0 0 1.5rem;
+  padding: 1.25rem 1.375rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--of-levels-900);
+  box-shadow: var(--of-shadow-lg);
+  font-family: var(--of-font-mono);
+  font-size: 0.84rem;
+  line-height: 1.75;
+  color: var(--of-levels-200);
+  overflow-x: auto;
+  white-space: pre;
+}
+.of-code-hole { color: var(--of-brand-200); }
+.of-code-str { color: #9fd7ff; }

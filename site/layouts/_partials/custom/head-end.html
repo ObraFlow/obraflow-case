@@ -1,0 +1,5 @@
+{{- /* Tema ObraFlow: carregado com fingerprint para nunca ficar preso em cache. */ -}}
+{{- with resources.Get "css/obraflow.css" -}}
+  {{- $css := . | minify | fingerprint -}}
+  <link rel="stylesheet" href="{{ $css.RelPermalink }}" />
+{{- end -}}
