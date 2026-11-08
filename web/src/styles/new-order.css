@@ -6,8 +6,12 @@
 }
 .order-main {
   display: grid;
+  /* sem o minmax(0, 1fr) a coluna cresce com a tabela de itens e passa por cima do resumo */
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
   min-width: 0;
+  /* a tabela de itens troca de formato pela largura desta coluna, não pela da janela */
+  container-type: inline-size;
 }
 
 .general-grid {
@@ -26,7 +30,7 @@
 
 /* --- itens --- */
 .items {
-  --cols: 28px minmax(160px, 1fr) 86px 78px 120px 116px 32px;
+  --cols: 28px minmax(120px, 1fr) 80px 74px 110px 110px 32px;
 }
 .items-header,
 .item-row {
@@ -174,7 +178,8 @@
   gap: 8px;
 }
 
-@media (max-width: 1180px) {
+/* duas colunas só quando a de itens (mín. ~640px) cabe ao lado do resumo */
+@media (max-width: 1300px) {
   .order-layout {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -190,6 +195,13 @@
   .span-3 {
     grid-column: auto;
   }
+  .created {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* cada item vira um cartão quando a tabela não cabe na coluna */
+@container (max-width: 640px) {
   .items-header {
     display: none;
   }
@@ -248,9 +260,6 @@
     font-size: 0.78rem;
     font-weight: 500;
     color: var(--ink-2);
-  }
-  .created {
-    grid-template-columns: 1fr;
   }
 }
 
