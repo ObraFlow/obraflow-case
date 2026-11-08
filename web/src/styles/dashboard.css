@@ -1,0 +1,603 @@
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.pill-select {
+  width: auto;
+  min-width: 240px;
+  border-radius: 999px;
+  border-color: transparent;
+  background-color: var(--surface);
+  box-shadow: var(--card-shadow);
+}
+
+/* ---------- grade do painel ---------- */
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 18px;
+}
+.hero-card {
+  grid-column: span 5;
+}
+.donut-card {
+  grid-column: span 4;
+}
+.mini-stack {
+  grid-column: span 3;
+  display: grid;
+  gap: 18px;
+}
+.months-card {
+  grid-column: span 8;
+}
+.suppliers-card {
+  grid-column: span 4;
+}
+.sites-card {
+  grid-column: span 8;
+}
+.activity-card {
+  grid-column: span 4;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px 24px;
+  min-width: 0;
+}
+.card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 16px;
+}
+.card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.card-meta {
+  font-size: 0.82rem;
+  color: var(--ink-3);
+}
+.card-meta strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.delta {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+.delta.is-up {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+.delta.is-down {
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+
+/* ---------- card de destaque ---------- */
+.hero-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 26px 22px;
+  border-radius: 22px;
+  background: var(--accent-grad);
+  color: #fff;
+  overflow: hidden;
+  box-shadow: 0 18px 40px -24px rgb(229 86 42 / 0.75);
+}
+/* círculos grandes e discretos no fundo, para o card não ficar chapado */
+.hero-card::before,
+.hero-card::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.08);
+  pointer-events: none;
+}
+.hero-card::before {
+  width: 260px;
+  height: 260px;
+  top: -120px;
+  right: -80px;
+}
+.hero-card::after {
+  width: 160px;
+  height: 160px;
+  bottom: -90px;
+  left: -40px;
+}
+.hero-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  opacity: 0.95;
+}
+.hero-chip {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.18);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+.hero-value {
+  margin-top: 10px;
+  font-size: clamp(1.9rem, 3.2vw, 2.6rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+.hero-sub {
+  margin-top: 4px;
+  font-size: 0.86rem;
+  opacity: 0.85;
+}
+.sparkline {
+  flex: 1;
+  width: calc(100% + 52px);
+  min-height: 84px;
+  margin: 18px -26px 14px;
+}
+.spark-line {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+.spark-dot {
+  fill: #fff;
+  stroke: rgb(255 255 255 / 0.35);
+  stroke-width: 6;
+}
+.hero-split {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 0;
+  margin: auto 0 0;
+}
+.hero-split > div {
+  padding: 2px 18px;
+  border-left: 1px dashed rgb(255 255 255 / 0.35);
+}
+.hero-split > div:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+.hero-split dt {
+  font-size: 0.76rem;
+  opacity: 0.85;
+}
+.hero-split dd {
+  margin: 2px 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ---------- anel do orçamento ---------- */
+.donut-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex: 1;
+}
+.donut {
+  position: relative;
+  flex: none;
+}
+.donut svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.donut-track {
+  stroke: var(--surface-2);
+}
+.seg-approved {
+  stroke: var(--ink);
+}
+.seg-pending {
+  stroke: var(--accent);
+}
+.donut-center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+}
+.donut-center strong {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+.donut-center span {
+  font-size: 0.76rem;
+  color: var(--ink-3);
+}
+.legend {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  flex: 1 1 130px;
+}
+.legend li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0 8px;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--ink-3);
+}
+.legend strong {
+  grid-column: 2;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+.dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+.dot-approved {
+  background: var(--ink);
+}
+.dot-pending {
+  background: var(--accent);
+}
+.dot-free {
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+.legend-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.legend-inline .dot + * {
+  margin-right: 8px;
+}
+
+/* ---------- mini cards ---------- */
+.mini {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  color: inherit;
+  text-decoration: none;
+  transition: box-shadow 0.2s;
+}
+.mini:hover {
+  box-shadow:
+    var(--card-shadow),
+    0 0 0 1px var(--line-strong);
+}
+.mini > svg {
+  color: var(--ink-3);
+}
+.mini-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+.mini-icon.is-accent {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+.mini-icon.is-warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+.mini-body {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.mini-label {
+  font-size: 0.8rem;
+  color: var(--ink-3);
+}
+.mini-body strong {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.mini-sub {
+  font-size: 0.78rem;
+  color: var(--ink-2);
+}
+
+/* ---------- barras por mês ---------- */
+.bars {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  flex: 1;
+  min-height: 230px;
+}
+.bars-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-bottom: 26px;
+  font-size: 0.72rem;
+  color: var(--ink-3);
+  text-align: right;
+}
+.bars-plot {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px calc((100% - 26px) / 2)) top / 100% calc(100% - 26px)
+    no-repeat;
+}
+.bars-plot li {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  justify-items: center;
+  min-width: 0;
+}
+.bar {
+  position: relative;
+  align-self: end;
+  width: min(42px, 100%);
+  height: max(var(--h), 4px);
+  padding: 0;
+  border: 0;
+  border-radius: 12px 12px 6px 6px;
+  background: var(--chart-muted);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+[data-current] .bar {
+  background: var(--accent-grad);
+}
+[data-active]:not([data-current]) .bar {
+  background: var(--ink-3);
+}
+.bar-tip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  translate: -50% 0;
+  padding: 4px 9px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: var(--primary-ink);
+  font-size: 0.74rem;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.bar-label {
+  padding-top: 8px;
+  font-size: 0.78rem;
+  color: var(--ink-3);
+}
+[data-current] .bar-label {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ---------- fornecedores ---------- */
+.sup-list {
+  display: grid;
+  /* sem o minmax(0, 1fr) a coluna cresce com o nome e o card vaza */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sup-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 5px;
+}
+.sup-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.86rem;
+}
+.sup-line strong {
+  flex: none;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.sup-bar {
+  height: 8px;
+  border-radius: 99px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.sup-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ink);
+}
+.sup-list li:first-child .sup-bar > span {
+  background: var(--accent-grad);
+}
+
+/* ---------- obras x orçamento ---------- */
+.site-budgets {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.site-budgets li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  transition: opacity 0.2s;
+}
+.site-budgets li[data-dim] {
+  opacity: 0.45;
+}
+.sb-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+.sb-head > .truncate {
+  flex: 1;
+}
+.sb-head strong {
+  font-weight: 600;
+}
+.sb-pct {
+  font-weight: 700;
+}
+.sb-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 12px;
+}
+/* ---------- atividade ---------- */
+.activity {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.activity li {
+  display: flex;
+  gap: 12px;
+  font-size: 0.86rem;
+}
+.act-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+[data-type='APPROVED'] .act-icon {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+[data-type='REJECTED'] .act-icon {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.act-body {
+  display: grid;
+  min-width: 0;
+}
+.act-body a {
+  color: var(--accent-ink);
+  text-decoration: none;
+}
+.act-body a:hover {
+  text-decoration: underline;
+}
+
+/* ---------- carregando ---------- */
+.is-skeleton,
+.skeleton-card {
+  min-height: 240px;
+  background: var(--shimmer);
+  box-shadow: none;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+.mini.skeleton-card {
+  min-height: 100px;
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* ---------- responsivo ---------- */
+@media (max-width: 1280px) {
+  .hero-card,
+  .donut-card {
+    grid-column: span 6;
+  }
+  .mini-stack {
+    grid-column: span 12;
+    grid-template-columns: 1fr 1fr;
+  }
+  .months-card,
+  .sites-card {
+    grid-column: span 12;
+  }
+  .suppliers-card,
+  .activity-card {
+    grid-column: span 6;
+  }
+  .suppliers-card {
+    order: 1;
+  }
+}
+@media (max-width: 860px) {
+  .dash-grid > * {
+    grid-column: span 12 !important;
+  }
+  .mini-stack {
+    grid-template-columns: 1fr;
+  }
+  .page-actions,
+  .pill-select {
+    width: 100%;
+  }
+  .page-actions .btn {
+    flex: 1;
+  }
+  .bars {
+    height: 200px;
+  }
+  .bars-plot {
+    gap: 8px;
+  }
+  .card {
+    padding: 18px;
+  }
+  .hero-split dd {
+    font-size: 0.88rem;
+  }
+}

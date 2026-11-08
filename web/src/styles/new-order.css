@@ -1,0 +1,338 @@
+.order-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 20px;
+  align-items: start;
+}
+.order-main {
+  display: grid;
+  /* sem o minmax(0, 1fr) a coluna cresce com a tabela de itens e passa por cima do resumo */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  min-width: 0;
+  /* a tabela de itens troca de formato pela largura desta coluna, não pela da janela */
+  container-type: inline-size;
+}
+
+.general-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.3fr) minmax(150px, 0.8fr);
+  gap: 16px;
+}
+.span-3 {
+  grid-column: 1 / -1;
+}
+
+.count {
+  margin-left: 6px;
+  font: 500 0.8rem var(--mono);
+}
+
+/* --- itens --- */
+.items {
+  --cols: 28px minmax(120px, 1fr) 80px 74px 110px 110px 32px;
+}
+.items-header,
+.item-row {
+  display: grid;
+  grid-template-columns: var(--cols);
+  gap: 8px;
+  align-items: start;
+  padding: 0 14px;
+}
+.items-header {
+  padding-top: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.74rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink-3);
+}
+.items-header .r {
+  text-align: right;
+}
+.item-row {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.item-row:last-child {
+  border-bottom: 0;
+}
+.item-row:focus-within {
+  background: color-mix(in srgb, var(--surface-2) 60%, transparent);
+}
+.item-index {
+  padding-top: 9px;
+  font-size: 0.78rem;
+  color: var(--ink-3);
+}
+.item-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.item-total {
+  padding-top: 9px;
+  text-align: right;
+  font-size: 0.9rem;
+}
+.item-remove {
+  color: var(--ink-3);
+  margin-top: 3px;
+}
+.item-remove:hover {
+  color: var(--danger) !important;
+}
+.item-errors {
+  grid-column: 2 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 16px;
+}
+.item-errors:not(:has(.field-error)) {
+  display: none;
+}
+
+.items-empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 16px;
+  padding: 14px 16px;
+  border: 1px dashed color-mix(in srgb, var(--danger) 45%, transparent);
+  border-radius: var(--radius);
+  background: var(--danger-soft);
+  color: var(--danger-ink);
+  font-size: 0.9rem;
+}
+
+/* --- resumo --- */
+.order-summary {
+  position: sticky;
+  top: 20px;
+}
+.summary-body {
+  display: grid;
+  gap: 18px;
+}
+.summary-total {
+  display: grid;
+  gap: 2px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.summary-total strong {
+  font-size: 1.85rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.summary-chain {
+  display: grid;
+  gap: 8px;
+}
+.summary-chain > div:not(.notice) {
+  display: grid;
+  gap: 8px;
+}
+.small {
+  font-size: 0.82rem;
+}
+.is-stale {
+  opacity: 0.55;
+  transition: opacity 0.15s;
+}
+
+/* --- sucesso --- */
+.created {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 18px;
+  align-items: start;
+  padding: 24px;
+}
+.created-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--ok);
+  color: var(--on-color);
+}
+.created-text {
+  display: grid;
+  gap: 8px;
+}
+.created-text p {
+  color: var(--ink-2);
+}
+.created-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* duas colunas só quando a de itens (mín. ~640px) cabe ao lado do resumo */
+@media (max-width: 1300px) {
+  .order-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .order-summary {
+    position: static;
+  }
+}
+
+@media (max-width: 760px) {
+  .general-grid {
+    grid-template-columns: 1fr;
+  }
+  .span-3 {
+    grid-column: auto;
+  }
+  .created {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* cada item vira um cartão quando a tabela não cabe na coluna */
+@container (max-width: 640px) {
+  .items-header {
+    display: none;
+  }
+  .item-row {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      'idx remove'
+      'desc desc'
+      'qty unit'
+      'price total'
+      'err err';
+    gap: 10px;
+    padding: 14px 16px;
+  }
+  .item-index {
+    grid-area: idx;
+    padding: 0;
+    align-self: center;
+  }
+  .item-remove {
+    grid-area: remove;
+    justify-self: end;
+    margin: 0;
+  }
+  .item-desc {
+    grid-area: desc;
+  }
+  .item-qty {
+    grid-area: qty;
+  }
+  .item-unit {
+    grid-area: unit;
+  }
+  .item-price {
+    grid-area: price;
+  }
+  .item-total {
+    grid-area: total;
+    display: grid;
+    gap: 5px;
+    padding: 0;
+    text-align: left;
+  }
+  .item-total .money {
+    padding-top: 8px;
+  }
+  .item-errors {
+    grid-area: err;
+    flex-direction: column;
+  }
+  .item-label {
+    position: static;
+    width: auto;
+    height: auto;
+    clip-path: none;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--ink-2);
+  }
+}
+
+/* ---------- corrigir e reenviar ---------- */
+.correction {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--danger) 28%, transparent);
+  border-left: 3px solid var(--danger);
+  border-radius: 8px;
+  background: var(--danger-soft);
+}
+.correction-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+  color: var(--danger-ink);
+}
+.correction-head > span {
+  flex: 1;
+}
+.correction-head a {
+  font-weight: 600;
+  color: inherit;
+}
+.correction blockquote {
+  margin: 0;
+  padding-left: 26px;
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+
+.self-approval > div {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+.self-approval p {
+  margin: 0;
+}
+
+.page-notice {
+  margin-bottom: 16px;
+}
+@media (max-width: 760px) {
+  .correction-head {
+    flex-wrap: wrap;
+  }
+  .correction-head > span {
+    flex-basis: calc(100% - 30px);
+  }
+  .correction-head .btn {
+    margin-left: 18px;
+  }
+}
+
+.summary-budget {
+  display: grid;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.budget-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.budget-head strong {
+  font-weight: 700;
+}
+.budget-over {
+  color: var(--warn);
+  font-weight: 500;
+}
